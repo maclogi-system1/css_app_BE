@@ -1,0 +1,16 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ model }};
+
+class {{ class }} extends Service
+{
+    /**
+     * Get a new model instance.
+     */
+    public function model(array $attributes = []): {{ model_basename }}
+    {
+        return new {{ model_basename }}($attributes);
+    }
+}

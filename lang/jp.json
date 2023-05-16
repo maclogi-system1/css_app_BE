@@ -1,0 +1,10 @@
+{
+    "You can not delete yourself.": "You can not delete yourself.",
+    "Delete failed. Please check your user ids!": "Delete failed. Please check your user ids!",
+    "The users have been deleted successfully.": "The users have been deleted successfully.",
+
+    "Bookmarking failed. Maybe your type is wrong, please check again.": "Bookmarking failed. Maybe your type is wrong, please check again.",
+    "Successfully bookmarked.": "Successfully bookmarked.",
+    "Unbookmarking failed. Maybe your type is wrong, please check again.": "Unbookmarking failed. Maybe your type is wrong, please check again.",
+    "Successfully unbookmarked.": "Successfully unbookmarked."
+}
