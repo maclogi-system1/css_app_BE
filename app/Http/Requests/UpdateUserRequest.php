@@ -28,6 +28,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->route('user'))],
             'company_id' => ['required', 'integer'],
             'roles' => ['nullable', 'array'],
+            'chatwork_id' => ['nullable', 'max:50'],
         ];
     }
 }

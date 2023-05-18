@@ -6,8 +6,11 @@ use App\Models\Bookmark;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
+use App\Services\ChatworkService;
 use LogicException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,7 +27,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     /**
      * Get the list of the resource with pagination and handle filter.
      */
-    public function getList(array $filters = [], array $columns = ['*'])
+    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
         if (Arr::has($filters, 'with')) {
             $this->useWith($filters['with']);
@@ -92,22 +95,57 @@ class UserRepository extends Repository implements UserRepositoryContract
 
             $user->syncRoles(Arr::get($data, 'roles', []));
 
+            if (isset($data['chatwork_id'])) {
+                $this->linkUserToChatwork($user, $data['chatwork_id']);
+            }
+
             return $user;
         }, 'Create user');
     }
 
     /**
+     * Handle link a specified user to chatwork by chatwork_id.
+     */
+    public function linkUserToChatwork(User $user, $chatworkId): bool
+    {
+        $service = new ChatworkService();
+        $memberInfo = $service->findMemberByChatworkId($chatworkId);
+        $chatwork = $user->chatwork()->where('chatwork_id', $chatworkId)->first();
+
+        if (empty($memberInfo) || $chatwork) {
+            return false;
+        }
+
+        $user->chatwork()->create([
+            'account_id' => $memberInfo->account_id,
+            'role' => $memberInfo->role,
+            'name' => $memberInfo->name,
+            'chatwork_id' => $chatworkId,
+            'organization_id' => $memberInfo->organization_id,
+            'organization_name' => $memberInfo->organization_name,
+            'department' => $memberInfo->department,
+            'avatar_image_url' => $memberInfo->avatar_image_url,
+        ]);
+
+        return true;
+    }
+
+    /**
      * Handle update the specified user.
      */
-    public function update(array $data, $id): ?User
+    public function update(array $data, User $user): ?User
     {
-        $user = $id instanceof User ? $id : $this->model()->find($id);
-
         return $this->handleSafely(function () use ($data, $user) {
             $user->fill($data);
             $user->save();
 
             $user->syncRoles(Arr::get($data, 'roles', []));
+
+            if (isset($data['chatwork_id'])) {
+                $this->linkUserToChatwork($user, $data['chatwork_id']);
+            } else {
+                $user->chatwork()->delete();
+            }
 
             return $user->refresh();
         }, 'Update user');
@@ -116,10 +154,8 @@ class UserRepository extends Repository implements UserRepositoryContract
     /**
      * Handle delete the specified user.
      */
-    public function delete($id, ?User $auth = null): ?User
+    public function delete(User $user, ?User $auth = null): ?User
     {
-        $user = $id instanceof User ? $id : $this->model()->find($id);
-
         return $this->handleSafely(function () use ($user, $auth) {
             if ($this->auth(user: $auth)->id == $user->id) {
                 throw new LogicException('Can not delete current user.');

@@ -29,10 +29,9 @@ class StoreUserRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
-
             'company_id' => ['nullable', 'integer'],
-
             'roles' => ['nullable', 'array'],
+            'chatwork_id' => ['nullable', 'max:50'],
         ];
     }
 }

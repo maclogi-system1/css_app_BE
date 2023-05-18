@@ -5,6 +5,8 @@ namespace App\Repositories\Eloquents;
 use App\Models\Role;
 use App\Repositories\Contracts\RoleRepository as RoleRepositoryContract;
 use App\Repositories\Repository;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 
 class RoleRepository extends Repository implements RoleRepositoryContract
@@ -20,7 +22,7 @@ class RoleRepository extends Repository implements RoleRepositoryContract
     /**
      * Get the list of the resource with pagination and handle filter.
      */
-    public function getList(array $filters = [], array $columns = ['*'])
+    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
         if (Arr::has($filters, 'with')) {
             $this->useWith($filters['with']);
@@ -64,10 +66,8 @@ class RoleRepository extends Repository implements RoleRepositoryContract
     /**
      * Handle update the specified role.
      */
-    public function update(array $data, $id): Role|null
+    public function update(array $data, Role $role): ?Role
     {
-        $role = $id instanceof Role ? $id : $this->model()->find($id);
-
         return $this->handleSafely(function () use ($data, $role) {
             $role->fill($data);
 
@@ -76,12 +76,12 @@ class RoleRepository extends Repository implements RoleRepositoryContract
 
             if (! empty($permissions)) {
                 $role->syncPermissions($permissions);
-                $role->updated_at = now();
+                $role->setAttribute('updated_at', now());
             }
 
             if (! empty($users)) {
                 $role->users()->sync($users);
-                $role->updated_at = now();
+                $role->setAttribute('updated_at', now());
             }
 
             $role->save();
@@ -90,9 +90,11 @@ class RoleRepository extends Repository implements RoleRepositoryContract
         }, 'Update role');
     }
 
-    public function delete($id): Role|null
+    /**
+     * Handle delete the specified role.
+     */
+    public function delete(Role $role): ?Role
     {
-        $role = $id instanceof Role ? $id : $this->model()->find($id);
         $role->delete();
 
         return $role;

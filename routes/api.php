@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\UpdateUserProfileInformationController;
 use App\Http\Controllers\Api\BookmarkController;
+use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
@@ -22,6 +23,7 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/', function (Request $request) {
             return $request->user();
@@ -47,4 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user-settings', [UserSettingController::class, 'index'])->name('user-settings.index');
     Route::patch('/user-settings', [UserSettingController::class, 'update'])->name('user-settings.update');
+
+    Route::prefix('chatwork')->name('chatwork.')->group(function () {
+        Route::get('/members/{roomId}', [ChatworkController::class, 'membersList'])->name('members');
+        Route::post('/send-message/{roomId}', [ChatworkController::class, 'sendMessage'])->name('send-message');
+    });
 });
