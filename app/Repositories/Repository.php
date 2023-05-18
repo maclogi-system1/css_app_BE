@@ -3,7 +3,8 @@
 namespace App\Repositories;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
@@ -51,9 +52,9 @@ abstract class Repository
      *
      * @param  array  $filters
      * @param  array  $columns
-     * @return \Illuminate\Pagination\LengthAwarePaginator
+     * @return \Illuminate\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
      */
-    public function getList(array $filters = [], array $columns = ['*'])
+    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
         $page = Arr::get($filters, 'page', 1);
         $perPage = Arr::get($filters, 'per_page', config('coreapp.per_page_default', 10));
@@ -212,46 +213,6 @@ abstract class Repository
         return $this->useHas($doesntHave, false);
     }
 
-    /**
-     * Update records in the database.
-     *
-     * @param  array  $data
-     * @param  int|\Illuminate\Database\Eloquent\Model  $id
-     * @return \Illuminate\Database\Eloquent\Model
-     */
-    public function update(array $data, $id): Model|null
-    {
-        $model = $id instanceof Model ? $id : $this->model()->find($id);
-
-        if (is_null($model)) {
-            return null;
-        }
-
-        $model->fill($data);
-        $model->save();
-
-        return $model;
-    }
-
-    /**
-     * Delete records from the database.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Database\Eloquent\Model|null
-     */
-    public function delete($id)
-    {
-        $model = $id instanceof Model ? $id : $this->model()->find($id);
-
-        if (is_null($model)) {
-            return null;
-        }
-
-        $model->delete();
-
-        return $model;
-    }
-
     protected function handleSafely(\Closure $callback, $titleError = 'Process')
     {
         DB::beginTransaction();
@@ -266,6 +227,8 @@ abstract class Repository
             DB::rollBack();
 
             logger()->error("{$titleError}: {$e->getMessage()}");
+
+            chatwork_log($e->getMessage(), 'error');
 
             return null;
         }

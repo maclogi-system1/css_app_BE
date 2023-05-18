@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class UserResource extends JsonResource
 {
@@ -28,6 +27,7 @@ class UserResource extends JsonResource
                 'name' => $this->full_name,
                 'company' => new CompanyResource($this->whenLoaded('company')),
                 'roles' => RoleResource::collection($this->whenLoaded('roles')),
+                'chatwork' => new ChatworkResource($this->whenLoaded('chatwork')),
             ]
         );
     }
