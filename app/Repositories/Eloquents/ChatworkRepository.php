@@ -26,9 +26,17 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
     }
 
     /**
+     * Get room detail by id.
+     */
+    public function roomDetail($roomId): Collection
+    {
+        return $this->chatworkService->getRoomById($roomId);
+    }
+
+    /**
      * Get a list of the member in a specified room.
      */
-    public function membersList($roomId): Collection
+    public function listMembersInRoom($roomId): Collection
     {
         return $this->chatworkService->getMembersInRoom($roomId);
     }

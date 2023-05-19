@@ -14,13 +14,23 @@ class ChatworkController extends Controller
     ) {}
 
     /**
-     * Display a listing of the member.
+     * Get a specified room by room id.
      */
-    public function membersList($roomId): JsonResponse
+    public function roomDetail($roomId): JsonResponse
+    {
+        return response()->json([
+            'room' => $this->chatworkRepository->roomDetail($roomId),
+        ]);
+    }
+
+    /**
+     * Display a listing of the member in the room.
+     */
+    public function roomMembers($roomId): JsonResponse
     {
         return response()->json([
             'room_id' => $roomId,
-            'members' => $this->chatworkRepository->membersList($roomId),
+            'members' => $this->chatworkRepository->listMembersInRoom($roomId),
         ]);
     }
 
