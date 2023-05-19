@@ -2,31 +2,27 @@ version: '3'
 services:
     web:
         build:
-            context: ./docker/8.2
+            context: ./docker/web
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.2/app
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
         ports:
             - '${APP_PORT:-80}:80'
+            - '443:443'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
+            ENABLE_SSL: ${ENABLE_SSL}
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
         volumes:
             - '.:/var/www/html'
+            - './docker/web/apache/log:/var/log/apache2'
         networks:
-            - sail
+            - maclogicss
         depends_on:
             - mysql
             - redis
-            # - meilisearch
-            # - mailpit
-            # - selenium
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -39,10 +35,10 @@ services:
             MYSQL_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
         volumes:
-            - 'sail-mysql:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+            - 'maclogicss-mysql:/var/lib/mysql'
+            - './docker/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
-            - sail
+            - maclogicss
         healthcheck:
             test:
                 - CMD
@@ -56,9 +52,9 @@ services:
         ports:
             - '${FORWARD_REDIS_PORT:-6379}:6379'
         volumes:
-            - 'sail-redis:/data'
+            - 'maclogicss-redis:/data'
         networks:
-            - sail
+            - maclogicss
         healthcheck:
             test:
                 - CMD
@@ -66,45 +62,11 @@ services:
                 - ping
             retries: 3
             timeout: 5s
-    # meilisearch:
-    #     image: 'getmeili/meilisearch:latest'
-    #     ports:
-    #         - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
-    #     volumes:
-    #         - 'sail-meilisearch:/meili_data'
-    #     networks:
-    #         - sail
-    #     healthcheck:
-    #         test:
-    #             - CMD
-    #             - wget
-    #             - '--no-verbose'
-    #             - '--spider'
-    #             - 'http://localhost:7700/health'
-    #         retries: 3
-    #         timeout: 5s
-    # mailpit:
-    #     image: 'axllent/mailpit:latest'
-    #     ports:
-    #         - '${FORWARD_MAILPIT_PORT:-1025}:1025'
-    #         - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
-    #     networks:
-    #         - sail
-    # selenium:
-    #     image: selenium/standalone-chrome
-    #     extra_hosts:
-    #         - 'host.docker.internal:host-gateway'
-    #     volumes:
-    #         - '/dev/shm:/dev/shm'
-    #     networks:
-    #         - sail
 networks:
-    sail:
+    maclogicss:
         driver: bridge
 volumes:
-    sail-mysql:
+    maclogicss-mysql:
         driver: local
-    sail-redis:
+    maclogicss-redis:
         driver: local
-    # sail-meilisearch:
-    #     driver: local

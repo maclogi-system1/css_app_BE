@@ -1,0 +1,4 @@
+/web/apache/default.apache.conf
+/web/apache/log/*
+/web/certs/ssl.crt
+/web/certs/ssl.key

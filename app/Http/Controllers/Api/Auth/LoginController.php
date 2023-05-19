@@ -33,7 +33,7 @@ class LoginController extends Controller
 
         return response()->json([
             'company' => new CompanyResource($company),
-            'access_token' => $company->createToken('maclogi_css_company', ['*'], now()->addMinute(5))->plainTextToken,
+            'access_token' => $company->createToken($company->company_id, ['*'], now()->addMinute(5))->plainTextToken,
         ]);
     }
 
@@ -48,15 +48,14 @@ class LoginController extends Controller
             'company_access_token' => ['required'],
         ]);
 
+        $user = User::where('email', $data['email'])->first();
         $accessToken = PersonalAccessToken::findToken($data['company_access_token']);
 
-        if (is_null($accessToken) || ! $this->verifyCompanyAccessToken($accessToken)) {
+        if (is_null($accessToken) || ! $this->verifyCompanyAccessToken($accessToken, $user->company->company_id)) {
             throw ValidationException::withMessages([
                 'company_access_token' => ['The provided credentials are incorrect.'],
             ]);
         }
-
-        $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
@@ -68,17 +67,18 @@ class LoginController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
-            'access_token' => $user->createToken('maclogi_css', ['*'], now()->addDay())->plainTextToken,
+            'access_token' => $user->createToken('maclogi_css_user', ['*'], now()->addDay())->plainTextToken,
         ]);
     }
 
     /**
      * Verify access token of company.
      */
-    private function verifyCompanyAccessToken(PersonalAccessToken $accessToken): bool
+    private function verifyCompanyAccessToken(PersonalAccessToken $accessToken, $companyId): bool
     {
         if (
-            $accessToken->name != 'maclogi_css_company'
+            $accessToken->name != $companyId
+            || $accessToken->tokenable_type != Company::class
             || (! $accessToken->expires_at && $accessToken->created_at->lte(now()->subMinutes(5)))
             || ($accessToken->expires_at && $accessToken->expires_at->isPast())
         ) {

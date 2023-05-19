@@ -17,32 +17,35 @@ cp .env.example .env
 ```
 
 ```bash
-docker run --rm \
-    -u "$(id -u):$(id -g)" \
-    -v "$(pwd):/var/www/html" \
-    -w /var/www/html \
-    laravelsail/php82-composer:latest \
-    composer install --ignore-platform-reqs
+cp docker/web/apache/default.apache.conf.example docker/web/apache/default.apache.conf
 ```
 
-Configure a shell alias.
+If you want to use ssl you must first update the `ENABLE_SSL=true` value in the `.env`. Then uncomment the code in the file `docker/web/apache/default.apache.conf`
+
+```text
+<VirtualHost *:443>
+  ServerName maclogi_css.test
+  DocumentRoot /var/www/html/public
+  SSLEngine On
+  SSLCertificateFile /etc/apache2/ssl/ssl.crt
+  SSLCertificateKeyFile /etc/apache2/ssl/ssl.key
+</VirtualHost>
+```
+
+Finally generate ssl certificate `docker/web/certs/ssl.crt` and `docker/web/certs/ssl.key`
 
 ```bash
-alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+./dockx up -d --build
 ```
 
 ```bash
-sail up -d
-```
-
-```bash
-sail artisan key:generate
+./dockx artisan key:generate
 ```
 
 Create database and insert data.
 
 ```bash
-sail artisan migrate --seed
+./dockx artisan migrate --seed
 ```
 
 **Warning**: update email information to mailtrap or something to be safe in performing some features that send mail, avoid sending real email.
@@ -52,15 +55,15 @@ sail artisan migrate --seed
 Run command for make a service file. Ex: make `app/Services/UserService.php` file.
 
 ```bash
-sail artisan app:make-service UserService
+./dockx artisan app:make-service UserService
 ```
 
 You can specify a model that your service depends on during creation by adding options `--model` or `-m`.
 
 ```bash
-sail artisan app:make-service UserService --model=User
+./dockx artisan app:make-service UserService --model=User
 #OR
-sail artisan app:make-service UserService -m User
+./dockx artisan app:make-service UserService -m User
 ```
 
 ## Create repository
@@ -69,13 +72,13 @@ Default Repository uses Eloquent, Run command make `app/Repositories/Eloquents/U
 and interface `app/Repositories/Contracts/UserRepository.php`
 
 ```bash
-sail artisan app:make-repository UserRepository
+./dockx artisan app:make-repository UserRepository
 ```
 
 You can specify a model that your repository depends on during creation by adding options `--model` or `-m`.
 
 ```bash
-sail artisan app:make-repository UserRepository -m User
+./dockx artisan app:make-repository UserRepository -m User
 ```
 
 Using difference repo for `Repository` during creation by adding options `--repo` or `-r`. For example, don't use Eloquent,
@@ -83,7 +86,7 @@ instead use the form of getting data from another service through the API. Now t
 `app/Repositories/APIs/UserRepository.php`
 
 ```bash
-sail artisan app:make-repository UserRepository -m User -r APIs
+./dockx artisan app:make-repository UserRepository -m User -r APIs
 ```
 
 After creating the repository remember to declare in `app/Providers/RepositoryServiceProvider.php` where `protected $repositories`
