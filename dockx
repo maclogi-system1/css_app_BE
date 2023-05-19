@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+export APP_SERVICE=${APP_SERVICE:-"web"}
+export WWWUSER=${WWWUSER:-$UID}
+export WWWGROUP=${WWWGROUP:-$(id -g)}
+
+ARG=()
+
+# Define Docker Compose command prefix...
+docker compose &> /dev/null
+if [ $? == 0 ]; then
+    DOCKER_COMPOSE=(docker compose)
+else
+    DOCKER_COMPOSE=(docker-compose)
+fi
+
+if [ "$1" == "php" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" "php" "$@")
+elif [ "$1" == "bin" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" ./vendor/bin/"$@")
+elif [ "$1" == "composer" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" "composer" "$@")
+elif [ "$1" == "artisan" ] || [ "$1" == "art" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" php artisan "$@")
+elif [ "$1" == "debug" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev -e XDEBUG_SESSION=1)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" php artisan "$@")
+elif [ "$1" == "test" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" php artisan test "$@")
+elif [ "$1" == "tinker" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" php artisan tinker)
+elif [ "$1" == "node" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" node "$@")
+elif [ "$1" == "npm" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" npm "$@")
+elif [ "$1" == "npx" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" npx "$@")
+elif [ "$1" == "yarn" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" yarn "$@")
+elif [ "$1" == "shell" ] || [ "$1" == "bash" ]; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" bash "$@")
+elif [ "$1" == "root-shell" ] || [ "$1" == "root-bash" ]; then
+    shift 1
+
+    ARGS+=(exec)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" bash "$@")
+elif [ "$1" == "redis" ] ; then
+    shift 1
+
+    ARGS+=(exec)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=(redis redis-cli)
+else
+    ARGS+=("$@")
+fi
+
+# Run Docker Compose with the defined arguments...
+"${DOCKER_COMPOSE[@]}" "${ARGS[@]}"
