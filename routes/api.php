@@ -51,7 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/user-settings', [UserSettingController::class, 'update'])->name('user-settings.update');
 
     Route::prefix('chatwork')->name('chatwork.')->group(function () {
-        Route::get('/members/{roomId}', [ChatworkController::class, 'membersList'])->name('members');
+        Route::get('/room/{roomId}', [ChatworkController::class, 'roomDetail'])->name('room.detail');
+        Route::get('/room/{roomId}/members', [ChatworkController::class, 'roomMembers'])->name('room.members');
         Route::post('/send-message/{roomId}', [ChatworkController::class, 'sendMessage'])->name('send-message');
     });
 });
