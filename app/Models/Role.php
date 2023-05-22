@@ -33,8 +33,7 @@ class Role extends Model
         }
 
         return $this->users()
-            ->where('first_name', $value)
-            ->orWhere('last_name', $value)
+            ->where('name', $value)
             ->orWhere('email', $value)
             ->orWhere('id', $value)
             ->exists();

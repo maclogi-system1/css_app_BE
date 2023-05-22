@@ -23,6 +23,7 @@ class RouteServiceProvider extends ServiceProvider
         'user' => \App\Repositories\Contracts\UserRepository::class,
         'role' => \App\Repositories\Contracts\RoleRepository::class,
         'company' => \App\Repositories\Contracts\CompanyRepository::class,
+        'team' => \App\Repositories\Contracts\TeamRepository::class,
     ];
 
     /**

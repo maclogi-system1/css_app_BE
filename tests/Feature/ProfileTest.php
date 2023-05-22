@@ -27,8 +27,7 @@ class ProfileTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->putJson(route('api.user.update-user-profile-info'), [
-                'first_name' => 'Test',
-                'last_name' => 'User',
+                'name' => 'Test User',
                 'email' => 'test@example.com',
             ])
             ->assertSessionHasNoErrors()
@@ -36,8 +35,7 @@ class ProfileTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test', $user->first_name);
-        $this->assertSame('User', $user->last_name);
+        $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
     }
 

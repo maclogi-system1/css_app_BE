@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
 use Illuminate\Http\Request;
@@ -55,4 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/room/{roomId}/members', [ChatworkController::class, 'roomMembers'])->name('room.members');
         Route::post('/send-message/{roomId}', [ChatworkController::class, 'sendMessage'])->name('send-message');
     });
+
+    Route::apiResource('teams', TeamController::class);
 });

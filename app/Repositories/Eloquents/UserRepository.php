@@ -51,28 +51,9 @@ class UserRepository extends Repository implements UserRepositoryContract
     }
 
     /**
-     * Set filter for builder.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  array  $filters
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected function getWithFilter(Builder $builder, array $filters = []): Builder
-    {
-        if ($fullName = Arr::pull($filters, 'search.name')) {
-            $builder->where(function ($query) use ($fullName) {
-                $query->where('first_name', 'like', "%{$fullName}%")
-                    ->orWhere('last_name', 'like', "%{$fullName}%");
-            });
-        }
-
-        return parent::getWithFilter($builder, $filters);
-    }
-
-    /**
      * Find a specified user with roles or permissions.
      */
-    public function find($id, array $columns = ['*'], array $filters = []): User|null
+    public function find($id, array $columns = ['*'], array $filters = []): ?User
     {
         if (Arr::has($filters, 'with')) {
             $this->useWith($filters['with']);
@@ -94,6 +75,10 @@ class UserRepository extends Repository implements UserRepositoryContract
             $user->fill($data)->save();
 
             $user->syncRoles(Arr::get($data, 'roles', []));
+
+            if (Arr::has($data, 'teams')) {
+                $user->teams()->sync(Arr::get($data, 'teams'));
+            }
 
             if (isset($data['chatwork_id'])) {
                 $this->linkUserToChatwork($user, $data['chatwork_id']);
@@ -139,12 +124,18 @@ class UserRepository extends Repository implements UserRepositoryContract
             $user->fill($data);
             $user->save();
 
-            $user->syncRoles(Arr::get($data, 'roles', []));
+            if (Arr::has($data, 'roles')) {
+                $user->syncRoles(Arr::get($data, 'roles', []));
+            }
 
             if (isset($data['chatwork_id'])) {
                 $this->linkUserToChatwork($user, $data['chatwork_id']);
             } else {
                 $user->chatwork()->delete();
+            }
+
+            if (Arr::has($data, 'teams')) {
+                $user->teams()->sync($data['teams']);
             }
 
             return $user->refresh();
@@ -204,7 +195,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function updateProfilePhoto(array $data, ?User $auth = null): string
     {
         $currentPath = $auth->profile_photo_path;
-        $fileName = str($auth->full_name)
+        $fileName = str($auth->name)
             ->snake()
             ->append('_'.time().'.'.$data['photo']->extension());
         $photoPath = $data['photo']->storeAs('images/profile_photo', $fileName, 'public');

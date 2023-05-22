@@ -22,8 +22,7 @@ class UserSeeder extends Seeder
         ]);
 
         $company->users()->create([
-            'first_name' => 'Supreme',
-            'last_name' => 'Administrator',
+            'name' => 'Administrator',
             'email' => 'admin@example.com',
             'password' => bcrypt('kcUy0f$'),
             'email_verified_at' => now(),

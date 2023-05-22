@@ -34,7 +34,7 @@ class RoleRepository extends Repository implements RoleRepositoryContract
     /**
      * Find a specified role with users or permissions.
      */
-    public function find($id, array $columns = ['*'], array $filters = []): Role|null
+    public function find($id, array $columns = ['*'], array $filters = []): ?Role
     {
         if (Arr::has($filters, 'with')) {
             $this->useWith($filters['with']);
@@ -46,7 +46,7 @@ class RoleRepository extends Repository implements RoleRepositoryContract
     /**
      * Handle create a new role and add users to that.
      */
-    public function create(array $data): Role|null
+    public function create(array $data): ?Role
     {
         return $this->handleSafely(function () use ($data) {
             $data['guard_name'] ??= 'web';
@@ -71,16 +71,13 @@ class RoleRepository extends Repository implements RoleRepositoryContract
         return $this->handleSafely(function () use ($data, $role) {
             $role->fill($data);
 
-            $permissions = Arr::get($data, 'permissions');
-            $users = Arr::get($data, 'users');
-
-            if (! empty($permissions)) {
-                $role->syncPermissions($permissions);
+            if (Arr::has($data, 'permissions')) {
+                $role->syncPermissions(Arr::get($data, 'permissions'));
                 $role->setAttribute('updated_at', now());
             }
 
-            if (! empty($users)) {
-                $role->users()->sync($users);
+            if (Arr::has($data, 'users')) {
+                $role->users()->sync(Arr::get($data, 'users'));
                 $role->setAttribute('updated_at', now());
             }
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -24,8 +25,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
+        'name',
         'email',
         'password',
         'company_id',
@@ -61,14 +61,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Get full name of the user.
-     */
-    public function getFullNameAttribute(): string
-    {
-        return $this->first_name.' '.$this->last_name;
-    }
-
-    /**
      * Get full profile photo url of the user.
      */
     public function getProfilePhotoAttribute(): string
@@ -77,7 +69,7 @@ class User extends Authenticatable
             return Storage::disk('public')->url($this->profile_photo_path);
         }
 
-        return config('filesystems.profile_photo_default', '').$this->full_name;
+        return config('filesystems.profile_photo_default', '').$this->name;
     }
 
     public function bookmarks(?string $bookmarkableType = null): HasMany
@@ -109,5 +101,10 @@ class User extends Authenticatable
     public function chatwork(): HasOne
     {
         return $this->hasOne(Chatwork::class);
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class);
     }
 }

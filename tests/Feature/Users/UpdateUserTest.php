@@ -39,15 +39,13 @@ class UpdateUserTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->putJson(route('api.users.update', $user), [
                 'email' => $user->email,
-                'first_name' => 'User',
-                'last_name' => 'Updated',
+                'name' => 'User Updated',
                 'company_id' => Company::factory()->create()->id,
             ])
             ->assertOk()
             ->assertJson([
                 'user' => true,
             ]);
-        $this->assertEquals($user->refresh()->first_name, 'User');
-        $this->assertEquals($user->refresh()->last_name, 'Updated');
+        $this->assertEquals($user->refresh()->name, 'User Updated');
     }
 }
