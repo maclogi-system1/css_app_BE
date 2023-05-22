@@ -18,8 +18,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.1@example.com',
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
@@ -44,8 +43,7 @@ class CreateUserTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertInvalid([
-                'first_name' => __('validation.required', ['attribute' => 'first name']),
-                'last_name' => __('validation.required', ['attribute' => 'last name']),
+                'name' => __('validation.required', ['attribute' => 'name']),
             ]);
     }
 
@@ -55,8 +53,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
@@ -73,8 +70,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.1',
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
@@ -92,8 +88,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => $user->email,
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
@@ -111,8 +106,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.1@example.com',
                 'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
@@ -129,8 +123,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.1@example.com',
                 'password' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
@@ -147,8 +140,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.2@example.com',
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
@@ -166,8 +158,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
-                'first_name' => 'Create',
-                'last_name' => 'New User',
+                'name' => 'Create New User',
                 'email' => 'create_new_user.3@example.com',
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',

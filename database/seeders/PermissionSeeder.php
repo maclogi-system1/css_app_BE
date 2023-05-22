@@ -56,7 +56,7 @@ class PermissionSeeder extends Seeder
     {
         $permissions = [];
 
-        foreach (['user', 'role', 'company'] as $suffix) {
+        foreach (['user', 'role', 'company', 'team'] as $suffix) {
             foreach (Permission::CODES as $prefix) {
                 $name = "{$prefix}_{$suffix}";
 
