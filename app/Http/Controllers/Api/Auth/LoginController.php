@@ -51,15 +51,15 @@ class LoginController extends Controller
         $user = User::where('email', $data['email'])->first();
         $accessToken = PersonalAccessToken::findToken($data['company_access_token']);
 
-        if (is_null($accessToken) || ! $this->verifyCompanyAccessToken($accessToken, $user->company->company_id)) {
-            throw ValidationException::withMessages([
-                'company_access_token' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        if (is_null($accessToken) || ! $this->verifyCompanyAccessToken($accessToken, $user->company->company_id)) {
+            throw ValidationException::withMessages([
+                'company_access_token' => ['The provided credentials are incorrect.'],
             ]);
         }
 
