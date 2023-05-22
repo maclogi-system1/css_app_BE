@@ -97,3 +97,44 @@ protected $repositories = [
     \App\Repositories\Contracts\UserRepository::class => \App\Repositories\Eloquents\UserRepository::class,
 ]
 ```
+
+## Git rules
+
+### Create branch
+
+---
+
+Create a new branch for your task. Branches must be checked out from branch develop `git checkout -b <branch-name>`.
+
+```bash
+git checkout -b feature/MAC-1
+```
+
+### Branch name
+
+---
+
+The branch name must be in the format `<type>/MAC-<task-number>`
+
+| &lt;type&gt;| Description                                                                   |
+| :---------: | :---------------------------------------------------------------------------: |
+| feature     | For new features, requests, corrections or additions.                         |
+| bug         | For requests to find and fix bugs.                                            |
+| hotfix      | For urgent bug finding and fixing requests. Usually an error from production. |
+
+### Commit
+
+---
+
+The commit name must be in the format `MAC-<task-number>: <message>`
+
+```text
+Ex: MAC-1: sample message
+```
+
+### Create pull request
+
+---
+
+First, rebase from the develop branch to get a latest code (`git pull --rebase origin develop`).
+Then squash all commits into one commit before creating the `pull request`.
