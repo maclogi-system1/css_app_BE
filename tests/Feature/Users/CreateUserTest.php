@@ -4,6 +4,7 @@ namespace Tests\Feature\Users;
 
 use App\Models\Company;
 use App\Models\Role;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +16,8 @@ class CreateUserTest extends TestCase
     public function test_can_create_a_new_user(): void
     {
         $user = User::factory()->isSupperAdmin()->create();
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
@@ -23,6 +26,8 @@ class CreateUserTest extends TestCase
                 'password' => 'pass123456',
                 'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertCreated()
             ->assertJson([
@@ -155,6 +160,7 @@ class CreateUserTest extends TestCase
         $role = Role::factory()->create([
             'name' => 'Role testing',
         ]);
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
@@ -164,6 +170,7 @@ class CreateUserTest extends TestCase
                 'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
                 'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertCreated();
         $this->assertTrue(User::where('email', 'create_new_user.3@example.com')->first()->hasRole('Role testing'));
