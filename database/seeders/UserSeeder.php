@@ -16,9 +16,7 @@ class UserSeeder extends Seeder
     {
         $company = Company::firstOrCreate([
             'name' => '株式会社マクロジ',
-            'company_id' => 'maclogi',
-        ], [
-            'password' => bcrypt(123456),
+            'company_id' => 'maclogicss',
         ]);
 
         $company->users()->create([

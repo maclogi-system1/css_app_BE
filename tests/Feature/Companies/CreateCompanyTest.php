@@ -19,8 +19,6 @@ class CreateCompanyTest extends TestCase
             ->postJson(route('api.companies.store'), [
                 'company_id' => str()->random(8),
                 'name' => $this->faker()->company(),
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
             ])
             ->assertCreated()
             ->assertJson([
@@ -35,8 +33,6 @@ class CreateCompanyTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.companies.store'), [
                 'company_id' => str()->random(8),
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -53,8 +49,6 @@ class CreateCompanyTest extends TestCase
             ->postJson(route('api.companies.store'), [
                 'company_id' => $company->company_id,
                 'name' => $this->faker()->company(),
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -69,44 +63,10 @@ class CreateCompanyTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.companies.store'), [
                 'name' => $this->faker()->company(),
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
             ])
             ->assertUnprocessable()
             ->assertInvalid([
                 'company_id' => __('validation.required', ['attribute' => 'company id']),
-            ]);
-    }
-
-    public function test_can_not_create_a_new_company_without_password(): void
-    {
-        $user = User::factory()->isSupperAdmin()->create();
-
-        $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.companies.store'), [
-                'company_id' => str()->random(8),
-                'name' => $this->faker()->company(),
-                'password_confirmation' => 'pass123456',
-            ])
-            ->assertUnprocessable()
-            ->assertInvalid([
-                'password' => __('validation.required', ['attribute' => 'password']),
-            ]);
-    }
-
-    public function test_can_not_create_a_new_company_without_confirm_password(): void
-    {
-        $user = User::factory()->isSupperAdmin()->create();
-
-        $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.companies.store'), [
-                'company_id' => str()->random(8),
-                'name' => $this->faker()->company(),
-                'password' => 'pass123456',
-            ])
-            ->assertUnprocessable()
-            ->assertInvalid([
-                'password' => __('validation.confirmed', ['attribute' => 'password']),
             ]);
     }
 
@@ -118,8 +78,6 @@ class CreateCompanyTest extends TestCase
             ->postJson(route('api.companies.store'), [
                 'name' => $this->faker()->company(),
                 'email' => $this->faker()->safeEmail(),
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
             ])
             ->assertForbidden();
     }
