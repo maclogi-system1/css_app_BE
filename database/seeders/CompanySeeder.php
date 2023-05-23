@@ -16,8 +16,6 @@ class CompanySeeder extends Seeder
             Company::firstOrcreate([
                 'company_id' => 'maclogicss',
                 'name' => '株式会社マクロジ',
-            ], [
-                'password' => bcrypt(123456),
             ]);
         }
     }

@@ -53,7 +53,6 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
         return $this->handleSafely(function () use ($data, $auth) {
             $company = $this->model();
             $company->fill($data);
-            $company->password = bcrypt($data['password']);
             $company->save();
 
             if (Arr::has($data, 'team_names')) {
