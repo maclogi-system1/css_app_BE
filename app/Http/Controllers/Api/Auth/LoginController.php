@@ -9,23 +9,22 @@ use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class LoginController extends Controller
 {
-    public function loginCompany(Request $request): JsonResponse
+    public function verifyCompany(Request $request): JsonResponse
     {
         $data = $request->validate([
             'company_id' => ['required'],
-            'password' => ['required'],
         ]);
 
         $company = Company::where('company_id', $data['company_id'])->first();
 
-        if (! $company || ! Hash::check($data['password'], $company->password)) {
+        if (!$company || $request->user()->company_id == $data['company_id']) {
+            $request->user()->currentAccessToken()?->delete();
+
             throw ValidationException::withMessages([
                 'company_id' => ['The provided credentials are incorrect.'],
             ]);
@@ -33,7 +32,6 @@ class LoginController extends Controller
 
         return response()->json([
             'company' => new CompanyResource($company),
-            'access_token' => $company->createToken($company->company_id, ['*'], now()->addMinute(5))->plainTextToken,
         ]);
     }
 
@@ -45,49 +43,20 @@ class LoginController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
-            'company_access_token' => ['required'],
         ]);
 
         $user = User::where('email', $data['email'])->first();
-        $accessToken = PersonalAccessToken::findToken($data['company_access_token']);
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        if (is_null($accessToken) || ! $this->verifyCompanyAccessToken($accessToken, $user->company->company_id)) {
-            throw ValidationException::withMessages([
-                'company_access_token' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $accessToken->delete();
-
         return response()->json([
             'user' => new UserResource($user),
             'access_token' => $user->createToken('maclogi_css_user', ['*'], now()->addDay())->plainTextToken,
         ]);
-    }
-
-    /**
-     * Verify access token of company.
-     */
-    private function verifyCompanyAccessToken(PersonalAccessToken $accessToken, $companyId): bool
-    {
-        if (
-            $accessToken->name != $companyId
-            || $accessToken->tokenable_type != Company::class
-            || (! $accessToken->expires_at && $accessToken->created_at->lte(now()->subMinutes(5)))
-            || ($accessToken->expires_at && $accessToken->expires_at->isPast())
-        ) {
-            $accessToken->delete();
-
-            return false;
-        }
-
-        return true;
     }
 
     /**

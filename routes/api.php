@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [LoginController::class, 'login'])->name('login');
-Route::post('/login-company', [LoginController::class, 'loginCompany'])->name('login-company');
 Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
     ->name('send-password-reset-link');
 Route::post('/password-reset-token', [PasswordController::class, 'getPasswordResetToken'])
@@ -23,6 +22,7 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
     ->name('reset-password');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/verify-company', [LoginController::class, 'verifyCompany'])->name('verify-company');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
