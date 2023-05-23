@@ -12,7 +12,7 @@ class Team extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'created_by', 'created_at', 'updated_at',
+        'company_id', 'name', 'created_by', 'created_at', 'updated_at',
     ];
 
     protected $hidden = [
@@ -27,5 +27,10 @@ class Team extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 }

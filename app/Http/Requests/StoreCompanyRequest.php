@@ -27,6 +27,7 @@ class StoreCompanyRequest extends FormRequest
             'company_id' => ['required', 'string', 'max:150', 'unique:companies'],
             'name' => ['required', 'string', 'max:150'],
             'password' => $this->passwordRules(),
+            'team_names' => ['nullable', 'array'],
         ];
     }
 }

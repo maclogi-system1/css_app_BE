@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::apiResource('companies', CompanyController::class);
+    Route::patch('/companies/{id}/restore', [CompanyController::class, 'restore'])->name('companies.restore');
+    Route::delete('/companies/{id}/force', [CompanyController::class, 'forceDelete'])->name('companies.force-delete');
 
     Route::get('/user-settings', [UserSettingController::class, 'index'])->name('user-settings.index');
     Route::patch('/user-settings', [UserSettingController::class, 'update'])->name('user-settings.update');
@@ -57,5 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/send-message/{roomId}', [ChatworkController::class, 'sendMessage'])->name('send-message');
     });
 
+    Route::get('/teams/company/{company}', [TeamController::class, 'getListByCompany'])
+        ->name('teams.get-list-by-company');
     Route::apiResource('teams', TeamController::class);
 });
