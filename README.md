@@ -39,6 +39,10 @@ Finally generate ssl certificate `docker/web/certs/ssl.crt` and `docker/web/cert
 ```
 
 ```bash
+./dockx composer install
+```
+
+```bash
 ./dockx artisan key:generate
 ```
 
