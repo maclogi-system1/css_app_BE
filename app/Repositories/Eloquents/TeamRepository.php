@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Models\Company;
 use App\Models\Team;
 use App\Models\User;
 use App\Repositories\Contracts\TeamRepository as TeamRepositoryContract;
@@ -30,6 +31,17 @@ class TeamRepository extends Repository implements TeamRepositoryContract
         }
 
         return parent::getList($filters, $columns);
+    }
+
+    /**
+     * Get the list of the team with pagination and handle filter by company.
+     */
+    public function getListByCompany(Company $company, array $filters = []): LengthAwarePaginator|Collection
+    {
+        $filters['filter']['company_id'] = $company->id;
+        $this->useWith(['company']);
+
+        return $this->getList($filters);
     }
 
     /**
@@ -85,7 +97,7 @@ class TeamRepository extends Repository implements TeamRepositoryContract
      */
     public function delete(Team $team): ?Team
     {
-        $team->users()->delete();
+        $team->users()->detach();
         $team->delete();
 
         return $team;

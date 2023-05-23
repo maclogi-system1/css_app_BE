@@ -14,7 +14,7 @@ class CompanySeeder extends Seeder
     {
         if (! Company::exists()) {
             Company::firstOrcreate([
-                'company_id' => 'maclogi',
+                'company_id' => 'maclogicss',
                 'name' => '株式会社マクロジ',
             ], [
                 'password' => bcrypt(123456),
