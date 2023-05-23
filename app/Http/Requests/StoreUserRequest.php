@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Support\Traits\PasswordValidationRules;
-use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUserRequest extends FormRequest
 {
@@ -25,13 +24,13 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
             'company_id' => ['nullable', 'integer'],
-            'roles' => ['nullable', 'array'],
+            'roles' => ['required', 'array'],
             'chatwork_id' => ['nullable', 'max:50'],
+            'teams' => ['required', 'array'],
         ];
     }
 }

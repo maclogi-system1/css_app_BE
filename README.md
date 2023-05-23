@@ -97,3 +97,122 @@ protected $repositories = [
     \App\Repositories\Contracts\UserRepository::class => \App\Repositories\Eloquents\UserRepository::class,
 ]
 ```
+
+## Git rules
+
+### Create branch
+
+---
+
+Create a new branch for your task. Branches must be checked out from branch develop `git checkout -b <branch-name>`.
+
+```bash
+git checkout -b feature/MAC-1
+```
+
+### Branch name
+
+---
+
+The branch name must be in the format `<type>/MAC-<task-number>`
+
+| &lt;type&gt;| Description                                                                   |
+| :---------- | :---------------------------------------------------------------------------- |
+| feature     | For new features, requests, corrections or additions.                         |
+| bug         | For requests to find and fix bugs.                                            |
+| hotfix      | For urgent bug finding and fixing requests. Usually an error from production. |
+
+### Commit
+
+---
+
+The commit name must be in the format `MAC-<task-number>: <message>`
+
+```bash
+git commit -m "MAC-1: Sample message"
+```
+
+### Create pull request
+
+---
+
+First, rebase from the develop branch to get a latest code (`git pull --rebase origin develop`).
+Then squash all commits into one commit before creating the `pull request`.
+
+Example:
+
+```bash
+git pull --rebase origin develop
+```
+
+```bash
+git log
+```
+
+We will see
+
+```log
+commit qyf70oe (HEAD -> feature/MAC-2, origin/feature/MAC-2)
+Author: JohnDoe <johndoe@example.com>
+Date:   Mon May 22 10:20:07 2023 +0700
+
+    MAC-2: Second commit
+
+commit p11ykz2
+Author: JohnDoe <johndoe@example.com>
+Date:   Fri May 19 13:30:00 2023 +0700
+
+    MAC-2: Fisrt commit
+
+commit gps4sw9 (origin/develop, develop)
+Author: JohnDoe <johndoe@example.com>
+Date:   Fri May 19 11:39:44 2023 +0700
+
+    MAC-1: Develop commit
+```
+
+Reset to the latest commit of develop
+
+```bash
+git reset gps4sw9
+```
+
+Create a new commit and push
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "MAC-2: All commit"
+```
+
+Check log
+
+```bash
+git log
+```
+
+Now we can see that the MAC-2 commits have been merged into 1 as `MAC-2: All commit`
+
+```log
+commit ztlvra9 (HEAD -> feature/MAC-2, origin/feature/MAC-2)
+Author: JohnDoe <johndoe@example.com>
+Date:   Mon May 22 10:25:27 2023 +0700
+
+    MAC-2: All commit
+
+commit gps4sw9 (origin/develop, develop)
+Author: JohnDoe <johndoe@example.com>
+Date:   Fri May 19 11:39:44 2023 +0700
+
+    MAC-1: Develop commit
+```
+
+And push
+
+```bash
+git push -f
+```
+
+Now we can make a pull request.

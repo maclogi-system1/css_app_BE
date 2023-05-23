@@ -5,14 +5,14 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class TeamResource extends JsonResource
 {
     /**
      * The "data" wrapper that should be applied.
      *
      * @var string|null
      */
-    public static $wrap = 'user';
+    public static $wrap = 'team';
 
     /**
      * Transform the resource into an array.
@@ -24,10 +24,8 @@ class UserResource extends JsonResource
         return array_merge(
             parent::toArray($request),
             [
-                'company' => new CompanyResource($this->whenLoaded('company')),
-                'roles' => RoleResource::collection($this->whenLoaded('roles')),
-                'chatwork' => new ChatworkResource($this->whenLoaded('chatwork')),
-                'teams' => TeamResource::collection($this->whenLoaded('teams')),
+                'users' => UserResource::collection($this->whenLoaded('users')),
+                'owner' => new UserResource($this->whenLoaded('owner')),
             ]
         );
     }

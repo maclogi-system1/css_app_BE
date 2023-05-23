@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Support\Traits\PasswordValidationRules;
-use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCompanyRequest extends FormRequest
 {

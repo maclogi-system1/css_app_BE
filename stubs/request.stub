@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Requests;
+namespace {{ namespace }};
 
-class SendMessageRequest extends FormRequest
+class {{ class }} extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -20,8 +20,7 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'max:255'],
-            'send_to' => ['nullable', 'array'],
+            //
         ];
     }
 }

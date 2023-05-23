@@ -34,7 +34,7 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
     /**
      * Find a specified user with roles or permissions.
      */
-    public function find($id, array $columns = ['*'], array $filters = []): Company|null
+    public function find($id, array $columns = ['*'], array $filters = []): ?Company
     {
         if (Arr::has($filters, 'with')) {
             $this->useWith($filters['with']);

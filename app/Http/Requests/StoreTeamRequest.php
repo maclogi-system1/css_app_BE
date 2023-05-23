@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-class SendMessageRequest extends FormRequest
+class StoreTeamRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create_team');
     }
 
     /**
@@ -20,8 +20,8 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'max:255'],
-            'send_to' => ['nullable', 'array'],
+            'name' => ['required', 'string', 'max:255', 'unique:teams'],
+            'users' => ['nullable', 'array'],
         ];
     }
 }
