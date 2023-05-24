@@ -9,6 +9,10 @@ class Permission extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'display_name',
+    ];
+
     protected $hidden = [
         'pivot',
     ];

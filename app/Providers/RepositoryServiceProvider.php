@@ -15,6 +15,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\ChatworkRepository::class => \App\Repositories\Eloquents\ChatworkRepository::class,
         \App\Repositories\Contracts\NotificationRepository::class => \App\Repositories\Eloquents\NotificationRepository::class,
         \App\Repositories\Contracts\TeamRepository::class => \App\Repositories\Eloquents\TeamRepository::class,
+        \App\Repositories\Contracts\PermissionRepository::class => \App\Repositories\Eloquents\PermissionRepository::class,
     ];
 
     /**
