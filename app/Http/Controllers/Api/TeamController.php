@@ -11,6 +11,7 @@ use App\Models\Team;
 use App\Repositories\Contracts\TeamRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class TeamController extends Controller
@@ -31,9 +32,24 @@ class TeamController extends Controller
     }
 
     /**
+     * Get a listing of the team by keyword.
+     */
+    public function search(Request $request): JsonResource|JsonResponse
+    {
+        $teams = TeamResource::collection($this->teamRepository->search(
+            ['name'],
+            $request->query(),
+            ['id', 'name']
+        ));
+        $teams->wrap('teams');
+
+        return $teams;
+    }
+
+    /**
      * Store a newly created team in storage.
      */
-    public function store(StoreTeamRequest $request): TeamResource|JsonResponse
+    public function store(StoreTeamRequest $request): JsonResource|JsonResponse
     {
         $team = $this->teamRepository->create($request->validated(), $request->user());
 
@@ -45,7 +61,7 @@ class TeamController extends Controller
     /**
      * Display the specified team.
      */
-    public function show(Team $team)
+    public function show(Team $team): JsonResource|JsonResponse
     {
         $this->authorize('view_team');
 
@@ -55,7 +71,7 @@ class TeamController extends Controller
     /**
      * Update the specified team in storage.
      */
-    public function update(UpdateTeamRequest $request, Team $team): TeamResource|JsonResponse
+    public function update(UpdateTeamRequest $request, Team $team): JsonResource|JsonResponse
     {
         $team = $this->teamRepository->update($request->validated(), $team);
 
@@ -67,7 +83,7 @@ class TeamController extends Controller
     /**
      * Remove the specified team from storage.
      */
-    public function destroy(Team $team)
+    public function destroy(Team $team): JsonResource|JsonResponse
     {
         $this->authorize('delete', $team);
 
@@ -81,7 +97,7 @@ class TeamController extends Controller
     /**
      * Display a listing of the team by company.
      */
-    public function getListByCompany(Request $request, Company $company)
+    public function getListByCompany(Request $request, Company $company): JsonResource|JsonResponse
     {
         $teams = TeamResource::collection($this->teamRepository->getListByCompany($company, $request->query()));
         $teams->wrap('teams');

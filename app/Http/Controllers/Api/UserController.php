@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Repositories\Contracts\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class UserController extends Controller
@@ -18,10 +18,11 @@ class UserController extends Controller
     public function __construct(
         private UserRepository $userRepository
     ) {}
+
     /**
-     * Display a listing of the resource.
+     * Display a listing of the user.
      */
-    public function index(Request $request): AnonymousResourceCollection|JsonResponse
+    public function index(Request $request): JsonResource|JsonResponse
     {
         $this->authorize('view_user');
 
@@ -32,9 +33,26 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Get a listing of the user by keyword.
      */
-    public function store(StoreUserRequest $request): UserResource|JsonResponse
+    public function search(Request $request): JsonResource|JsonResponse
+    {
+        $this->authorize('view_user');
+
+        $users = UserResource::collection($this->userRepository->search(
+            ['name', 'email'],
+            $request->query(),
+            ['id', 'name', 'email']
+        ));
+        $users->wrap('users');
+
+        return $users;
+    }
+
+    /**
+     * Store a newly created user in storage.
+     */
+    public function store(StoreUserRequest $request): JsonResource|JsonResponse
     {
         $user = $this->userRepository->create($request->validated());
 
@@ -44,9 +62,9 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified user.
      */
-    public function show(User $user): UserResource|JsonResponse
+    public function show(User $user): JsonResource|JsonResponse
     {
         $this->authorize('view_user');
 
@@ -54,9 +72,9 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified user in storage.
      */
-    public function update(UpdateUserRequest $request, User $user): UserResource|JsonResponse
+    public function update(UpdateUserRequest $request, User $user): JsonResource|JsonResponse
     {
         $user = $this->userRepository->update($request->validated(), $user);
 
@@ -66,9 +84,9 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified user from storage.
      */
-    public function destroy(Request $request, User $user): UserResource|JsonResponse
+    public function destroy(Request $request, User $user): JsonResource|JsonResponse
     {
         $this->authorize('delete_user');
 

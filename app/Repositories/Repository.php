@@ -147,6 +147,31 @@ abstract class Repository
     }
 
     /**
+     * Get a listing of the resource bt keyword.
+     *
+     * @param  array  $queries
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function search(array $fields, array $queries = [], $columns = ['*']): Collection
+    {
+        if (empty($queries)) {
+            return $this->model()->all();
+        }
+
+        $builder = $this->model()->select($columns);
+
+        if ($limit = Arr::get($queries, 'limit')) {
+            $builder->limit($limit);
+        }
+
+        if ($keyword = Arr::get($queries, 'keyword')) {
+            $builder->orSearches(array_combine($fields, array_fill(0, count($fields), $keyword)));
+        }
+
+        return $builder->get();
+    }
+
+    /**
      * Set a list of model scopes to query.
      *
      * @param  array|string  $scope
@@ -213,6 +238,13 @@ abstract class Repository
         return $this->useHas($doesntHave, false);
     }
 
+    /**
+     * Safely execute database interactions using transaction.
+     *
+     * @param  \Closure  $callback
+     * @param  string  $titleError
+     * @return mixed
+     */
     protected function handleSafely(\Closure $callback, $titleError = 'Process')
     {
         DB::beginTransaction();
