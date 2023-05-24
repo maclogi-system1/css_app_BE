@@ -21,11 +21,11 @@ class PermissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        return array_filter([
             'id' => $this->id,
             'display_name' => $this->display_name,
             'name' => $this->name,
             'guard_name' => $this->guard_name,
-        ];
+        ]);
     }
 }

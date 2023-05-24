@@ -2,27 +2,25 @@
 
 namespace App\Providers;
 
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
+     * @var array
+     */
+    protected array $mixins = [
+        \Illuminate\Database\Query\Builder::class => \App\Mixin\BuilderMixin::class,
+    ];
+
+    /**
      * Register any application services.
      */
     public function register(): void
     {
-        Builder::macro('searches', function ($values) {
-            if (empty($values)) {
-                return $this;
-            }
-
-            return $this->where(function ($query) use ($values) {
-                foreach ($values as $field => $value) {
-                    $query->where($field, 'like', "%{$value}%");
-                }
-            });
-        });
+        foreach ($this->mixins as $class => $mixin) {
+            $class::mixin(new $mixin);
+        }
     }
 
     /**

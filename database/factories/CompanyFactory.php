@@ -19,7 +19,6 @@ class CompanyFactory extends Factory
         return [
             'company_id' => str()->random(8),
             'name' => $this->faker->company(),
-            'password' => bcrypt(123456),
             'created_at' => now(),
             'updated_at' => now(),
         ];

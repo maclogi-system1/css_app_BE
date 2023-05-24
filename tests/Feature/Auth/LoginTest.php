@@ -12,37 +12,13 @@ class LoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_login_company(): void
-    {
-        $company = Company::factory()->create();
-
-        $this->postJson(route('api.login-company'), [
-                'company_id' => $company->company_id,
-                'password' => '123456',
-            ])
-            ->assertOk()
-            ->assertJson([
-                'access_token' => true,
-                'company' => $company->toArray(),
-            ]);
-    }
-
     public function test_can_login(): void
     {
         $user = User::factory()->create();
-        $company = Company::factory()->create();
-
-        $response = $this->postJson(route('api.login-company'), [
-            'company_id' => $company->company_id,
-            'password' => '123456',
-        ]);
-
-        $companyAccessToken = $response->json('access_token');
 
         $this->postJson(route('api.login'), [
                 'email' => $user->email,
                 'password' => '123456',
-                'company_access_token' => $companyAccessToken,
             ])
             ->assertOk()
             ->assertJson([
@@ -51,12 +27,30 @@ class LoginTest extends TestCase
             ]);
     }
 
+    public function test_can_verify_company(): void
+    {
+        $user = User::factory()->for(Company::factory())->create();
+
+        $response = $this->postJson(route('api.login'), [
+            'email' => $user->email,
+            'password' => '123456',
+        ]);
+
+        $accessToken = $response->json('access_token');
+
+        $this->postJson(route('api.verify-company'), [
+                'company_id' => $user->company->company_id,
+            ], [
+                'Authorization' => "Bearer {$accessToken}",
+            ])
+            ->assertOk();
+    }
+
     public function test_can_not_login_with_invalid_email()
     {
         $this->postJson(route('api.login'), [
                 'email' => 'email_invalid',
                 'password' => '123456',
-                'company_access_token' => '1|thisIsForTesting',
             ])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertInvalid([
@@ -66,20 +60,11 @@ class LoginTest extends TestCase
 
     public function test_can_not_login_with_wrong_password()
     {
-        $user = User::factory()->create();
-        $company = Company::factory()->create();
-
-        $response = $this->postJson(route('api.login-company'), [
-            'company_id' => $company->company_id,
-            'password' => '123456',
-        ]);
-
-        $companyAccessToken = $response->json('access_token');
+        $user = User::factory()->for(Company::factory())->create();
 
         $this->postJson(route('api.login'), [
                 'email' => $user->email,
-                'password' => 'wrong_password',
-                'company_access_token' => $companyAccessToken,
+                'password' => 'wrongpassword',
             ])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertInvalid([
@@ -87,18 +72,25 @@ class LoginTest extends TestCase
             ]);
     }
 
-    public function test_can_not_login_with_wrong_company_access_token()
+    public function test_can_not_login_with_wrong_company()
     {
         $user = User::factory()->create();
 
-        $this->postJson(route('api.login'), [
+        $response = $this->postJson(route('api.login'), [
                 'email' => $user->email,
                 'password' => '123456',
-                'company_access_token' => '1|thisIsForTesting',
+        ]);
+
+        $accessToken = $response->json('access_token');
+
+        $this->postJson(route('api.verify-company'), [
+                'company_id' => 'wrongcompanyid',
+            ], [
+                'Authorization' => "Bearer {$accessToken}",
             ])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertInvalid([
-                'company_access_token' => 'The provided credentials are incorrect.',
+                'company_id' => 'The provided credentials are incorrect.',
             ]);
     }
 

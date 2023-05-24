@@ -42,7 +42,7 @@ class ProfileTest extends TestCase
     public function test_can_update_profile_photo(): void
     {
         $user = User::factory()->create();
-        $file = UploadedFile::fake()->image('avatar.jpg');
+        $file = UploadedFile::fake()->image('avatar.png');
 
         $this->actingAs($user, 'sanctum')
             ->post(route('api.user.update-profile-photo'), [

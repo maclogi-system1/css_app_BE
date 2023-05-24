@@ -2,14 +2,16 @@
 
 namespace App\Http\Requests;
 
-class StoreTeamRequest extends FormRequest
+use Illuminate\Validation\Rule;
+
+class UpdatePermissionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create_team');
+        return $this->user()->isAdmin();
     }
 
     /**
@@ -20,9 +22,12 @@ class StoreTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => ['required'],
-            'name' => ['required', 'string', 'max:255', 'unique:teams'],
-            'users' => ['nullable', 'array'],
+            'display_name' => [
+                'required',
+                'string',
+                'max:125',
+                Rule::unique('permissions')->ignore($this->route('permission'))
+            ],
         ];
     }
 }

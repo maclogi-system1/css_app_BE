@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTeamRequest;
 use App\Http\Requests\UpdateTeamRequest;
 use App\Http\Resources\TeamResource;
+use App\Models\Company;
 use App\Models\Team;
 use App\Repositories\Contracts\TeamRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class TeamController extends Controller
@@ -19,7 +21,7 @@ class TeamController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the team.
      */
     public function index(Request $request)
     {
@@ -30,9 +32,24 @@ class TeamController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Get a listing of the team by keyword.
      */
-    public function store(StoreTeamRequest $request): TeamResource|JsonResponse
+    public function search(Request $request): JsonResource|JsonResponse
+    {
+        $teams = TeamResource::collection($this->teamRepository->search(
+            ['name'],
+            $request->query(),
+            ['id', 'name']
+        ));
+        $teams->wrap('teams');
+
+        return $teams;
+    }
+
+    /**
+     * Store a newly created team in storage.
+     */
+    public function store(StoreTeamRequest $request): JsonResource|JsonResponse
     {
         $team = $this->teamRepository->create($request->validated(), $request->user());
 
@@ -42,9 +59,9 @@ class TeamController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified team.
      */
-    public function show(Team $team)
+    public function show(Team $team): JsonResource|JsonResponse
     {
         $this->authorize('view_team');
 
@@ -52,9 +69,9 @@ class TeamController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified team in storage.
      */
-    public function update(UpdateTeamRequest $request, Team $team): TeamResource|JsonResponse
+    public function update(UpdateTeamRequest $request, Team $team): JsonResource|JsonResponse
     {
         $team = $this->teamRepository->update($request->validated(), $team);
 
@@ -64,9 +81,9 @@ class TeamController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified team from storage.
      */
-    public function destroy(Team $team)
+    public function destroy(Team $team): JsonResource|JsonResponse
     {
         $this->authorize('delete', $team);
 
@@ -75,5 +92,16 @@ class TeamController extends Controller
         return $team ? new TeamResource($team) : response()->json([
             'message' => __('Deleted failure.'),
         ], Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Display a listing of the team by company.
+     */
+    public function getListByCompany(Request $request, Company $company): JsonResource|JsonResponse
+    {
+        $teams = TeamResource::collection($this->teamRepository->getListByCompany($company, $request->query()));
+        $teams->wrap('teams');
+
+        return $teams;
     }
 }

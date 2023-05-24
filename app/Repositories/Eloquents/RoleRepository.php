@@ -49,7 +49,7 @@ class RoleRepository extends Repository implements RoleRepositoryContract
     public function create(array $data): ?Role
     {
         return $this->handleSafely(function () use ($data) {
-            $data['guard_name'] ??= 'web';
+            $data['guard_name'] ??= 'sanctum';
             $role = $this->model()->create($data);
             $role->save();
 
