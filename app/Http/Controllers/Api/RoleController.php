@@ -8,8 +8,9 @@ use App\Http\Requests\UpdateRoleRequest;
 use App\Http\Resources\RoleResource;
 use App\Models\Role;
 use App\Repositories\Contracts\RoleRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class RoleController extends Controller
@@ -19,9 +20,9 @@ class RoleController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the role.
      */
-    public function index(Request $request): AnonymousResourceCollection|JsonResponse
+    public function index(Request $request): JsonResource|JsonResponse
     {
         $this->authorize('view_role');
 
@@ -32,9 +33,26 @@ class RoleController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Get a listing of the role by keyword.
      */
-    public function store(StoreRoleRequest $request): RoleResource|JsonResponse
+    public function search(Request $request): JsonResource|JsonResponse
+    {
+        $this->authorize('view_role');
+
+        $roles = RoleResource::collection($this->roleRepository->search(
+            ['name', 'display_name'],
+            $request->query(),
+            ['id', 'name', 'display_name']
+        ));
+        $roles->wrap('roles');
+
+        return $roles;
+    }
+
+    /**
+     * Store a newly created role in storage.
+     */
+    public function store(StoreRoleRequest $request): JsonResource|JsonResponse
     {
         $role = $this->roleRepository->create($request->validated());
 
@@ -44,9 +62,9 @@ class RoleController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified role.
      */
-    public function show(Role $role): RoleResource|JsonResponse
+    public function show(Role $role): JsonResource|JsonResponse
     {
         $this->authorize('view_role');
 
@@ -54,9 +72,9 @@ class RoleController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified role in storage.
      */
-    public function update(UpdateRoleRequest $request, Role $role): RoleResource|JsonResponse
+    public function update(UpdateRoleRequest $request, Role $role): JsonResource|JsonResponse
     {
         $role = $this->roleRepository->update($request->validated(), $role);
 
@@ -66,9 +84,9 @@ class RoleController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified role from storage.
      */
-    public function destroy(Role $role): RoleResource|JsonResponse
+    public function destroy(Role $role): JsonResource|JsonResponse
     {
         $this->authorize('delete_role');
 

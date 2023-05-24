@@ -10,7 +10,7 @@ use App\Models\Company;
 use App\Repositories\Contracts\CompanyRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class CompanyController extends Controller
@@ -22,7 +22,7 @@ class CompanyController extends Controller
     /**
      * Display a listing of the company.
      */
-    public function index(Request $request): AnonymousResourceCollection|JsonResponse
+    public function index(Request $request): JsonResource|JsonResponse
     {
         $this->authorize('view_company');
 
@@ -33,9 +33,24 @@ class CompanyController extends Controller
     }
 
     /**
+     * Get a listing of the permission by keyword.
+     */
+    public function search(Request $request): JsonResource|JsonResponse
+    {
+        $companies = CompanyResource::collection($this->companyRepository->search(
+            ['name', 'company_id'],
+            $request->query(),
+            ['id', 'name', 'company_id']
+        ));
+        $companies->wrap('companies');
+
+        return $companies;
+    }
+
+    /**
      * Store a newly created company in storage.
      */
-    public function store(StoreCompanyRequest $request): CompanyResource|JsonResponse
+    public function store(StoreCompanyRequest $request): JsonResource|JsonResponse
     {
         $company = $this->companyRepository->create($request->validated(), $request->user());
 
@@ -47,7 +62,7 @@ class CompanyController extends Controller
     /**
      * Display the specified company.
      */
-    public function show(Company $company): CompanyResource|JsonResponse
+    public function show(Company $company): JsonResource|JsonResponse
     {
         $this->authorize('view_company');
 
@@ -57,7 +72,7 @@ class CompanyController extends Controller
     /**
      * Update the specified company in storage.
      */
-    public function update(UpdateCompanyRequest $request, Company $company): CompanyResource|JsonResponse
+    public function update(UpdateCompanyRequest $request, Company $company): JsonResource|JsonResponse
     {
         $company = $this->companyRepository->update($request->validated(), $company, $request->user());
 
@@ -69,7 +84,7 @@ class CompanyController extends Controller
     /**
      * Remove the specified company from storage.
      */
-    public function destroy(Company $company): CompanyResource|JsonResponse
+    public function destroy(Company $company): JsonResource|JsonResponse
     {
         $this->authorize('delete_company');
 

@@ -35,31 +35,40 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('update-profile-photo');
     });
 
-    Route::delete('/users/delete-multiple', [UserController::class, 'deleteMultiple'])->name('users.delete-multiple');
+    Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
+        Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
+        Route::get('/search', 'search')->name('search');
+    });
     Route::apiResource('users', UserController::class);
 
+    Route::get('/roles/search', [RoleController::class, 'search'])->name('roles.search');
     Route::apiResource('roles', RoleController::class);
 
-    Route::prefix('bookmarks')->name('bookmarks.')->group(function () {
-        Route::get('/', [BookmarkController::class, 'index'])->name('index');
-        Route::post('/bookmark', [BookmarkController::class, 'bookmark'])->name('bookmark');
-        Route::post('/unbookmark', [BookmarkController::class, 'unbookmark'])->name('unbookmark');
+    Route::prefix('bookmarks')->name('bookmarks.')->controller(BookmarkController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/bookmark', 'bookmark')->name('bookmark');
+        Route::post('/unbookmark', 'unbookmark')->name('unbookmark');
     });
 
+    Route::prefix('companies')->name('companies.')->controller(CompanyController::class)->group(function () {
+        Route::patch('/{id}/restore', 'restore')->name('restore');
+        Route::delete('/{id}/force', 'forceDelete')->name('force-delete');
+        Route::get('/search', 'search')->name('search');
+    });
     Route::apiResource('companies', CompanyController::class);
-    Route::patch('/companies/{id}/restore', [CompanyController::class, 'restore'])->name('companies.restore');
-    Route::delete('/companies/{id}/force', [CompanyController::class, 'forceDelete'])->name('companies.force-delete');
 
     Route::get('/user-settings', [UserSettingController::class, 'index'])->name('user-settings.index');
     Route::patch('/user-settings', [UserSettingController::class, 'update'])->name('user-settings.update');
 
-    Route::prefix('chatwork')->name('chatwork.')->group(function () {
-        Route::get('/room/{roomId}', [ChatworkController::class, 'roomDetail'])->name('room.detail');
-        Route::get('/room/{roomId}/members', [ChatworkController::class, 'roomMembers'])->name('room.members');
-        Route::post('/send-message/{roomId}', [ChatworkController::class, 'sendMessage'])->name('send-message');
+    Route::prefix('chatwork')->name('chatwork.')->controller(ChatworkController::class)->group(function () {
+        Route::get('/room/{roomId}', 'roomDetail')->name('room.detail');
+        Route::get('/room/{roomId}/members', 'roomMembers')->name('room.members');
+        Route::post('/send-message/{roomId}', 'sendMessage')->name('send-message');
     });
 
-    Route::get('/teams/company/{company}', [TeamController::class, 'getListByCompany'])
-        ->name('teams.get-list-by-company');
+    Route::prefix('teams')->name('teams.')->controller(TeamController::class)->group(function () {
+        Route::get('/company/{company}', 'getListByCompany')->name('get-list-by-company');
+        Route::get('/search', 'search')->name('search');
+    });
     Route::apiResource('teams', TeamController::class);
 });
