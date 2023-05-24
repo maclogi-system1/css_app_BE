@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\UpdateUserProfileInformationController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
@@ -43,6 +44,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/roles/search', [RoleController::class, 'search'])->name('roles.search');
     Route::apiResource('roles', RoleController::class);
+
+    Route::prefix('permissions')->name('permissions.')->controller(PermissionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/search', 'search')->name('search');
+        Route::patch('/{permission}', 'update')->name('update');
+    });
 
     Route::prefix('bookmarks')->name('bookmarks.')->controller(BookmarkController::class)->group(function () {
         Route::get('/', 'index')->name('index');
