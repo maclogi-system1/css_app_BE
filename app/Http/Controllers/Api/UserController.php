@@ -54,7 +54,16 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResource|JsonResponse
     {
-        $user = $this->userRepository->create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('profile_photo_path')) {
+            $data['profile_photo_path'] = $this->userRepository->uploadProfilePhoto(
+                $request->file('profile_photo_path'),
+                $data
+            );
+        }
+
+        $user = $this->userRepository->create($data);
 
         return $user ? new UserResource($user): response()->json([
             'message' => __('Created failure.'),
@@ -76,7 +85,16 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): JsonResource|JsonResponse
     {
-        $user = $this->userRepository->update($request->validated(), $user);
+        $data = $request->validated();
+
+        if ($request->hasFile('profile_photo_path')) {
+            $data['profile_photo_path'] = $this->userRepository->uploadProfilePhoto(
+                $request->file('profile_photo_path'),
+                $data
+            );
+        }
+
+        $user = $this->userRepository->update($data, $user);
 
         return $user ? new UserResource($user) : response()->json([
             'message' => __('Updated failure.'),

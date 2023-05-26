@@ -61,12 +61,20 @@ class User extends Authenticatable
     }
 
     /**
+     * Generate signature for verification.
+     */
+    public function getSignatureVerifyEmail($token, $expires): string
+    {
+        return sha1($this->getKey().$token.$expires.config('app.key'));
+    }
+
+    /**
      * Get full profile photo url of the user.
      */
     public function getProfilePhotoAttribute(): string
     {
         if ($this->profile_photo_path) {
-            return Storage::disk('public')->url($this->profile_photo_path);
+            return Storage::url($this->profile_photo_path);
         }
 
         return config('filesystems.profile_photo_default', '').$this->name;

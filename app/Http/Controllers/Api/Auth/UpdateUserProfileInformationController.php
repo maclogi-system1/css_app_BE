@@ -32,7 +32,7 @@ class UpdateUserProfileInformationController extends Controller
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'photo' => [
+            'profile_photo_path' => [
                 'required',
                 'image',
                 'max:'.config('filesystems.profile_photo_max', 2 * pow(2, 10)), // default 2MB

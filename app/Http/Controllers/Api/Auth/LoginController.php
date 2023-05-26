@@ -3,37 +3,20 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CompanyResource;
 use App\Http\Resources\UserResource;
-use App\Models\Company;
 use App\Models\User;
+use App\Repositories\Contracts\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function verifyCompany(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'company_id' => ['required'],
-        ]);
-
-        $company = Company::where('company_id', $data['company_id'])->first();
-
-        if (!$company || $request->user()->company_id == $data['company_id']) {
-            $request->user()->currentAccessToken()?->delete();
-
-            throw ValidationException::withMessages([
-                'company_id' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        return response()->json([
-            'company' => new CompanyResource($company),
-        ]);
-    }
+    public function __construct(
+        private UserRepository $userRepository
+    ) {}
 
     /**
      * Handle login.
@@ -57,6 +40,14 @@ class LoginController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        if (is_null($user->email_verified_at)) {
+            $this->userRepository->sendEmailVerificationNotification($user, $data['password']);
+
+            return response()->json([
+                'message' => __('Verification email has been sent.'),
+            ], Response::HTTP_FORBIDDEN);
         }
 
         return response()->json([

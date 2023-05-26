@@ -2,20 +2,28 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Mail\VerifyEmailRegistered;
 use App\Models\Bookmark;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\ChatworkService;
+use App\Services\UploadFileService;
 use LogicException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class UserRepository extends Repository implements UserRepositoryContract
 {
+    public function __construct(
+        private UploadFileService $uploadFileService
+    ) {}
+
     /**
      * Get full name of model.
      */
@@ -89,7 +97,8 @@ class UserRepository extends Repository implements UserRepositoryContract
     {
         return $this->handleSafely(function () use ($data) {
             $user = $this->model();
-            $data['password'] = bcrypt($data['password']);
+            $password = str()->random(8);
+            $data['password'] = bcrypt($password);
             $user->fill($data)->save();
 
             $user->syncRoles(Arr::get($data, 'roles', []));
@@ -101,6 +110,8 @@ class UserRepository extends Repository implements UserRepositoryContract
             if (isset($data['chatwork_id'])) {
                 $this->linkUserToChatwork($user, $data['chatwork_id']);
             }
+
+            $this->sendEmailVerificationNotification($user, $password);
 
             return $user;
         }, 'Create user');
@@ -134,12 +145,38 @@ class UserRepository extends Repository implements UserRepositoryContract
     }
 
     /**
+     * Handle sending email for verification.
+     */
+    public function sendEmailVerificationNotification(User $user, $password): void
+    {
+        $expires = now()->addDay()->timestamp;
+        $token = sha1($user->email.$expires);
+        $signature = $user->getSignatureVerifyEmail($token, $expires);
+        $url = route('verification.verify', [
+            'id' => $user->id,
+            'hash' => $token,
+            'expires' => $expires,
+            'signature' => $signature,
+        ]);
+
+        Mail::to($user)->send(new VerifyEmailRegistered($user, $password, $url));
+    }
+
+    /**
      * Handle update the specified user.
      */
     public function update(array $data, User $user): ?User
     {
         return $this->handleSafely(function () use ($data, $user) {
             $user->fill($data);
+            $currentPath = $user->profile_photo_path;
+
+            if (Arr::has($data, 'profile_photo_path')) {
+                if ($currentPath && Storage::exists($currentPath)) {
+                    Storage::delete($currentPath);
+                }
+            }
+
             $user->save();
 
             if (Arr::has($data, 'roles')) {
@@ -213,18 +250,29 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function updateProfilePhoto(array $data, ?User $auth = null): string
     {
         $currentPath = $auth->profile_photo_path;
-        $fileName = str($auth->name)
-            ->snake()
-            ->append('_'.time().'.'.$data['photo']->extension());
-        $photoPath = $data['photo']->storeAs('images/profile_photo', $fileName, 'public');
+        $photoPath = $this->uploadProfilePhoto($data['profile_photo_path'], $auth);
         $auth->forceFill([
             'profile_photo_path' => $photoPath,
         ])->save();
 
         if ($currentPath && Storage::exists($currentPath)) {
-            Storage::disk('public')->delete($currentPath);
+            Storage::delete($currentPath);
         }
 
         return $photoPath;
+    }
+
+    /**
+     * Handle upload profile photo.
+     */
+    public function uploadProfilePhoto(UploadedFile $file, array|User $user): string
+    {
+        $user = to_array($user);
+
+        $fileName = str(Arr::get($user, 'name', $file->getClientOriginalName()))
+            ->snake()
+            ->append('_'.time().'.'.$file->extension());
+
+        return $this->uploadFileService->uploadImage($file, $fileName, 'images/profile_photo');
     }
 }
