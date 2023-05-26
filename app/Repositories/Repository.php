@@ -126,16 +126,42 @@ abstract class Repository
     protected function getWithFilter(Builder $builder, array $filters = []): Builder
     {
         $search = Arr::get($filters, 'search');
+        $searchList = Arr::get($filters, 'searches');
         $filter = Arr::get($filters, 'filter');
+        $filterList = Arr::get($filters, 'filters');
         $sort = Arr::get($filters, 'sort');
 
         if (! empty($search)) {
             $builder->searches($search);
         }
+        
+        if (! empty($searchList)) {
+            foreach ($searchList as $field => $value) {
+                if (str($value)->contains(',')) {
+                    $values = explode(',', $value);
+                    foreach ($values as $val) {
+                        $builder->orSearch($field, $val);
+                    }
+                } else {
+                    $builder->search($field, $value);
+                }
+            }
+        }
 
         if (! empty($filter)) {
             foreach ($filter as $field => $value) {
                 $builder->where($field, $value);
+            }
+        }
+
+        if (! empty($filterList)) {
+            foreach ($filterList as $field => $value) {
+                if (str($value)->contains(',')) {
+                    $values = explode(',', $value);
+                    $builder->whereIn($field, $values);    
+                } else {
+                    $builder->where($field, $value);
+                }
             }
         }
 
