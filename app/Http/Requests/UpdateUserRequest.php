@@ -28,6 +28,11 @@ class UpdateUserRequest extends FormRequest
             'roles' => ['required', 'array'],
             'chatwork_id' => ['nullable', 'max:50'],
             'teams' => ['required', 'array'],
+            'profile_photo_path' => [
+                'nullable',
+                'image',
+                'max:'.config('filesystems.profile_photo_max', 2 * pow(2, 10)), // default 2MB
+            ],
         ];
     }
 }

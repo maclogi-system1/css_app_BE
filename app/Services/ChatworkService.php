@@ -116,7 +116,7 @@ class ChatworkService extends Service
      * @param  string|null  $roomId
      * @return \wataridori\ChatworkSDK\ChatworkUser
      */
-    public function findMemberByChatworkId($chatworkId, ?string $roomId = null): ChatworkUser
+    public function findMemberByChatworkId($chatworkId, ?string $roomId = null): ?ChatworkUser
     {
         $members = $this->getMembersInRoom($roomId);
 

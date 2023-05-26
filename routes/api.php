@@ -38,8 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
         Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
         Route::get('/search', 'search')->name('search');
+        Route::post('/{user}', 'update')->name('update');
     });
-    Route::apiResource('users', UserController::class);
+    Route::apiResource('users', UserController::class)->except(['update']);
 
     Route::get('/roles/search', [RoleController::class, 'search'])->name('roles.search');
     Route::apiResource('roles', RoleController::class);
