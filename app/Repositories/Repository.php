@@ -155,7 +155,7 @@ abstract class Repository
     public function search(array $fields, array $queries = [], $columns = ['*']): Collection
     {
         if (empty($queries)) {
-            return $this->model()->all();
+            return $this->model()->all($columns);
         }
 
         $builder = $this->model()->select($columns);
