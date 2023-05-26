@@ -57,7 +57,7 @@ abstract class Repository
     public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
         $page = Arr::get($filters, 'page', 1);
-        $perPage = Arr::get($filters, 'per_page', config('coreapp.per_page_default', 10));
+        $perPage = Arr::get($filters, 'per_page', 10);
 
         $query = $this->getWithFilter($this->queryBuilder(), $filters);
 
@@ -134,7 +134,7 @@ abstract class Repository
         if (! empty($search)) {
             $builder->searches($search);
         }
-        
+
         if (! empty($searchList)) {
             foreach ($searchList as $field => $value) {
                 if (str($value)->contains(',')) {
@@ -158,7 +158,7 @@ abstract class Repository
             foreach ($filterList as $field => $value) {
                 if (str($value)->contains(',')) {
                     $values = explode(',', $value);
-                    $builder->whereIn($field, $values);    
+                    $builder->whereIn($field, $values);
                 } else {
                     $builder->where($field, $value);
                 }

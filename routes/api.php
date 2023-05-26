@@ -23,7 +23,6 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
     ->name('reset-password');
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/verify-company', [LoginController::class, 'verifyCompany'])->name('verify-company');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
