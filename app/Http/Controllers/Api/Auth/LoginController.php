@@ -43,9 +43,15 @@ class LoginController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+            'company_id' => ['required'],
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $user = User::join('companies as c', function ($join) use ($data) {
+                $join->on('c.id', '=', 'users.company_id')
+                    ->where('c.company_id', $data['company_id']);
+            })
+            ->where('email', $data['email'])
+            ->first(['users.*', 'c.company_id as company_company_id', 'c.name as company_name']);
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
