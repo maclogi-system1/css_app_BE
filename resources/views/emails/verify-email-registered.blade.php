@@ -20,6 +20,8 @@
     <p>ログイン情報：<br/>
     企業ID： {{ $user->company->company_id }}<br/>
     メールアドレス： {{ $user->email }}<br/>
+    @isset ($password)
     パスワード： {{ $password }}</p>
+    @endisset
 </body>
 </html>

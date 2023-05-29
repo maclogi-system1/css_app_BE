@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateUserProfileRequest;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
 
 class UpdateUserProfileInformationController extends Controller
 {
@@ -15,20 +16,39 @@ class UpdateUserProfileInformationController extends Controller
         private UserRepository $userRepository
     ) {}
 
-    public function update(Request $request): UserResource
+    /**
+     * Validate and update the given user's profile information.
+     */
+    public function update(UpdateUserProfileRequest $request): UserResource
     {
-        $user = $request->user('sanctum');
+        $user = $request->user();
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-        ]);
-
-        $user->forceFill($data)->saveQuietly();
+        if ($user->email != $request->post('email')) {
+            $this->updateVerifiedUser($user, $request->validated());
+        } else {
+            $user->forceFill($request->validated())->saveQuietly();
+        }
 
         return new UserResource($user);
     }
 
+    /**
+     * Update the given verified user's profile information.
+     */
+    private function updateVerifiedUser(User $user, array $input)
+    {
+        $user->forceFill($input + [
+            'email_verified_at' => null,
+        ])->saveQuietly();
+
+        $this->userRepository->sendEmailVerificationNotification($user);
+
+        $user->tokens()->delete();
+    }
+
+    /**
+     * Handle update profile photo.
+     */
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $data = $request->validate([
