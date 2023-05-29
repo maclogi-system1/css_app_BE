@@ -87,6 +87,20 @@ class ChatworkService extends Service
     }
 
     /**
+     * Send a message to the room for a few specified members by account id list.
+     *
+     * @param  array  $accountIds
+     * @param  string $message
+     * @param  string|null  $roomId
+     * @return void
+     */
+    public function sendMessageToListByAccountId(array $accountIds, string $message, ?string $roomId = null): void
+    {
+        $members = $this->getMembersInRoom($roomId)->whereIn('account_id', $accountIds)->toArray();
+        $this->chatworkRoom($roomId)->sendMessageToList($members, $message);
+    }
+
+    /**
      * Send a message to the room.
      *
      * @param  string $message
@@ -123,8 +137,30 @@ class ChatworkService extends Service
         return $members->where('chatwork_id', $chatworkId)->first();
     }
 
+    /**
+     * Find member by account id.
+     *
+     * @param  string  $accountId
+     * @param  string|null  $roomId
+     * @return \wataridori\ChatworkSDK\ChatworkUser
+     */
+    public function findMemberByAccountId($accountId, ?string $roomId = null): ?ChatworkUser
+    {
+        $members = $this->getMembersInRoom($roomId);
+
+        return $members->where('account_id', $accountId)->first();
+    }
+
     public function chatworkRoom(?string $roomId = null)
     {
         return empty($roomId) ? $this->chatworkRoom : new ChatworkRoom($roomId);
+    }
+
+    public function useable(): bool
+    {
+        $roomId = config('chatwork.room_id');
+        $apiKey = config('chatwork.api_key');
+
+        return $roomId && $apiKey;
     }
 }

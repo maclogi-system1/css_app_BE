@@ -25,7 +25,7 @@ interface UserRepository extends Repository
     /**
      * Handle sending email for verification.
      */
-    public function sendEmailVerificationNotification(User $user, $password): void;
+    public function sendEmailVerificationNotification(User $user, ?string $password = null): void;
 
     /**
      * Handle upload profile photo.

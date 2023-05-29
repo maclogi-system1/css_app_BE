@@ -147,7 +147,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     /**
      * Handle sending email for verification.
      */
-    public function sendEmailVerificationNotification(User $user, $password): void
+    public function sendEmailVerificationNotification(User $user, ?string $password = null): void
     {
         $expires = now()->addDay()->timestamp;
         $token = sha1($user->email.$expires);
