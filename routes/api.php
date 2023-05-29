@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/', function (Request $request) {
-            return $request->user();
+            return new \App\Http\Resources\UserResource($request->user());
         })->name('info');
         Route::put('/', [UpdateUserProfileInformationController::class, 'update'])->name('update-user-profile-info');
         Route::patch('/update-password', [PasswordController::class, 'update'])->name('update-password');

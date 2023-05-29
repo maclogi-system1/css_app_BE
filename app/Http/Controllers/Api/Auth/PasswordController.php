@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Password;
 
 class PasswordController extends Controller
 {
-
     use PasswordValidationRules;
+
     /**
      * Send password reset link to requested user's email.
      */
@@ -81,6 +81,9 @@ class PasswordController extends Controller
         ], $status === Password::PASSWORD_RESET ? Response::HTTP_ACCEPTED : Response::HTTP_BAD_REQUEST);
     }
 
+    /**
+     * Handle change current password.
+     */
     public function update(Request $request): JsonResponse
     {
         $request->validate([
