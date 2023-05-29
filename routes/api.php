@@ -42,7 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::apiResource('users', UserController::class)->except(['update']);
 
-    Route::get('/roles/search', [RoleController::class, 'search'])->name('roles.search');
+    Route::prefix('roles')->name('roles.')->controller(RoleController::class)->group(function () {
+        Route::get('/search', [RoleController::class, 'search'])->name('search');
+        Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
+    });
     Route::apiResource('roles', RoleController::class);
 
     Route::prefix('permissions')->name('permissions.')->controller(PermissionController::class)->group(function () {

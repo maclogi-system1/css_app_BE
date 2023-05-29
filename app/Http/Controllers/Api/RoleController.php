@@ -96,4 +96,21 @@ class RoleController extends Controller
             'message' => __('Deleted failure.')
         ], Response::HTTP_BAD_REQUEST);
     }
+
+    /**
+     * Remove multiple roles at the same time.
+     */
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        $this->authorize('delete_role');
+
+        return ! $this->roleRepository->deleteMultiple($request->query('role_ids', []))
+            ? response()->json([
+                'message' => __('Delete failed. Please check your role ids!'),
+                'role_ids' => $request->query('role_ids', []),
+            ], Response::HTTP_BAD_REQUEST)
+            : response()->json([
+                'message' => __('The roles have been deleted successfully.'),
+            ]);
+    }
 }
