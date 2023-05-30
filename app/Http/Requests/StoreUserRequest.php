@@ -28,7 +28,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'company_id' => ['nullable', 'integer'],
             'roles' => ['required', 'array'],
-            'chatwork_id' => ['nullable', 'max:50'],
+            'chatwork_account_id' => ['nullable', 'max:8'],
             'teams' => ['required', 'array'],
             'profile_photo_path' => [
                 'nullable',

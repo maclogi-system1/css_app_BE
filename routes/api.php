@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\UpdateUserProfileInformationController;
+use App\Http\Controllers\Api\Auth\UserProfileController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
@@ -26,9 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
-        Route::get('/', function (Request $request) {
-            return new \App\Http\Resources\UserResource($request->user());
-        })->name('info');
+        Route::get('/', UserProfileController::class)->name('profile');
         Route::put('/', [UpdateUserProfileInformationController::class, 'update'])->name('update-user-profile-info');
         Route::patch('/update-password', [PasswordController::class, 'update'])->name('update-password');
         Route::post('/upload-photo', [UpdateUserProfileInformationController::class, 'uploadProfilePhoto'])

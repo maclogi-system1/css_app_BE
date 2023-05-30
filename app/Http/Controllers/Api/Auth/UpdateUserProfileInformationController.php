@@ -29,6 +29,10 @@ class UpdateUserProfileInformationController extends Controller
             $user->forceFill($request->validated())->saveQuietly();
         }
 
+        if ($request->has('chatwork_account_id')) {
+            $this->userRepository->linkUserToChatwork($user, $request->input('chatwork_account_id'));
+        }
+
         return new UserResource($user);
     }
 
