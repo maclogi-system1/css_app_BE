@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquents;
 
 use App\Mail\VerifyEmailRegistered;
 use App\Models\Bookmark;
+use App\Models\Company;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
@@ -274,5 +275,61 @@ class UserRepository extends Repository implements UserRepositoryContract
             ->append('_'.time().'.'.$file->extension());
 
         return $this->uploadFileService->uploadImage($file, $fileName, 'images/profile_photo');
+    }
+
+    /**
+     * Handle update profile photo.
+     */
+    public function updateProfile(array $data, ?User $user = null): User
+    {
+        if ($user->email != $data['email']) {
+            $this->updateVerifiedUser($user, Arr::only($data, ['name', 'email']));
+        } else {
+            $user->forceFill(Arr::only($data, ['name', 'email']))->saveQuietly();
+        }
+
+        if (Arr::has($data, 'chatwork_account_id')) {
+            $this->linkUserToChatwork($user, $data['chatwork_account_id']);
+        }
+
+        if (Arr::has($data, 'team_id')) {
+            $user->teams()->sync([$data['team_id']]);
+        }
+
+        return $user;
+    }
+
+    /**
+     * Update the given verified user's profile information.
+     */
+    private function updateVerifiedUser(User $user, array $input)
+    {
+        $user->forceFill($input + [
+            'email_verified_at' => null,
+        ])->saveQuietly();
+
+        $this->sendEmailVerificationNotification($user);
+
+        $user->tokens()->delete();
+    }
+
+    /**
+     * Get the user's company.
+     */
+    public function getUsersCompany(User $user): Company
+    {
+        $usersTeam = $user->teams->first();
+        $company = $user->company()->with(['teams'])->first();
+        $company->teams->map(function ($team) use ($usersTeam) {
+            if ($usersTeam?->id == $team->id) {
+                $team->is_user_s_team = 1;
+            } else {
+                $team->is_user_s_team = 0;
+            }
+
+            return $team;
+        });
+
+        return $company;
     }
 }

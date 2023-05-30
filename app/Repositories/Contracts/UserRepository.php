@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 
@@ -25,6 +26,11 @@ interface UserRepository extends Repository
     /**
      * Handle update profile photo.
      */
+    public function updateProfile(array $data, ?User $user = null): User;
+
+    /**
+     * Handle update profile photo.
+     */
     public function updateProfilePhoto(array $data, ?User $auth = null): string;
 
     /**
@@ -36,4 +42,9 @@ interface UserRepository extends Repository
      * Handle upload profile photo.
      */
     public function uploadProfilePhoto(UploadedFile $file, array|User $user): string;
+
+    /**
+     * Get the user's company.
+     */
+    public function getUsersCompany(User $user): Company;
 }

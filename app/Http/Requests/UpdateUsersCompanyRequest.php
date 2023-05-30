@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 
-class UpdateUserProfileRequest extends FormRequest
+class UpdateUsersCompanyRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('edit_company');
     }
 
     /**
@@ -22,10 +22,14 @@ class UpdateUserProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($this->user()->id)],
-            'chatwork_account_id' => ['nullable', 'max:8'],
-            'team_id' => ['nullable'],
+            'company_id' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('companies')->ignore($this->user()->company_id),
+            ],
+            'name' => ['required', 'string', 'max:150'],
+            'team_names' => ['nullable', 'array'],
         ];
     }
 }
