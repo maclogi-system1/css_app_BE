@@ -8,6 +8,11 @@ use Illuminate\Http\UploadedFile;
 interface UserRepository extends Repository
 {
     /**
+     * Handle link a specified user to chatwork by chatwork_account_id.
+     */
+    public function linkUserToChatwork(User $user, $chatworkAccountId): bool;
+
+    /**
      * Handle delete multiple users at the same time.
      */
     public function deleteMultiple(array $userIds, ?User $auth = null): ?bool;

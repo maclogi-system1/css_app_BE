@@ -107,8 +107,8 @@ class UserRepository extends Repository implements UserRepositoryContract
                 $user->teams()->sync(Arr::get($data, 'teams'));
             }
 
-            if (isset($data['chatwork_id'])) {
-                $this->linkUserToChatwork($user, $data['chatwork_id']);
+            if (isset($data['chatwork_account_id'])) {
+                $this->linkUserToChatwork($user, $data['chatwork_account_id']);
             }
 
             $this->sendEmailVerificationNotification($user, $password);
@@ -118,13 +118,13 @@ class UserRepository extends Repository implements UserRepositoryContract
     }
 
     /**
-     * Handle link a specified user to chatwork by chatwork_id.
+     * Handle link a specified user to chatwork by chatwork_account_id.
      */
-    public function linkUserToChatwork(User $user, $chatworkId): bool
+    public function linkUserToChatwork(User $user, $chatworkAccountId): bool
     {
         $service = new ChatworkService();
-        $memberInfo = $service->findMemberByChatworkId($chatworkId);
-        $chatwork = $user->chatwork()->where('chatwork_id', $chatworkId)->first();
+        $memberInfo = $service->findMemberByAccountId($chatworkAccountId);
+        $chatwork = $user->chatwork()->where('account_id', $chatworkAccountId)->first();
 
         if (empty($memberInfo) || $chatwork) {
             return false;
@@ -134,7 +134,7 @@ class UserRepository extends Repository implements UserRepositoryContract
             'account_id' => $memberInfo->account_id,
             'role' => $memberInfo->role,
             'name' => $memberInfo->name,
-            'chatwork_id' => $chatworkId,
+            'chatwork_id' => $memberInfo->chatwork_id,
             'organization_id' => $memberInfo->organization_id,
             'organization_name' => $memberInfo->organization_name,
             'department' => $memberInfo->department,
@@ -183,8 +183,8 @@ class UserRepository extends Repository implements UserRepositoryContract
                 $user->syncRoles(Arr::get($data, 'roles', []));
             }
 
-            if (isset($data['chatwork_id'])) {
-                $this->linkUserToChatwork($user, $data['chatwork_id']);
+            if (isset($data['chatwork_account_id'])) {
+                $this->linkUserToChatwork($user, $data['chatwork_account_id']);
             } else {
                 $user->chatwork()->delete();
             }

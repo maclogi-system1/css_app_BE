@@ -86,8 +86,8 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
     private function handleSendMessageToMembers($message, $roomId, $chatworks): string
     {
         if ($chatworks->isNotEmpty()) {
-            $this->chatworkService->sendMessageToListByChatworkId(
-                $chatworks->pluck('chatwork_id')->toArray(),
+            $this->chatworkService->sendMessageToListByAccountId(
+                $chatworks->pluck('account_id')->toArray(),
                 $message,
                 $roomId
             );
