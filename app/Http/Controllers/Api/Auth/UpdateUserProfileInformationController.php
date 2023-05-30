@@ -21,33 +21,7 @@ class UpdateUserProfileInformationController extends Controller
      */
     public function update(UpdateUserProfileRequest $request): UserResource
     {
-        $user = $request->user();
-
-        if ($user->email != $request->post('email')) {
-            $this->updateVerifiedUser($user, $request->validated());
-        } else {
-            $user->forceFill($request->validated())->saveQuietly();
-        }
-
-        if ($request->has('chatwork_account_id')) {
-            $this->userRepository->linkUserToChatwork($user, $request->input('chatwork_account_id'));
-        }
-
-        return new UserResource($user);
-    }
-
-    /**
-     * Update the given verified user's profile information.
-     */
-    private function updateVerifiedUser(User $user, array $input)
-    {
-        $user->forceFill($input + [
-            'email_verified_at' => null,
-        ])->saveQuietly();
-
-        $this->userRepository->sendEmailVerificationNotification($user);
-
-        $user->tokens()->delete();
+        return new UserResource($this->userRepository->updateProfile($request->validated(), $request->user()));
     }
 
     /**
