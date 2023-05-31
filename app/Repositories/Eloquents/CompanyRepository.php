@@ -68,6 +68,8 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
                 $company->teams()->createMany($teams);
             }
 
+            $company = $company->withAllRels();
+
             return $company;
         }, 'Create company');
     }
@@ -83,6 +85,8 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
             $teamNames = collect(Arr::get($data, 'team_names', []));
 
             $this->syncTeams($company, $teamNames, $auth);
+
+            $company = $company->withAllRels();
 
             return $company;
         }, 'Update company');
