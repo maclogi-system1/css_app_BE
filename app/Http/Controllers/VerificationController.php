@@ -26,6 +26,15 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return __('Successful Verification.');
+        return <<<HTML
+        <html>
+        <head><title>Email verification</title></head>
+        <body style="font-size: 16px">
+        <div style="width: 100vw;height: 100vh;display: flex;justify-content: center;align-items: center">
+            <p style="font-size: 3rem">Successful Verification.</p>
+        </div>
+        </body>
+        </html>
+        HTML;
     }
 }

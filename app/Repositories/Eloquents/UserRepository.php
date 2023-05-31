@@ -105,7 +105,7 @@ class UserRepository extends Repository implements UserRepositoryContract
             $user->syncRoles(Arr::get($data, 'roles', []));
 
             if (Arr::has($data, 'teams')) {
-                $user->teams()->sync(Arr::get($data, 'teams'));
+                $this->syncTeams($user->refresh(), $data['teams']);
             }
 
             if (isset($data['chatwork_account_id'])) {
@@ -114,8 +114,18 @@ class UserRepository extends Repository implements UserRepositoryContract
 
             $this->sendEmailVerificationNotification($user, $password);
 
-            return $user;
+            return $user->withAllRels();
         }, 'Create user');
+    }
+
+    /**
+     * Handle sync teams to a specified user.
+     */
+    public function syncTeams(User $user, array $teams): void
+    {
+        // Add only teams belonging to the current user's company.
+        $companysTeam = $user->company->teams->pluck('id')->intersect($teams)->all();
+        $user->teams()->sync($companysTeam);
     }
 
     /**
@@ -191,10 +201,10 @@ class UserRepository extends Repository implements UserRepositoryContract
             }
 
             if (Arr::has($data, 'teams')) {
-                $user->teams()->sync($data['teams']);
+                $this->syncTeams($user->refresh(), $data['teams']);
             }
 
-            return $user->refresh();
+            return $user->withAllRels();
         }, 'Update user');
     }
 
@@ -319,7 +329,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function getUsersCompany(User $user): Company
     {
         $usersTeam = $user->teams->first();
-        $company = $user->company()->with(['teams'])->first();
+        $company = $user->company->withAllRels();
         $company->teams->map(function ($team) use ($usersTeam) {
             if ($usersTeam?->id == $team->id) {
                 $team->is_user_s_team = 1;

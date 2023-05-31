@@ -115,4 +115,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Team::class);
     }
+
+    public function withAllRels(): static
+    {
+        return $this->where('id', $this->getKey())->with(['chatwork', 'company', 'teams', 'roles'])->first();
+    }
 }
