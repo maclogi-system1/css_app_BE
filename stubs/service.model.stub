@@ -3,6 +3,8 @@
 namespace {{ namespace }};
 
 use {{ model }};
+use App\Services\Service;
+use Illuminate\Support\Arr;
 
 class {{ class }} extends Service
 {
