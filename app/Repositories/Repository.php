@@ -52,9 +52,9 @@ abstract class Repository
      *
      * @param  array  $filters
      * @param  array  $columns
-     * @return \Illuminate\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection
+     * @return mixed
      */
-    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
+    public function getList(array $filters = [], array $columns = ['*'])
     {
         $page = Arr::get($filters, 'page', 1);
         $perPage = Arr::get($filters, 'per_page', 10);
