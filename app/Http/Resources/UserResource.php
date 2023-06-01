@@ -28,6 +28,7 @@ class UserResource extends JsonResource
                 'roles' => RoleResource::collection($this->whenLoaded('roles')),
                 'chatwork' => new ChatworkResource($this->whenLoaded('chatwork')),
                 'teams' => TeamResource::collection($this->whenLoaded('teams')),
+                'profile_photo_path' => $this->profile_photo,
             ]
         );
     }

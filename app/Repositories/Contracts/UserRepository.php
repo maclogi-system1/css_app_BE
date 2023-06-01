@@ -2,10 +2,17 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\Company;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 interface UserRepository extends Repository
 {
+    /**
+     * Handle link a specified user to chatwork by chatwork_account_id.
+     */
+    public function linkUserToChatwork(User $user, $chatworkAccountId): bool;
+
     /**
      * Handle delete multiple users at the same time.
      */
@@ -19,5 +26,25 @@ interface UserRepository extends Repository
     /**
      * Handle update profile photo.
      */
+    public function updateProfile(array $data, ?User $user = null): User;
+
+    /**
+     * Handle update profile photo.
+     */
     public function updateProfilePhoto(array $data, ?User $auth = null): string;
+
+    /**
+     * Handle sending email for verification.
+     */
+    public function sendEmailVerificationNotification(User $user, ?string $password = null): void;
+
+    /**
+     * Handle upload profile photo.
+     */
+    public function uploadProfilePhoto(UploadedFile $file, array|User $user): string;
+
+    /**
+     * Get the user's company.
+     */
+    public function getUsersCompany(User $user): Company;
 }

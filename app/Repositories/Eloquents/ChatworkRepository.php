@@ -86,8 +86,8 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
     private function handleSendMessageToMembers($message, $roomId, $chatworks): string
     {
         if ($chatworks->isNotEmpty()) {
-            $this->chatworkService->sendMessageToListByChatworkId(
-                $chatworks->pluck('chatwork_id')->toArray(),
+            $this->chatworkService->sendMessageToListByAccountId(
+                $chatworks->pluck('account_id')->toArray(),
                 $message,
                 $roomId
             );
@@ -111,15 +111,17 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
      */
     public function sendMessageLog(string $message, string $level = 'info'): void
     {
-        $logTime = now()->format('Y-m-d H:i:s P');
-        $levelLog = str($level)->upper()->prepend(env('APP_ENV', 'local').'.')->toString();
+        if ($this->chatworkService->useable()) {
+            $logTime = now()->format('Y-m-d H:i:s P');
+            $levelLog = str($level)->upper()->prepend(env('APP_ENV', 'local').'.')->toString();
 
-        $this->chatworkService->sendMessage("[{$logTime}] {$levelLog}: {$message}");
+            $this->chatworkService->sendMessage("[{$logTime}] {$levelLog}: {$message}");
 
-        $this->notificationRepository->create([
-            'message' => $message,
-            'room_id' => config('chatwork.room_id'),
-            'type' => "log_{$level}",
-        ]);
+            $this->notificationRepository->create([
+                'message' => $message,
+                'room_id' => config('chatwork.room_id'),
+                'type' => "log_{$level}",
+            ]);
+        }
     }
 }

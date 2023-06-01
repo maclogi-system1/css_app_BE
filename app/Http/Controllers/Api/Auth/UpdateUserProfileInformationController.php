@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateUserProfileRequest;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
 
 class UpdateUserProfileInformationController extends Controller
 {
@@ -15,24 +16,21 @@ class UpdateUserProfileInformationController extends Controller
         private UserRepository $userRepository
     ) {}
 
-    public function update(Request $request): UserResource
+    /**
+     * Validate and update the given user's profile information.
+     */
+    public function update(UpdateUserProfileRequest $request): UserResource
     {
-        $user = $request->user('sanctum');
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-        ]);
-
-        $user->forceFill($data)->saveQuietly();
-
-        return new UserResource($user);
+        return new UserResource($this->userRepository->updateProfile($request->validated(), $request->user()));
     }
 
+    /**
+     * Handle update profile photo.
+     */
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'photo' => [
+            'profile_photo_path' => [
                 'required',
                 'image',
                 'max:'.config('filesystems.profile_photo_max', 2 * pow(2, 10)), // default 2MB

@@ -96,4 +96,20 @@ class RoleRepository extends Repository implements RoleRepositoryContract
 
         return $role;
     }
+
+    /**
+     * Handle delete multiple roles at the same time.
+     */
+    public function deleteMultiple(array $roleIds, ?Role $auth = null): ?bool
+    {
+        if (empty($roleIds)) {
+            return false;
+        }
+
+        return $this->handleSafely(function () use ($roleIds) {
+            $result = $this->model()->whereIn('id', $roleIds)->delete();
+
+            return $result;
+        }, 'Delete multiple role');
+    }
 }

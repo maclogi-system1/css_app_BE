@@ -16,12 +16,12 @@ class BuilderMixin
 {
     public function search(): Closure
     {
-        return fn ($field, $value) => $value ? $this->where($field, 'like', $value) : $this;
+        return fn ($field, $value) => $value ? $this->where($field, 'like', "%{$value}%") : $this;
     }
 
     public function orSearch(): Closure
     {
-        return fn ($field, $value) => $value ? $this->orWhere($field, 'like', $value) : $this;
+        return fn ($field, $value) => $value ? $this->orWhere($field, 'like', "%{$value}%") : $this;
     }
 
     public function searches(): Closure

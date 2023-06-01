@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\UpdateUserProfileInformationController;
+use App\Http\Controllers\Api\Auth\UserProfileController;
+use App\Http\Controllers\Api\Auth\UsersCompanyController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
@@ -11,7 +13,6 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [LoginController::class, 'login'])->name('login');
@@ -23,26 +24,29 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
     ->name('reset-password');
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/verify-company', [LoginController::class, 'verifyCompany'])->name('verify-company');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
-        Route::get('/', function (Request $request) {
-            return $request->user();
-        })->name('info');
+        Route::get('/', UserProfileController::class)->name('profile');
         Route::put('/', [UpdateUserProfileInformationController::class, 'update'])->name('update-user-profile-info');
         Route::patch('/update-password', [PasswordController::class, 'update'])->name('update-password');
         Route::post('/upload-photo', [UpdateUserProfileInformationController::class, 'uploadProfilePhoto'])
             ->name('update-profile-photo');
+        Route::get('/company', [UsersCompanyController::class, 'show'])->name('company.show');
+        Route::put('/company', [UsersCompanyController::class, 'update'])->name('company.update');
     });
 
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
         Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
         Route::get('/search', 'search')->name('search');
+        Route::post('/{user}', 'update')->name('update');
     });
-    Route::apiResource('users', UserController::class);
+    Route::apiResource('users', UserController::class)->except(['update']);
 
-    Route::get('/roles/search', [RoleController::class, 'search'])->name('roles.search');
+    Route::prefix('roles')->name('roles.')->controller(RoleController::class)->group(function () {
+        Route::get('/search', [RoleController::class, 'search'])->name('search');
+        Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
+    });
     Route::apiResource('roles', RoleController::class);
 
     Route::prefix('permissions')->name('permissions.')->controller(PermissionController::class)->group(function () {

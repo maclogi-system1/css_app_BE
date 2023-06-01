@@ -12,10 +12,9 @@ class MakeRepository extends Command
      * @var string
      */
     protected $signature = 'app:make-repository
-        {repository}
+        {repository?}
         {--m|model= : Model Class Name}
-        {--r|repo=Eloquents : Repo Name}
-        {--test : Testing}';
+        {--r|repo=Eloquents : Repo Name}';
 
     /**
      * The console command description.
@@ -35,13 +34,18 @@ class MakeRepository extends Command
     protected $rootNamespaceModel = 'App\Models';
 
     /**
+     * @var string
+     */
+    protected $repositoryName;
+
+    /**
      * Execute the console command.
      */
     public function handle()
     {
         $this->makeFolderRepositories();
 
-        $model = $this->option('model');
+        $model = $this->option('model') ?? '';
         $modelClass = $this->rootNamespaceModel . '\\' . $model;
         $repositoryPath = app_path("Repositories/{$this->getRepo()}/{$this->getRepositoryName()}.php");
 
@@ -135,7 +139,7 @@ class MakeRepository extends Command
      */
     private function getStubPath(string $modelClass): array
     {
-        $repositoryPath = base_path('stubs/service.stub');
+        $repositoryPath = base_path('stubs/repository.stub');
         $contractPath = base_path('stubs/repository.contract.stub');
 
         if (class_exists($modelClass)) {
@@ -158,7 +162,15 @@ class MakeRepository extends Command
      */
     private function getRepositoryName(): string
     {
-        return $this->argument('repository');
+        if (! ($repository = $this->argument('repository'))) {
+            if (! $this->repositoryName) {
+                $this->repositoryName = $this->ask('What should the repository be named?');
+            }
+
+            return $this->repositoryName;
+        }
+
+        return $repository;
     }
 
     private function updateServiceProvider()
