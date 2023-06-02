@@ -34,6 +34,20 @@ If you want to use ssl you must first update the `ENABLE_SSL=true` value in the 
 
 Finally generate ssl certificate `docker/web/certs/ssl.crt` and `docker/web/certs/ssl.key`
 
+**Note**: update necessary fields in .env file
+
+```text
+APP_ENV= // current environment name (local, staging, production)
+APP_URL= // application url (https://domain.example)
+APP_HOST= // host name (domain.example)
+CHATWORK_API_KEY= // api token of chatwork account
+CHATWORK_ROOM_ID= // chatwork room id
+MACLOGI_OSS_URL= // the url of the maclogi oss provided to call the api
+MACLOGI_OSS_KEY= // api key provided by maclogi oss
+```
+
+After updating the necessary information for the env file, run the command:
+
 ```bash
 ./dockx up -d --build
 ```
@@ -125,6 +139,7 @@ The branch name must be in the format `<type>/MAC-<task-number>`
 | feature     | For new features, requests, corrections or additions.                         |
 | bug         | For requests to find and fix bugs.                                            |
 | hotfix      | For urgent bug finding and fixing requests. Usually an error from production. |
+| test        | For the case of writing test.                                                 |
 
 ### Commit
 
