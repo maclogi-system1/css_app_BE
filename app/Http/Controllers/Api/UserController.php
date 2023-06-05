@@ -65,9 +65,11 @@ class UserController extends Controller
 
         $user = $this->userRepository->create($data);
 
-        return $user ? new UserResource($user): response()->json([
-            'message' => __('Created failure.'),
-        ], Response::HTTP_BAD_REQUEST);
+        return $user
+            ? (new UserResource($user))->response($request)->setStatusCode(Response::HTTP_CREATED)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ], Response::HTTP_BAD_REQUEST);
     }
 
     /**
