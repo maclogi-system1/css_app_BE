@@ -9,7 +9,6 @@ services:
         ports:
             - '${APP_PORT:-80}:80'
             - '443:443'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
             ENABLE_SSL: ${ENABLE_SSL}

@@ -15,7 +15,7 @@ class CreateUserTest extends TestCase
 
     public function test_can_create_a_new_user(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
         $role = Role::factory()->create();
         $team = Team::factory()->for(Company::factory())->create();
 
@@ -23,8 +23,6 @@ class CreateUserTest extends TestCase
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
                 'email' => 'create_new_user.1@example.com',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
                 'roles' => [$role->id],
                 'teams' => [$team->id],
@@ -37,14 +35,16 @@ class CreateUserTest extends TestCase
 
     public function test_can_not_create_a_new_user_without_name(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
                 'email' => 'create_new_user.1@example.com',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -54,14 +54,16 @@ class CreateUserTest extends TestCase
 
     public function test_can_not_create_a_new_user_without_email(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -71,15 +73,17 @@ class CreateUserTest extends TestCase
 
     public function test_can_not_create_a_new_user_with_invalid_email(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
                 'email' => 'create_new_user.1',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -89,15 +93,17 @@ class CreateUserTest extends TestCase
 
     public function test_can_not_create_a_new_user_with_email_already_exists(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
                 'email' => $user->email,
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertUnprocessable()
             ->assertInvalid([
@@ -105,58 +111,26 @@ class CreateUserTest extends TestCase
             ]);
     }
 
-    public function test_can_not_create_a_new_user_without_password(): void
-    {
-        $user = User::factory()->isSupperAdmin()->create();
-
-        $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.users.store'), [
-                'name' => 'Create New User',
-                'email' => 'create_new_user.1@example.com',
-                'password_confirmation' => 'pass123456',
-                'company_id' => Company::factory()->create()->id,
-            ])
-            ->assertUnprocessable()
-            ->assertInvalid([
-                'password' => __('validation.required', ['attribute' => 'password']),
-            ]);
-    }
-
-    public function test_can_not_create_a_new_user_without_confirm_password(): void
-    {
-        $user = User::factory()->isSupperAdmin()->create();
-
-        $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.users.store'), [
-                'name' => 'Create New User',
-                'email' => 'create_new_user.1@example.com',
-                'password' => 'pass123456',
-                'company_id' => Company::factory()->create()->id,
-            ])
-            ->assertUnprocessable()
-            ->assertInvalid([
-                'password' => __('validation.confirmed', ['attribute' => 'password']),
-            ]);
-    }
-
     public function test_can_not_create_a_new_user_without_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
+        $role = Role::factory()->create();
+        $team = Team::factory()->for(Company::factory())->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
                 'email' => 'create_new_user.2@example.com',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
+                'roles' => [$role->id],
+                'teams' => [$team->id],
             ])
             ->assertForbidden();
     }
 
     public function test_can_assign_role_to_user(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
         $role = Role::factory()->create([
             'name' => 'Role testing',
         ]);
@@ -166,8 +140,6 @@ class CreateUserTest extends TestCase
             ->postJson(route('api.users.store'), [
                 'name' => 'Create New User',
                 'email' => 'create_new_user.3@example.com',
-                'password' => 'pass123456',
-                'password_confirmation' => 'pass123456',
                 'company_id' => Company::factory()->create()->id,
                 'roles' => [$role->id],
                 'teams' => [$team->id],

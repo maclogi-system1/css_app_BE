@@ -153,6 +153,10 @@ class ChatworkService extends Service
 
     public function chatworkRoom(?string $roomId = null)
     {
+        if (! $this->useable()) {
+            return optional();
+        }
+
         return empty($roomId) ? $this->chatworkRoom : new ChatworkRoom($roomId);
     }
 

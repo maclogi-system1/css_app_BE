@@ -12,8 +12,8 @@ class DeleteUserTest extends TestCase
 
     public function test_can_delete_speccify_user(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
-        $userDelete = User::factory()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $userDelete = $this->createUser();
 
         $this->actingAs($user)
             ->deleteJson(route('api.users.destroy', $userDelete))
@@ -26,7 +26,7 @@ class DeleteUserTest extends TestCase
 
     public function test_can_not_delete_yourself(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
 
         $this->actingAs($user)
             ->deleteJson(route('api.users.destroy', $user))
@@ -39,8 +39,8 @@ class DeleteUserTest extends TestCase
 
     public function test_can_not_delete_user_without_permission(): void
     {
-        $user = User::factory()->create();
-        $userDelete = User::factory()->create();
+        $user = $this->createUser();
+        $userDelete = $this->createUser();
 
         $this->actingAs($user)
             ->deleteJson(route('api.users.destroy', $userDelete))
@@ -50,7 +50,7 @@ class DeleteUserTest extends TestCase
 
     public function test_can_delete_multiple_users(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
         $userDelete = User::factory(2)->create();
 
         $this->actingAs($user)
@@ -63,7 +63,7 @@ class DeleteUserTest extends TestCase
 
     public function test_can_not_delete_multiple_users_without_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $userDelete = User::factory(2)->create();
 
         $this->actingAs($user)
@@ -76,8 +76,8 @@ class DeleteUserTest extends TestCase
 
     public function test_can_not_delete_mutiple_users_when_admin_exists_in_the_list()
     {
-        $user = User::factory()->isSupperAdmin()->create();
-        $userDelete = User::factory(2)->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $userDelete = $this->createUser(count: 2);
 
 
         $this->actingAs($user)

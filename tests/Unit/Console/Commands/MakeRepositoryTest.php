@@ -8,7 +8,7 @@ class MakeRepositoryTest extends TestCase
 {
     public function test_create_repository_file(): void
     {
-        $this->artisan('app:make-repository', ['repository' => 'TestRepository', '--model' => 'User', '--test' => true]);
+        $this->artisan('app:make-repository', ['repository' => 'TestRepository', '--model' => 'User']);
         $this->assertTrue(file_exists(app_path('Repositories/Eloquents/TestRepository.php')));
         $this->assertTrue(file_exists(app_path('Repositories/Contracts/TestRepository.php')));
     }

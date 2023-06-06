@@ -14,36 +14,18 @@ class LoginTest extends TestCase
 
     public function test_can_login(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->postJson(route('api.login'), [
                 'email' => $user->email,
                 'password' => '123456',
+                'company_id' => $user->company->company_id,
             ])
             ->assertOk()
             ->assertJson([
                 'access_token' => true,
-                'user' => $user->toArray(),
+                'user' => true,
             ]);
-    }
-
-    public function test_can_verify_company(): void
-    {
-        $user = User::factory()->for(Company::factory())->create();
-
-        $response = $this->postJson(route('api.login'), [
-            'email' => $user->email,
-            'password' => '123456',
-        ]);
-
-        $accessToken = $response->json('access_token');
-
-        $this->postJson(route('api.verify-company'), [
-                'company_id' => $user->company->company_id,
-            ], [
-                'Authorization' => "Bearer {$accessToken}",
-            ])
-            ->assertOk();
     }
 
     public function test_can_not_login_with_invalid_email()
@@ -60,11 +42,12 @@ class LoginTest extends TestCase
 
     public function test_can_not_login_with_wrong_password()
     {
-        $user = User::factory()->for(Company::factory())->create();
+        $user = $this->createUser();
 
         $this->postJson(route('api.login'), [
                 'email' => $user->email,
                 'password' => 'wrongpassword',
+                'company_id' => $user->company_id,
             ])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertInvalid([
@@ -76,21 +59,14 @@ class LoginTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson(route('api.login'), [
+        $this->postJson(route('api.login'), [
                 'email' => $user->email,
                 'password' => '123456',
-        ]);
-
-        $accessToken = $response->json('access_token');
-
-        $this->postJson(route('api.verify-company'), [
-                'company_id' => 'wrongcompanyid',
-            ], [
-                'Authorization' => "Bearer {$accessToken}",
+                'company_id' => 1234,
             ])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertInvalid([
-                'company_id' => 'The provided credentials are incorrect.',
+                'email' => 'The provided credentials are incorrect.',
             ]);
     }
 
