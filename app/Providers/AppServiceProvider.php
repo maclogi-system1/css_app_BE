@@ -11,6 +11,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected array $mixins = [
         \Illuminate\Database\Query\Builder::class => \App\Mixin\BuilderMixin::class,
+        \Illuminate\Support\Facades\Http::class => \App\Mixin\HttpMixin::class,
     ];
 
     /**

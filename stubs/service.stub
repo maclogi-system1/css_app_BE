@@ -3,7 +3,7 @@
 namespace {{ namespace }};
 
 use App\Services\Service;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
 
 class {{ class }} extends Service
 {
