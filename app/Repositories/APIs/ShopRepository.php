@@ -25,6 +25,14 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
+        $filters = ['with' => [
+            'shopCredential',
+            'projectDirectors',
+            'projectDesigners',
+            'projectConsultants',
+            'createdUser',
+        ]] + $filters;
+
         return $this->shopService->getList($filters);
     }
 }

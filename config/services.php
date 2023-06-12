@@ -38,6 +38,9 @@ return [
             'shops' => [
                 'list' => '/shops',
             ],
+            'alerts' => [
+                'list' => '/alerts',
+            ],
         ],
     ],
 
