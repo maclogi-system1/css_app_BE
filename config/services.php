@@ -34,6 +34,11 @@ return [
     'maclogi_oss' => [
         'url' => env('MACLOGI_OSS_URL', 'http://localhost'),
         'key' => env('MACLOGI_OSS_KEY'),
+        'api_uri' => [
+            'shops' => [
+                'list' => '/shops',
+            ],
+        ],
     ],
 
 ];

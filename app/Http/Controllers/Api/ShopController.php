@@ -16,8 +16,8 @@ class ShopController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $shops = $this->shopRepository->getList($request->query());
+        $result = $this->shopRepository->getList($request->query());
 
-        return response()->json($shops);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 }
