@@ -18,6 +18,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\PermissionRepository::class => \App\Repositories\Eloquents\PermissionRepository::class,
         \App\Repositories\Contracts\ShopRepository::class => \App\Repositories\APIs\ShopRepository::class,
         \App\Repositories\Contracts\AlertRepository::class => \App\Repositories\APIs\AlertRepository::class,
+        \App\Repositories\Contracts\TaskRepository::class => \App\Repositories\APIs\TaskRepository::class,
     ];
 
     /**
