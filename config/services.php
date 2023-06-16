@@ -41,6 +41,9 @@ return [
             'alerts' => [
                 'list' => '/alerts',
             ],
+            'tasks' => [
+                'list' => '/tasks',
+            ],
         ],
     ],
 
