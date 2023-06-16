@@ -2,36 +2,24 @@
 
 namespace App\Services\OSS;
 
-trait OSSService
+class OSSService
 {
-    /**
-     * Get base url api of maclogi oss.
-     */
-    public function getBaseUrl()
-    {
-        if (empty($this->baseUrl)) {
-            $this->baseUrl = config('services.maclogi_oss.url');
-        }
-
-        return $this->baseUrl;
-    }
-
     /**
      * Get api key.
      */
-    public function getApiKey()
+    public static function getApiKey(): string
     {
         $salt = config('services.maclogi_oss.key');
         $appUrl = config('app.url');
 
-        return sha1($salt.$appUrl);
+        return sha1($appUrl.$salt);
     }
 
     /**
-     * Handle call oss api.
+     * Get api uri.
      */
-    public function ossClient()
+    public static function getApiUri($key): string
     {
-        return $this->callApi()->withHeaders(['X-Api-Key' => $this->getApiKey()]);
+        return config("services.maclogi_oss.api_uri.{$key}");
     }
 }

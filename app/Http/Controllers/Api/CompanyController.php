@@ -54,9 +54,11 @@ class CompanyController extends Controller
     {
         $company = $this->companyRepository->create($request->validated(), $request->user());
 
-        return $company ? new CompanyResource($company) : response()->json([
-            'message' => __('Created failure.'),
-        ], Response::HTTP_BAD_REQUEST);
+        return $company
+            ? (new CompanyResource($company))->response($request)->setStatusCode(Response::HTTP_CREATED)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ], Response::HTTP_BAD_REQUEST);
     }
 
     /**

@@ -10,7 +10,9 @@ if (! function_exists('chatwork_log')) {
      */
     function chatwork_log(string $message, $level = 'info'): void
     {
-        app(ChatworkRepository::class)->sendMessageLog($message, $level);
+        if (! app()->environment('testing')) {
+            app(ChatworkRepository::class)->sendMessageLog($message, $level);
+        }
     }
 }
 

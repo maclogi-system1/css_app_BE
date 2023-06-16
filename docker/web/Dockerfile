@@ -10,7 +10,7 @@ ENV XDEBUG_MODE off
 ENV XDEBUG_CONFIG client_host=host.docker.internal
 
 # Install packages
-RUN apt-get update && apt-get install -y sudo git curl zip unzip supervisor sqlite3 libcap2-bin libpng-dev libpq-dev libzip-dev python2 vim
+RUN apt-get update && apt-get install -y sudo git curl zip unzip supervisor sqlite3 libcap2-bin libpng-dev libpq-dev libzip-dev vim
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && curl -sLS https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
@@ -24,7 +24,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN yes | pecl install xdebug \
     && echo "zend_extension=$(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini \
     && echo "xdebug.remote_enable=${XDEBUG_MODE}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-    && echo "xdebug.remote_autostart=off" >> /usr/local/etc/php/conf.d/xdebug.ini
+    && echo "xdebug.${XDEBUG_CONFIG}" >> /usr/local/etc/php/conf.d/xdebug.ini \
+    && echo "xdebug.remote_autostart=off" >> /usr/local/etc/php/conf.d/xdebug.ini \
+    && echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/xdebug.ini
 
 # Install imagick
 RUN apt-get update && apt-get install -y libmagickwand-dev --no-install-recommends
@@ -61,6 +63,6 @@ COPY php.ini /usr/local/etc/php/
 
 RUN chmod +x /usr/local/bin/start-container
 
-EXPOSE 80 443 5173
+EXPOSE 80 443
 
 ENTRYPOINT ["start-container"]

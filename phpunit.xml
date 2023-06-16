@@ -31,5 +31,11 @@
         <include>
             <directory suffix=".php">./app</directory>
         </include>
+        <exclude>
+            <directory suffix=".php">./app/Mixin</directory>
+            <directory suffix=".php">./app/Http/Middleware</directory>
+            <directory suffix=".php">./app/Providers</directory>
+            <file>./app/Support/helpers.php</file>
+        </exclude>
     </source>
 </phpunit>

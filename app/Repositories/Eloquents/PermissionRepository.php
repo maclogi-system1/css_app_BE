@@ -16,6 +16,9 @@ class PermissionRepository extends Repository implements PermissionRepositoryCon
         return Permission::class;
     }
 
+    /**
+     * Handle update permission.
+     */
     public function update(array $data, Permission $permission): ?Permission
     {
         $permission->forceFill($data);

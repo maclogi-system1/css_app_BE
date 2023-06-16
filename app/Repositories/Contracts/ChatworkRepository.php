@@ -20,4 +20,9 @@ interface ChatworkRepository extends Repository
      * Handle sending messages to the room for all members or a few specified members.
      */
     public function sendMessage($roomId, string $message, array $sendTo = []): ?bool;
+
+    /**
+     * Handle sending a message log to chatwork.
+     */
+    public function sendMessageLog(string $message, string $level = 'info'): void;
 }

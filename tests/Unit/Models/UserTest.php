@@ -16,4 +16,14 @@ class UserTest extends TestCase
 
         $this->assertTrue($user->profile_photo === config('app.url').'/storage/images/profile_photo/supreme_administrator_1681980964.png');
     }
+
+    public function test_get_profile_photo_default(): void
+    {
+        $user = User::factory()->make([
+            'name' => 'User Name',
+            'profile_photo_path' => null,
+        ]);
+
+        $this->assertTrue($user->profile_photo === config('filesystems.profile_photo_default').$user->name);
+    }
 }

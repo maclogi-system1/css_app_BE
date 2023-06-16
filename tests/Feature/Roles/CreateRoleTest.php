@@ -13,7 +13,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_create_a_new_role(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.roles.store'), [
@@ -28,7 +28,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_not_create_a_new_role_without_name(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.roles.store'), [
@@ -42,7 +42,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_not_create_a_new_user_without_display_name(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.roles.store'), [
@@ -56,7 +56,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_not_create_a_new_user_with_name_already_exists(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
         $role = Role::factory()->create();
 
         $this->actingAs($user, 'sanctum')
@@ -72,7 +72,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_not_create_a_new_user_with_display_name_already_exists(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
+        $user = $this->createUser(['is_admin' => true]);
         $role = Role::factory()->create();
 
         $this->actingAs($user, 'sanctum')
@@ -88,7 +88,7 @@ class CreateRoleTest extends TestCase
 
     public function test_can_not_create_a_new_user_without_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.roles.store'), [
@@ -100,8 +100,8 @@ class CreateRoleTest extends TestCase
 
     public function test_can_assign_user_to_role(): void
     {
-        $user = User::factory()->isSupperAdmin()->create();
-        $anotherUser = User::factory()->create();
+        $user = $this->createUser(['is_admin' => true]);
+        $anotherUser = $this->createUser();
 
         $this->actingAs($user, 'sanctum')
             ->postJson(route('api.roles.store'), [
