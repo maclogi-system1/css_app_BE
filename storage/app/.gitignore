@@ -1,3 +1,4 @@
 *
 !public/
 !.gitignore
+!mq_accounting_template.csv
