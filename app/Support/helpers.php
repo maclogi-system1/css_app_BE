@@ -16,6 +16,22 @@ if (! function_exists('chatwork_log')) {
     }
 }
 
+if (! function_exists('convert_fields_to_sjis')) {
+    /**
+     * Convert fields to sjis encoding.
+     */
+    function convert_fields_to_sjis(array $fields)
+    {
+        $result = [];
+
+        foreach ($fields as $field) {
+            $result[] = mb_convert_encoding($field, 'SJIS', 'UTF-8');
+        }
+
+        return $result;
+    }
+}
+
 if (! function_exists('to_array')) {
     /**
      * Results array of items from Collection or Arrayable.
