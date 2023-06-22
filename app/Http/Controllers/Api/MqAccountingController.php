@@ -28,12 +28,46 @@ class MqAccountingController extends Controller
         ]);
     }
 
+    public function updateByStore(Request $request, $storeId)
+    {
+        $numberFailures = 0;
+
+        foreach ($request->all() as $data) {
+            $rows = $this->mqAccountingRepository->getDataForUpdate($data);
+            $result = $this->mqAccountingRepository->updateOrCreate($rows, $storeId);
+
+            if (is_null($result)) {
+                $numberFailures++;
+            }
+        }
+
+        return response()->json([
+            'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
+            'number_of_failures' => $numberFailures,
+        ]);
+    }
+
     public function downloadTemplateCsv(Request $request)
     {
         return Storage::disk('local')->download('mq_accounting_template.csv');
     }
 
     public function downloadMqAccountingCsv(Request $request, $storeId)
+    {
+        $filter = [
+            'options' => $this->mqAccountingRepository->getShowableRows(),
+        ] + $request->only(['from_date', 'to_date']);
+
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
+    }
+
+    public function downloadMqAccountingCsvSelection(Request $request, $storeId)
     {
         return response()->stream($this->mqAccountingRepository->streamCsvFile($request->query(), $storeId), 200, [
             'Content-Type' => 'text/csv',

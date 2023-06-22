@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Collection;
 interface MqAccountingRepository extends Repository
 {
     /**
+     * Get a list of items that can be shown.
+     */
+    public function getShowableRows(): array;
+
+    /**
      * Get mq_accounting details by storeId.
      */
     public function getListByStore(string $storeId, array $filter = []): ?Collection;
@@ -32,4 +37,9 @@ interface MqAccountingRepository extends Repository
      * Update an existing model or create a new model.
      */
     public function updateOrCreate(array $rows, $storeId);
+
+    /**
+     * Read and parse data for update.
+     */
+    public function getDataForUpdate(array $data): array;
 }
