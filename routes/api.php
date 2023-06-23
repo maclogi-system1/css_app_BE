@@ -93,7 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->withoutMiddleware('auth:sanctum');
             Route::get('/download-csv/{storeId}', 'downloadMqAccountingCsv')
                 ->name('download-csv');
+            Route::get('/download-csv-selection/{storeId}', 'downloadMqAccountingCsvSelection')
+                ->name('download-csv-selection');
             Route::post('/upload-csv/{storeId}', 'uploadMqAccountingCsv')->name('upload-csv');
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
+            Route::put('/{storeId}', 'updateByStore')->name('update-by-store');
         });
 });
