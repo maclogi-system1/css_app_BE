@@ -12,4 +12,9 @@ class MqAccountingService extends Service
     {
         return [];
     }
+
+    public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filter = [])
+    {
+        return [];
+    }
 }

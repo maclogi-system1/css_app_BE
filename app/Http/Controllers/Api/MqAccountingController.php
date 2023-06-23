@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
 use App\Imports\MqAccountingImport;
 use App\Repositories\Contracts\MqAccountingRepository;
+use App\Repositories\Contracts\MqChartRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,8 @@ use Maatwebsite\Excel\Facades\Excel;
 class MqAccountingController extends Controller
 {
     public function __construct(
-        private MqAccountingRepository $mqAccountingRepository
+        private MqAccountingRepository $mqAccountingRepository,
+        private MqChartRepository $mqChartRepository
     ) {}
 
     public function getListByStore(Request $request, $storeId): JsonResponse
@@ -95,6 +97,15 @@ class MqAccountingController extends Controller
         return response()->json([
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
             'number_of_failures' => $numberFailures,
+        ]);
+    }
+
+    public function financialIndicatorsMonthly(Request $request, $storeId)
+    {
+        $chartMonthly = $this->mqChartRepository->financialIndicatorsMonthly($storeId, $request->query());
+
+        return response()->json([
+            'changes_financial_indicators_monthly' => $chartMonthly,
         ]);
     }
 }
