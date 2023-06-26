@@ -140,67 +140,105 @@ class MqAccountingCsv
         }
 
         // Add lines for mq_access_num.
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['アクセス内訳', '広告以外アクセス'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->access_flow_sum;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗サーチ流入'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->search_flow_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗ランキング流入'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->ranking_flow_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Instagram流入'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->instagram_flow_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Google流入'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->google_flow_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '運用広告アクセス'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->cpc_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'ディスプレイアクセス'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->display_num;
-        }, $dateRange));
+        if (in_array('access_flow_sum', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['アクセス内訳', '広告以外アクセス'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->access_flow_sum;
+            }, $dateRange));
+        }
+        if (in_array('search_flow_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗サーチ流入'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->search_flow_num;
+            }, $dateRange));
+        }
+        if (in_array('ranking_flow_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗ランキング流入'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->ranking_flow_num;
+            }, $dateRange));
+        }
+        if (in_array('instagram_flow_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Instagram流入'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->instagram_flow_num;
+            }, $dateRange));
+        }
+        if (in_array('google_flow_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Google流入'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->google_flow_num;
+            }, $dateRange));
+        }
+        if (in_array('cpc_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '運用広告アクセス'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->cpc_num;
+            }, $dateRange));
+        }
+        if (in_array('display_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'ディスプレイアクセス'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->display_num;
+            }, $dateRange));
+        }
 
         // Add lines for mq_ad_sales_amnt.
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['広告経由売上内訳', '広告経由売上※TDA除く'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_via_ad;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗シーズナル広告売上'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_seasonal;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗イベント広告売上'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_event;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['TDA', 'アクセス'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_access_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'V売上'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_sales_amnt;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'VROAS'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_roas;
-        }, $dateRange));
+        if (in_array('sales_amnt_via_ad', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['広告経由売上内訳', '広告経由売上※TDA除く'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_via_ad;
+            }, $dateRange));
+        }
+        if (in_array('sales_amnt_seasonal', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗シーズナル広告売上'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_seasonal;
+            }, $dateRange));
+        }
+        if (in_array('sales_amnt_event', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '┗イベント広告売上'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_event;
+            }, $dateRange));
+        }
+        if (in_array('tda_access_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['TDA', 'アクセス'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_access_num;
+            }, $dateRange));
+        }
+        if (in_array('tda_v_sales_amnt', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'V売上'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_sales_amnt;
+            }, $dateRange));
+        }
+        if (in_array('tda_v_roas', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'VROAS'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_roas;
+            }, $dateRange));
+        }
 
         // Add lines for mq_user_trends.
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['新規', '売上'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_amnt;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_price_per_user;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['リピート', '売上'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_amnt;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_num;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_price_per_user;
-        }, $dateRange));
+        if (in_array('new_sales_amnt', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['新規', '売上'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_amnt;
+            }, $dateRange));
+        }
+        if (in_array('new_sales_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_num;
+            }, $dateRange));
+        }
+        if (in_array('new_price_per_user', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_price_per_user;
+            }, $dateRange));
+        }
+        if (in_array('re_sales_amnt', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['リピート', '売上'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_amnt;
+            }, $dateRange));
+        }
+        if (in_array('re_sales_num', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_num;
+            }, $dateRange));
+        }
+        if (in_array('re_price_per_user', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_price_per_user;
+            }, $dateRange));
+        }
 
         // Add lines for mq_cost.
         if (in_array('coupon_points_cost', $options)) {
@@ -212,9 +250,11 @@ class MqAccountingCsv
                 $dateRange
             ));
         }
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '販促費率'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->coupon_points_cost_rate;
-        }, $dateRange));
+        if (in_array('coupon_points_cost_rate', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '販促費率'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->coupon_points_cost_rate;
+            }, $dateRange));
+        }
         if (in_array('ad_cost', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '広告費合計'], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_cost;
@@ -245,9 +285,11 @@ class MqAccountingCsv
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_cost_rate;
             }, $dateRange));
         }
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '原価'], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_price;
-        }, $dateRange));
+        if (in_array('cost_price', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '原価'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_price;
+            }, $dateRange));
+        }
         if (in_array('cost_price_rate', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '原価率'], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_price_rate;
@@ -273,9 +315,11 @@ class MqAccountingCsv
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->commision_rate;
             }, $dateRange));
         }
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->variable_cost_sum;
-        }, $dateRange));
+        if (in_array('variable_cost_sum', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->variable_cost_sum;
+            }, $dateRange));
+        }
         if (in_array('gross_profit', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['粗利益', '粗利益額'], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->gross_profit;
@@ -306,9 +350,11 @@ class MqAccountingCsv
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee_rate;
             }, $dateRange));
         }
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_sum;
-        }, $dateRange));
+        if (in_array('cost_sum', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_sum;
+            }, $dateRange));
+        }
         if (in_array('profit', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['損益', ''], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->profit;
@@ -321,15 +367,21 @@ class MqAccountingCsv
         }
 
         // Add lines for mq_accounting.
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['2年間LTV', ''], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->ltv_2y_amnt;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['限界CPA', ''], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->lim_cpa;
-        }, $dateRange));
-        $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['広告経由CPO', ''], function ($month, $year) use ($mqAccounting) {
-            return $mqAccounting->where('month', $month)->where('year', $year)->first()?->cpo_via_ad;
-        }, $dateRange));
+        if (in_array('ltv_2y_amnt', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['2年間LTV', ''], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->ltv_2y_amnt;
+            }, $dateRange));
+        }
+        if (in_array('lim_cpa', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['限界CPA', ''], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->lim_cpa;
+            }, $dateRange));
+        }
+        if (in_array('cpo_via_ad', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['広告経由CPO', ''], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->cpo_via_ad;
+            }, $dateRange));
+        }
 
         return $this->rows;
     }
