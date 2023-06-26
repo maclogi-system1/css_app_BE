@@ -111,34 +111,10 @@ class ShopService extends Service
                         'consultants' => [],
                     ]
                 ],
-                'links' => [
-                    'first' => 'http://5e0a-14-241-229-85.ngrok-free.app/api/shops?page=1',
-                    'last' => 'http://5e0a-14-241-229-85.ngrok-free.app/api/shops?page=1',
-                    'prev' => null,
-                    'next' => null,
-                ],
                 'meta' => [
                     'current_page' => 1,
                     'from' => 1,
                     'last_page' => 1,
-                    'links' => [
-                        [
-                            'url' => null,
-                            'label' => '&laquo; Previous',
-                            'active' => false,
-                        ],
-                        [
-                            'url' => 'http://5e0a-14-241-229-85.ngrok-free.app/api/shops?page=1',
-                            'label' => '1',
-                            'active' => true,
-                        ],
-                        [
-                            'url' => null,
-                            'label' => 'Next &raquo;',
-                            'active' => false,
-                        ],
-                    ],
-                    'path' => 'http://5e0a-14-241-229-85.ngrok-free.app/api/shops',
                     'per_page' => 10,
                     'to' => 3,
                     'total' => 3,

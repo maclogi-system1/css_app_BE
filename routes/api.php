@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Auth\UsersCompanyController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TeamController;
@@ -82,4 +83,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search', 'search')->name('search');
     });
     Route::apiResource('teams', TeamController::class);
+
+    Route::prefix('mq-accounting')
+        ->name('mq-accounting.')
+        ->controller(MqAccountingController::class)
+        ->group(function () {
+            Route::get('/download-template', 'downloadTemplateCsv')
+                ->name('download-template')
+                ->withoutMiddleware('auth:sanctum');
+            Route::get('/download-csv/{storeId}', 'downloadMqAccountingCsv')
+                ->name('download-csv');
+            Route::get('/download-csv-selection/{storeId}', 'downloadMqAccountingCsvSelection')
+                ->name('download-csv-selection');
+            Route::post('/upload-csv/{storeId}', 'uploadMqAccountingCsv')->name('upload-csv');
+            Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
+            Route::put('/{storeId}', 'updateByStore')->name('update-by-store');
+        });
 });
