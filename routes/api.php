@@ -96,6 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/download-csv-selection/{storeId}', 'downloadMqAccountingCsvSelection')
                 ->name('download-csv-selection');
             Route::post('/upload-csv/{storeId}', 'uploadMqAccountingCsv')->name('upload-csv');
+            Route::get('/chart-financial-indicators-monthly/{storeId}', 'financialIndicatorsMonthly');
+
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
             Route::put('/{storeId}', 'updateByStore')->name('update-by-store');
         });

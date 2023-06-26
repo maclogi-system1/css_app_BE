@@ -49,7 +49,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     ];
 
     public function __construct(
-        private MqAccountingService $mqAccountingService
+        protected MqAccountingService $mqAccountingService
     ) {}
 
     /**
@@ -113,7 +113,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      * Check for filter by year, filter only year not less than current by 2 years
      * and year not more than present by 1 year.
      */
-    private function checkAndGetYearForFilter($year): int
+    protected function checkAndGetYearForFilter($year): int
     {
         $year = $year < now()->subYear(2)->year ? now()->subYear(2)->year : $year;
         $year = $year > now()->addYear()->year ? now()->addYear()->year : $year;
@@ -146,234 +146,18 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
         return function () use ($mqAccounting, $options, $dateRange) {
             $file = fopen('php://output', 'w');
+            $mqAccountingCsv = new MqAccountingCsv();
+            $mqAccountingRows = $mqAccountingCsv->makeRowsCsvFile($mqAccounting, $dateRange, $options);
 
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['項目', '詳細項目'], fn ($month, $year) => $year.'年', $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', ''], fn ($month) => $month.'月', $dateRange)));
-
-            // Add lines for mq_kpi.
-            if (in_array('sales_amnt', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['売上の公式', '売上'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqKpi?->sales_amnt;
-                }, $dateRange)));
+            foreach ($mqAccountingRows as $row) {
+                fputcsv($file, $row);
             }
-            if (in_array('sales_num', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqKpi?->sales_num;
-                }, $dateRange)));
-            }
-            if (in_array('access_num', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', 'アクセス'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqKpi?->access_num;
-                }, $dateRange)));
-            }
-            if (in_array('conversion_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '転換率（％）'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqKpi?->conversion_rate;
-                }, $dateRange)));
-            }
-            if (in_array('sales_amnt_per_user', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqKpi?->sales_amnt_per_user;
-                }, $dateRange)));
-            }
-
-            // Add lines for mq_access_num.
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['アクセス内訳', '広告以外アクセス'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->access_flow_sum;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗サーチ流入'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->search_flow_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗ランキング流入'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->ranking_flow_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Instagram流入'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->instagram_flow_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗Google流入'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->google_flow_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '運用広告アクセス'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->cpc_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', 'ディスプレイアクセス'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAccessNum?->display_num;
-            }, $dateRange)));
-
-            // Add lines for mq_ad_sales_amnt.
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['広告経由売上内訳', '広告経由売上※TDA除く'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_via_ad;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗シーズナル広告売上'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_seasonal;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗イベント広告売上'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->sales_amnt_event;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['TDA', 'アクセス'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_access_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', 'V売上'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_sales_amnt;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', 'VROAS'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqAdSalesAmnt?->tda_v_roas;
-            }, $dateRange)));
-
-            // Add lines for mq_user_trends.
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['新規', '売上'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_amnt;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_sales_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->new_price_per_user;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['リピート', '売上'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_amnt;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '売上件数'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_sales_num;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '客単価'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqUserTrends?->re_price_per_user;
-            }, $dateRange)));
-
-            // Add lines for mq_cost.
-            if (in_array('coupon_points_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(
-                    ['変動費', '販促費(クーポン・ポイント・アフィリエイト）'],
-                    function ($month, $year) use ($mqAccounting) {
-                        return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->coupon_points_cost;
-                    },
-                    $dateRange
-                )));
-            }
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '販促費率'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->coupon_points_cost_rate;
-            }, $dateRange)));
-            if (in_array('ad_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '広告費合計'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_cost;
-                }, $dateRange)));
-            }
-            if (in_array('ad_cpc_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗運用型広告'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_cpc_cost;
-                }, $dateRange)));
-            }
-            if (in_array('ad_season_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗シーズナル広告'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_season_cost;
-                }, $dateRange)));
-            }
-            if (in_array('ad_event_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗イベント広告'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_event_cost;
-                }, $dateRange)));
-            }
-            if (in_array('ad_tda_cost', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '┗TDA広告'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_tda_cost;
-                }, $dateRange)));
-            }
-            if (in_array('ad_cost_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '広告費率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->ad_cost_rate;
-                }, $dateRange)));
-            }
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '原価'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_price;
-            }, $dateRange)));
-            if (in_array('cost_price_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '原価率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_price_rate;
-                }, $dateRange)));
-            }
-            if (in_array('postage', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '送料'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->postage;
-                }, $dateRange)));
-            }
-            if (in_array('postage_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '送料費率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->postage_rate;
-                }, $dateRange)));
-            }
-            if (in_array('commision', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '手数料'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->commision;
-                }, $dateRange)));
-            }
-            if (in_array('commision_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '手数料率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->commision_rate;
-                }, $dateRange)));
-            }
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->variable_cost_sum;
-            }, $dateRange)));
-            if (in_array('gross_profit', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['粗利益', '粗利益額'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->gross_profit;
-                }, $dateRange)));
-            }
-            if (in_array('gross_profit_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '粗利益率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->gross_profit_rate;
-                }, $dateRange)));
-            }
-            if (in_array('management_agency_fee', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['固定費', '運営代行費'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee;
-                }, $dateRange)));
-            }
-            if (in_array('reserve1', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '予備'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->reserve1;
-                }, $dateRange)));
-            }
-            if (in_array('reserve2', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '予備'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->reserve2;
-                }, $dateRange)));
-            }
-            if (in_array('management_agency_fee_rate', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['', '比率'], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee_rate;
-                }, $dateRange)));
-            }
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_sum;
-            }, $dateRange)));
-            if (in_array('profit', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['損益', ''], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->profit;
-                }, $dateRange)));
-            }
-            if (in_array('sum_profit', $options)) {
-                fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['損益累計', ''], function ($month, $year) use ($mqAccounting) {
-                    return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->sum_profit;
-                }, $dateRange)));
-            }
-
-            // Add lines for mq_accounting.
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['2年間LTV', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->ltv_2y_amnt;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['限界CPA', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->lim_cpa;
-            }, $dateRange)));
-            fputcsv($file, convert_fields_to_sjis($this->makeRowCsvFile(['広告経由CPO', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->cpo_via_ad;
-            }, $dateRange)));
 
             fclose($file);
         };
     }
 
-    private function getDateTimeRange($fromDate, $toDate)
+    protected function getDateTimeRange($fromDate, $toDate)
     {
         $period = new CarbonPeriod($fromDate, '1 month', $toDate);
         $result = [];
@@ -383,32 +167,6 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         }
 
         return $result;
-    }
-
-    /**
-     * Make row for csv file.
-     *
-     * @param  array  $row
-     * @param  Closure  $callback (fn ($month, $year) => ([...]))
-     * @return array
-     */
-    private function makeRowCsvFile(array $row, Closure $callback, array $dateRange = []): array
-    {
-        $additionalColumns = [];
-
-        if (empty($dateRange)) {
-            for ($month = 1; $month <= 12; $month++) {
-                $additionalColumns[] = $callback($month, now()->year);
-            }
-        } else {
-            foreach ($dateRange as $yearMonth) {
-                [$year, $month] = explode('-', $yearMonth);
-                $additionalColumns[] = $callback($month, $year);
-            }
-        }
-
-
-        return array_merge($row, $additionalColumns);
     }
 
     /**
@@ -461,7 +219,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Remove strange characters in csv file content to save to database.
      */
-    private function removeStrangeCharacters($value)
+    protected function removeStrangeCharacters($value)
     {
         return ! is_null($value) ? str_replace([',', '%', ' '], ['', '', ''], $value) : null;
     }
