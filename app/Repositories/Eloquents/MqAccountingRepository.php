@@ -100,37 +100,13 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     public function getListByStore(string $storeId, array $filter = []): ?Collection
     {
         $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost']);
+        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
+        $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
+        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
+        $toDate->year($this->checkAndGetYearForFilter($toDate->year));
+
+        $this->useScope(['dateRange' => [$fromDate, $toDate]]);
         $query = $this->queryBuilder()->where('store_id', $storeId);
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date'));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date'));
-
-        if (Arr::has($filter, ['from_date', 'to_date'])) {
-            $fromDate = Carbon::create($filter['from_date']);
-            $toDate = Carbon::create($filter['to_date']);
-
-            if ($fromDate < $toDate) {
-                $query->where(function ($query) use ($fromDate) {
-                        $query->where('year', '>=', $this->checkAndGetYearForFilter($fromDate->year))
-                            ->where('month', '>=', $fromDate->month);
-                    })
-                    ->where(function ($query) use ($toDate) {
-                        $query->where('year', '<=', $this->checkAndGetYearForFilter($toDate->year))
-                            ->where('month', '<=', $toDate->month);
-                    });
-            }
-        } else {
-            if ($year = Arr::get($filter, 'year')) {
-                $query->where('year', $this->checkAndGetYearForFilter($year));
-            } else {
-                $query->where('year', '>=', now()->subYear(2)->year)
-                    ->where('year', '<=', now()->addYear()->year);
-            }
-
-            if ($month = Arr::get($filter, 'month')) {
-                $query->where('month', $month);
-            }
-        }
-
 
         return $query->get();
     }
@@ -161,8 +137,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     public function streamCsvFile(array $filter = [], ?string $storeId = ''): Closure
     {
         $mqAccounting = collect();
-        $fromDate = Carbon::create($filter['from_date']);
-        $toDate = Carbon::create($filter['to_date']);
+        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
+        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
         $dateRange = $this->getDateTimeRange($fromDate, $toDate);
         $options = Arr::get($filter, 'options', []);
 
