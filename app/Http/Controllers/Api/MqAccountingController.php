@@ -137,4 +137,14 @@ class MqAccountingController extends Controller
             'changes_financial_indicators_monthly' => $chartMonthly,
         ]);
     }
+
+    /**
+     * Get the cumulative change in revenue and profit.
+     */
+    public function cumulativeChangeInRevenueAndProfit(Request $request, $storeId)
+    {
+        $chartMonthly = $this->mqChartRepository->cumulativeChangeInRevenueAndProfit($storeId, $request->query());
+
+        return response()->json($chartMonthly);
+    }
 }
