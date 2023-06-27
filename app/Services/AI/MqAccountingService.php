@@ -3,7 +3,9 @@
 namespace App\Services\AI;
 
 use App\Services\Service;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
 class MqAccountingService extends Service
@@ -16,5 +18,43 @@ class MqAccountingService extends Service
     public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filter = [])
     {
         return [];
+    }
+
+    /**
+     * Get the cumulative change in revenue and profit.
+     */
+    public function getCumulativeChangeInRevenueAndProfit($storeId, array $filter = [])
+    {
+        $fromDate = Carbon::create(Arr::get($filter, 'from_date'));
+        $toDate = Carbon::create(Arr::get($filter, 'to_date'));
+        $dateRange = $this->getDateTimeRange($fromDate, $toDate);
+
+        $result = [];
+
+        foreach ($dateRange as $yearMonth) {
+            [$year, $month] = explode('-', $yearMonth);
+            $result[] = [
+                'store_id' => $storeId,
+                'year' => intval($year),
+                'month' => intval($month),
+                'sales_amnt' => 0,
+                'profit' => 0,
+            ];
+        }
+
+        return $result;
+    }
+
+    protected function getDateTimeRange($fromDate, $toDate)
+    {
+        $period = new CarbonPeriod($fromDate, '1 month', $toDate);
+
+        $result = [];
+
+        foreach ($period as $dateTime) {
+            $result[] = $dateTime->format('Y-m');
+        }
+
+        return $result;
     }
 }
