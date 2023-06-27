@@ -8,7 +8,6 @@ use App\Repositories\Repository;
 use App\Services\AI\MqAccountingService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class MqChartRepository extends Repository implements MqChartRepositoryContract
 {
@@ -29,18 +28,12 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
      */
     public function financialIndicatorsMonthly($storeId, array $filter = [])
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date'));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date'));
+        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
+        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
 
-        return $this->model()->where('store_id', $storeId)
-            ->where(function ($query) use ($fromDate) {
-                $query->where('year', '>=', $fromDate->year)
-                    ->where('month', '>=', $fromDate->month);
-            })
-            ->where(function ($query) use ($toDate) {
-                $query->where('year', '<=', $toDate->year)
-                    ->where('month', '<=', $toDate->month);
-            })
+        return $this->model()
+            ->dateRange($fromDate, $toDate)
+            ->where('store_id', $storeId)
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
@@ -55,19 +48,13 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
      */
     public function cumulativeChangeInRevenueAndProfit($storeId, array $filter = [])
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date'));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date'));
+        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
+        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
 
         $actualMqAccounting = $this->mqAccountingService->getCumulativeChangeInRevenueAndProfit($storeId, $filter);
-        $expectedMqAccounting = $this->model()->where('store_id', $storeId)
-            ->where(function ($query) use ($fromDate) {
-                $query->where('year', '>=', $fromDate->year)
-                    ->where('month', '>=', $fromDate->month);
-            })
-            ->where(function ($query) use ($toDate) {
-                $query->where('year', '<=', $toDate->year)
-                    ->where('month', '<=', $toDate->month);
-            })
+        $expectedMqAccounting = $this->model()
+            ->dateRange($fromDate, $toDate)
+            ->where('store_id', $storeId)
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
