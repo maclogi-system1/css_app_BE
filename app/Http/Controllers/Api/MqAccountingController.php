@@ -147,4 +147,16 @@ class MqAccountingController extends Controller
 
         return response()->json($chartMonthly);
     }
+
+    /**
+     * Get total sale amount, cost and profit by store id.
+     */
+    public function getTotalParamByStore(Request $request, $storeId)
+    {
+        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->query()); 
+
+        return response()->json([
+            'total_param' => $expectedTotalParam,
+        ]);
+    }
 }
