@@ -300,7 +300,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filter = []): ?Collection 
+    public function getTotalParamByStore(string $storeId, array $filter = []): Collection
     {
         $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
@@ -315,7 +315,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                         store_id,
                         sum(mk.sales_amnt) as sales_amnt_total,
                         sum(mc.cost_sum) as cost_sum_total,
-                        sum(mc.variable_cost_sum) as variable_cost_sum_total, 
+                        sum(mc.variable_cost_sum) as variable_cost_sum_total,
                         sum(mc.profit) as profit_total
                     ")
             ->groupBy('mq_accounting.store_id')

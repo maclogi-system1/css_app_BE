@@ -42,4 +42,9 @@ interface MqAccountingRepository extends Repository
      * Read and parse data for update.
      */
     public function getDataForUpdate(array $data): array;
+
+    /**
+     * Get total sale amount, cost and profit by store id.
+     */
+    public function getTotalParamByStore(string $storeId, array $filter = []): Collection;
 }
