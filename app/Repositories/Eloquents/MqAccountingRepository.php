@@ -17,10 +17,11 @@ use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MqAccountingRepository extends Repository implements MqAccountingRepositoryContract
 {
-    public const SHOWABLE_ROWS = [
+    protected array $showableRows = [
         'sales_amnt',
         'sales_num',
         'access_num',
@@ -91,7 +92,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getShowableRows(): array
     {
-        return static::SHOWABLE_ROWS;
+        return $this->showableRows;
     }
 
     /**
@@ -99,6 +100,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getListByStore(string $storeId, array $filter = []): ?Collection
     {
+        $csvUsageFee = MqCost::CSV_USAGE_FEE;
+        $storeOpeningFee = MqCost::STORE_OPENING_FEE;
+
         $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost']);
         $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
@@ -106,9 +110,14 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $toDate->year($this->checkAndGetYearForFilter($toDate->year));
 
         $this->useScope(['dateRange' => [$fromDate, $toDate]]);
-        $query = $this->queryBuilder()->where('store_id', $storeId);
+        $query = $this->queryBuilder()->where('store_id', $storeId)
+            ->select('*', DB::raw("{$csvUsageFee} as csv_usage_fee, {$storeOpeningFee} as store_opening_fee"));
 
-        return $query->get();
+        return $query->get()->map(function ($item) use ($csvUsageFee, $storeOpeningFee) {
+            $item->fixed_cost = $item->mqCost->cost_sum + $csvUsageFee + $storeOpeningFee;
+
+            return $item;
+        });
     }
 
     /**
