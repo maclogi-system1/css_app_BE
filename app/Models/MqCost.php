@@ -10,6 +10,9 @@ class MqCost extends Model
 {
     use HasFactory, HasUuids;
 
+    public const CSV_USAGE_FEE = 10000;
+    public const STORE_OPENING_FEE = 50000;
+
     protected $table = 'mq_cost';
 
     protected $fillable = [
