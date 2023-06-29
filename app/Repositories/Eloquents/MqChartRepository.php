@@ -50,6 +50,7 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
     {
         $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
+        $dateRange = $this->mqAccountingService->getDateTimeRange($fromDate, $toDate);
 
         $actualMqAccounting = $this->mqAccountingService->getCumulativeChangeInRevenueAndProfit($storeId, $filter);
         $expectedMqAccounting = $this->model()
@@ -63,9 +64,25 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             )
             ->get();
 
+        $profitAchievementRate = [];
+
+        foreach ($dateRange as $yearMonth) {
+            [$year, $month] = explode('-', $yearMonth);
+            $expected = $expectedMqAccounting->where('year', $year)->where('month', intval($month))->first()?->profit ?? 1;
+            $actual = Arr::get($actualMqAccounting->where('year', $year)->where('month', intval($month))->first(), 'profit', 2);
+            $result = 100 * $actual / $expected;
+            $profitAchievementRate[] = [
+                'store_id' => $storeId,
+                'year' => $year,
+                'month' => intval($month),
+                'profit_rate' => round($result, 2),
+            ];
+        }
+
         return [
             'actual_mq_accounting' => $actualMqAccounting,
             'expected_mq_accounting' => $expectedMqAccounting,
+            'profit_achievement_rate' => $profitAchievementRate,
         ];
     }
 }
