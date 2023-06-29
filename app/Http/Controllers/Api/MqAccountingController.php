@@ -64,7 +64,7 @@ class MqAccountingController extends Controller
         ] + $request->only(['from_date', 'to_date']);
 
         return response()->stream($this->mqAccountingRepository->streamCsvFile($filter), 200, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
@@ -81,7 +81,7 @@ class MqAccountingController extends Controller
             + ['options' => $this->mqAccountingRepository->getShowableRows()];
 
         return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), 200, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
@@ -95,7 +95,7 @@ class MqAccountingController extends Controller
     public function downloadMqAccountingCsvSelection(Request $request, $storeId)
     {
         return response()->stream($this->mqAccountingRepository->streamCsvFile($request->query(), $storeId), 200, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
