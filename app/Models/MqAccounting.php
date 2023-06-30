@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Support\Traits\HasCompositePrimaryKey;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class MqAccounting extends Model
 {
@@ -57,5 +59,29 @@ class MqAccounting extends Model
     public function mqCost()
     {
         return $this->belongsTo(MqCost::class);
+    }
+
+    public function scopeDateRange(Builder $query, Carbon $fromDate, Carbon $toDate): Builder
+    {
+        if ($fromDate <= $toDate) {
+            $query->where(function ($query) use ($fromDate, $toDate) {
+                    $fromYear = $fromDate->year;
+                    $fromMonth = $fromDate->month;
+                    $from = "{$fromYear}-{$fromMonth}-01";
+
+                    $toYear = $toDate->year;
+                    $toMonth = $toDate->month;
+                    $to = "{$toYear}-{$toMonth}-01";
+
+                    $query->whereRaw("
+                        STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') >= DATE('".$from."')
+                    ")
+                    ->whereRaw("
+                        STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') <= DATE('".$to."')
+                    ");
+                });
+        }
+
+        return $query;
     }
 }
