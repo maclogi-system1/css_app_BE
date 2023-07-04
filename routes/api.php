@@ -104,5 +104,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/total/{storeId}', 'getTotalParamByStore')->name('get-total-param-by-store');
 
             Route::get('/get-forecast-vs-actual/{storeId}', 'getForecastVsActual')->name('get-forecast-vs-actual');
+            Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
         });
 });
