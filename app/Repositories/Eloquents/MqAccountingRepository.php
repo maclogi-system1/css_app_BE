@@ -102,22 +102,35 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     {
         $csvUsageFee = MqCost::CSV_USAGE_FEE;
         $storeOpeningFee = MqCost::STORE_OPENING_FEE;
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
 
-        $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost']);
+        return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
+            ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
+            ->queryBuilder()
+            ->where('store_id', $storeId)
+            ->select('*', DB::raw("{$csvUsageFee} as csv_usage_fee, {$storeOpeningFee} as store_opening_fee"))
+            ->get()
+            ->map(function ($item) use ($csvUsageFee, $storeOpeningFee) {
+                $item->fixed_cost = $item->mqCost->cost_sum + $csvUsageFee + $storeOpeningFee;
+
+                return $item;
+            });
+    }
+
+    /**
+     * Get date range for filter.
+     */
+    public function getDateRangeFilter(array $filter): array
+    {
         $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
         $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
         $toDate->year($this->checkAndGetYearForFilter($toDate->year));
 
-        $this->useScope(['dateRange' => [$fromDate, $toDate]]);
-        $query = $this->queryBuilder()->where('store_id', $storeId)
-            ->select('*', DB::raw("{$csvUsageFee} as csv_usage_fee, {$storeOpeningFee} as store_opening_fee"));
-
-        return $query->get()->map(function ($item) use ($csvUsageFee, $storeOpeningFee) {
-            $item->fixed_cost = $item->mqCost->cost_sum + $csvUsageFee + $storeOpeningFee;
-
-            return $item;
-        });
+        return [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ];
     }
 
     /**
@@ -311,13 +324,10 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getTotalParamByStore(string $storeId, array $filter = []): Collection
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
-        $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
-        $toDate->year($this->checkAndGetYearForFilter($toDate->year));
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
 
-        $this->useScope(['dateRange' => [$fromDate, $toDate]]);
-        $query = $this->queryBuilder()
+        $query = $this->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
+            ->queryBuilder()
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->selectRaw("
@@ -331,5 +341,45 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->where('store_id', $storeId);
 
         return $query->get();
+    }
+
+    /**
+     * Get forecast vs actual.
+     */
+    public function getForecastVsActual(string $storeId, array $filter = []): array
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
+
+        $expected = $this->useScope([
+                'dateRange' => [
+                    $dateRangeFilter['from_date'],
+                    $dateRangeFilter['to_date'],
+                ]
+            ])
+            ->queryBuilder()
+            ->where('store_id', $storeId)
+            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
+            ->select('mk.sales_amnt', 'mc.profit')
+            ->get()
+            ->reduce(function ($pre, $item) {
+                return [
+                    'sales_amnt' => $pre['sales_amnt'] + $item->sales_amnt,
+                    'profit' => $pre['profit'] + $item->profit,
+                ];
+            }, [
+                'sales_amnt' => 0,
+                'profit' => 0,
+            ]);
+        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filter);
+        $salesAmntRate = ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $actual['sales_amnt'];
+        $profitRate = ($actual['profit'] - $expected['profit']) * 100 / $actual['profit'];
+
+        return [
+            'sales_amnt_rate' => round($salesAmntRate, 2),
+            'profit_rate' => round($profitRate, 2),
+            'actual' => $actual,
+            'expected' => $expected,
+        ];
     }
 }

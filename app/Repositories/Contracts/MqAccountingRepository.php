@@ -47,4 +47,9 @@ interface MqAccountingRepository extends Repository
      * Get total sale amount, cost and profit by store id.
      */
     public function getTotalParamByStore(string $storeId, array $filter = []): Collection;
+
+    /**
+     * Get forecast vs actual.
+     */
+    public function getForecastVsActual(string $storeId, array $filter = []): array;
 }

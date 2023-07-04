@@ -10,6 +10,7 @@ use App\Repositories\Contracts\MqChartRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MqAccountingController extends Controller
 {
@@ -35,7 +36,7 @@ class MqAccountingController extends Controller
     /**
      * Update metrics of mq_accounting by store id (corresponds to shop_url in OSS).
      */
-    public function updateByStore(Request $request, $storeId)
+    public function updateByStore(Request $request, $storeId): JsonResponse
     {
         $numberFailures = 0;
 
@@ -57,7 +58,7 @@ class MqAccountingController extends Controller
     /**
      * Download a template csv file.
      */
-    public function downloadTemplateCsv(Request $request)
+    public function downloadTemplateCsv(Request $request): StreamedResponse
     {
         $filter = [
             'options' => $this->mqAccountingRepository->getShowableRows(),
@@ -75,7 +76,7 @@ class MqAccountingController extends Controller
     /**
      * Download a csv file containing the data of mq_accounting by store_id and by time period
      */
-    public function downloadMqAccountingCsv(Request $request, $storeId)
+    public function downloadMqAccountingCsv(Request $request, $storeId): StreamedResponse
     {
         $filter = $request->only(['from_date', 'to_date', 'options'])
             + ['options' => $this->mqAccountingRepository->getShowableRows()];
@@ -92,7 +93,7 @@ class MqAccountingController extends Controller
     /**
      * Download a csv file containing the data of mq_accounting by store_id and by time period with selection fields.
      */
-    public function downloadMqAccountingCsvSelection(Request $request, $storeId)
+    public function downloadMqAccountingCsvSelection(Request $request, $storeId): StreamedResponse
     {
         return response()->stream($this->mqAccountingRepository->streamCsvFile($request->query(), $storeId), 200, [
             'Content-Type' => 'text/csv; charset=shift_jis',
@@ -106,7 +107,7 @@ class MqAccountingController extends Controller
     /**
      * Upload a mq_accounting file for update an existing resource or create a new resource.
      */
-    public function uploadMqAccountingCsv(UploadMqAccountingCsvRequest $request, $storeId)
+    public function uploadMqAccountingCsv(UploadMqAccountingCsvRequest $request, $storeId): JsonResponse
     {
         $rows = Excel::toArray(new MqAccountingImport(), $request->file('mq_accounting'))[0];
         $dataReaded = $this->mqAccountingRepository->readAndParseCsvFileContents($rows);
@@ -129,7 +130,7 @@ class MqAccountingController extends Controller
     /**
      * Get the chart information of the month-to-month change of financial indicators.
      */
-    public function financialIndicatorsMonthly(Request $request, $storeId)
+    public function financialIndicatorsMonthly(Request $request, $storeId): JsonResponse
     {
         $chartMonthly = $this->mqChartRepository->financialIndicatorsMonthly($storeId, $request->query());
 
@@ -141,7 +142,7 @@ class MqAccountingController extends Controller
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function cumulativeChangeInRevenueAndProfit(Request $request, $storeId)
+    public function cumulativeChangeInRevenueAndProfit(Request $request, $storeId): JsonResponse
     {
         $chartMonthly = $this->mqChartRepository->cumulativeChangeInRevenueAndProfit($storeId, $request->query());
 
@@ -151,12 +152,22 @@ class MqAccountingController extends Controller
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(Request $request, $storeId)
+    public function getTotalParamByStore(Request $request, $storeId): JsonResponse
     {
-        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->query()); 
+        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->query());
 
         return response()->json([
             'total_param' => $expectedTotalParam,
         ]);
+    }
+
+    /**
+     * Get forecast vs actual.
+     */
+    public function getForecastVsActual(Request $request, $storeId): JsonResponse
+    {
+        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $request->query());
+
+        return response()->json($result);
     }
 }
