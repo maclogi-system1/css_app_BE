@@ -390,8 +390,12 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 'profit' => 0,
             ]);
         $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filter);
-        $salesAmntRate = ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $actual['sales_amnt'];
-        $profitRate = ($actual['profit'] - $expected['profit']) * 100 / $actual['profit'];
+        $salesAmntRate = $expected['sales_amnt']
+            ? ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $expected['sales_amnt']
+            : 0;
+        $profitRate = $expected['profit']
+            ? ($actual['profit'] - $expected['profit']) * 100 / $expected['profit']
+            : 0;
 
         return [
             'sales_amnt_rate' => round($salesAmntRate, 2),
