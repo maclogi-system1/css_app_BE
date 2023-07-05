@@ -256,6 +256,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         return $this->handleSafely(function () use ($rows, $storeId) {
             $year = $rows['year'];
             $month = $rows['month'];
+            $rows['fixed_cost'] = Arr::get($rows, 'cost_sum', 0)
+                + Arr::get($rows, 'csv_usage_fee', 0)
+                + Arr::get($rows, 'store_opening_fee', 0);
 
             $mqAccounting = MqAccounting::where('store_id', $storeId)
                 ->where('year', $year)
@@ -292,7 +295,14 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 ]);
             }
 
-            $mqAccounting->forceFill(Arr::only($rows, ['ltv_2y_amnt', 'lim_cpa', 'cpo_via_ad']))->save();
+            $mqAccounting->forceFill(Arr::only($rows, [
+                'ltv_2y_amnt',
+                'lim_cpa',
+                'cpo_via_ad',
+                'csv_usage_fee',
+                'store_opening_fee',
+                'fixed_cost',
+            ]))->save();
 
             return $mqAccounting;
         }, 'Update or create mq accounting');
@@ -303,7 +313,15 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getDataForUpdate(array $data): array
     {
-        $rows = Arr::only($data, ['year', 'month', 'ltv_2y_amnt', 'lim_cpa', 'cpo_via_ad']);
+        $rows = Arr::only($data, [
+            'year',
+            'month',
+            'ltv_2y_amnt',
+            'lim_cpa',
+            'cpo_via_ad',
+            'csv_usage_fee',
+            'store_opening_fee',
+        ]);
         $kpi = Arr::only($data, (new MqKpi())->getFillable());
         $accessNum = Arr::only($data, (new MqAccessNum())->getFillable());
         $adSalesAmnt = Arr::only($data, (new MqAdSalesAmnt())->getFillable());

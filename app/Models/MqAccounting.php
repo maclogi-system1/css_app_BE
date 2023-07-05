@@ -27,6 +27,9 @@ class MqAccounting extends Model
         'cpo_via_ad',
         'create_at',
         'updated_at',
+        'csv_usage_fee',
+        'store_opening_fee',
+        'fixed_cost',
     ];
 
     /**
