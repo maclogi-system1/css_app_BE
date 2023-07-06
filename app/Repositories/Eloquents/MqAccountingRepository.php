@@ -100,21 +100,20 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getListByStore(string $storeId, array $filter = []): ?Collection
     {
-        $csvUsageFee = MqCost::CSV_USAGE_FEE;
-        $storeOpeningFee = MqCost::STORE_OPENING_FEE;
         $dateRangeFilter = $this->getDateRangeFilter($filter);
 
         return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
             ->queryBuilder()
             ->where('store_id', $storeId)
-            ->select('*', DB::raw("{$csvUsageFee} as csv_usage_fee, {$storeOpeningFee} as store_opening_fee"))
-            ->get()
-            ->map(function ($item) use ($csvUsageFee, $storeOpeningFee) {
-                $item->fixed_cost = $item->mqCost->cost_sum + $csvUsageFee + $storeOpeningFee;
-
-                return $item;
-            });
+            ->select(
+                '*',
+                DB::raw('CASE
+                    WHEN (mq_accounting.`fixed_cost` IS NULL) THEN 0
+                    ELSE mq_accounting.`fixed_cost`
+                END as `fixed_cost`')
+            )
+            ->get();
     }
 
     /**
