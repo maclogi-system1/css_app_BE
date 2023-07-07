@@ -40,7 +40,7 @@ class MqAccountingController extends Controller
     {
         $numberFailures = 0;
 
-        foreach ($request->all() as $data) {
+        foreach ($request->post() as $data) {
             $rows = $this->mqAccountingRepository->getDataForUpdate($data);
             $result = $this->mqAccountingRepository->updateOrCreate($rows, $storeId);
 
