@@ -17,62 +17,65 @@ use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class MqAccountingRepository extends Repository implements MqAccountingRepositoryContract
 {
-    protected array $showableRows = [
-        'sales_amnt',
-        'sales_num',
-        'access_num',
-        'conversion_rate',
-        'sales_amnt_per_user',
-        'access_flow_sum',
-        'search_flow_num',
-        'ranking_flow_num',
-        'instagram_flow_num',
-        'google_flow_num',
-        'cpc_num',
-        'display_num',
-        'sales_amnt_via_ad',
-        'sales_amnt_seasonal',
-        'sales_amnt_event',
-        'tda_access_num',
-        'tda_v_sales_amnt',
-        'tda_v_roas',
-        'new_sales_amnt',
-        'new_sales_num',
-        'new_price_per_user',
-        're_sales_amnt',
-        're_sales_num',
-        're_price_per_user',
-        'coupon_points_cost',
-        'coupon_points_cost_rate',
-        'ad_cost',
-        'ad_cpc_cost',
-        'ad_season_cost',
-        'ad_event_cost',
-        'ad_tda_cost',
-        'ad_cost_rate',
-        'cost_price',
-        'cost_price_rate',
-        'postage',
-        'postage_rate',
-        'commision',
-        'commision_rate',
-        'variable_cost_sum',
-        'gross_profit',
-        'gross_profit_rate',
-        'management_agency_fee',
-        'reserve1',
-        'reserve2',
-        'management_agency_fee_rate',
-        'cost_sum',
-        'profit',
-        'sum_profit',
-        'ltv_2y_amnt',
-        'lim_cpa',
-        'cpo_via_ad',
+    protected array $validationRules = [
+        'sales_amnt'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_num'                 => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'access_num'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'conversion_rate'           => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'sales_amnt_per_user'       => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'access_flow_sum'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'search_flow_num'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ranking_flow_num'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'instagram_flow_num'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'google_flow_num'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cpc_num'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'display_num'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_via_ad'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_seasonal'       => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_event'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_access_num'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_v_sales_amnt'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_v_roas'                => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'new_sales_amnt'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'new_sales_num'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'new_price_per_user'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_sales_amnt'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_sales_num'              => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_price_per_user'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'coupon_points_cost'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'coupon_points_cost_rate'   => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'ad_cost'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_cpc_cost'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_season_cost'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_event_cost'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_tda_cost'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_cost_rate'              => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'cost_price'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cost_price_rate'           => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'postage'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'postage_rate'              => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'commision'                 => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'commision_rate'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'gross_profit'              => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'gross_profit_rate'         => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'variable_cost_sum'         => ['nullable'],
+        'management_agency_fee'     => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'reserve1'                  => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'reserve2'                  => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'csv_usage_fee'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'store_opening_fee'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'management_agency_fee_rate'=> [ 'nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'fixed_cost'                => ['nullable'],
+        'profit'                    => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sum_profit'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ltv_2y_amnt'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'lim_cpa'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cpo_via_ad'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cost_sum'                  => ['nullable'],
     ];
 
     public function __construct(
@@ -92,7 +95,42 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getShowableRows(): array
     {
-        return $this->showableRows;
+        return array_keys($this->validationRules);
+    }
+
+    /**
+     * Get a list of validation rules for validator
+     */
+    public function getValidationRules() : array
+    {
+        return $this->validationRules +
+            [
+                'year'  => ['required', 'integer', 'max:' . now()->addYear()->year, 'min:' . now()->subYear(2)->year],
+                'month' => ['required', 'integer', 'min:1', 'max:12'],
+            ];
+    }
+
+    /**
+     * Handle data validation to update mq_accounting.
+     */
+    public function handleValidationUpdate($data, $storeId): array
+    {
+        $validator = Validator::make($data, $this->getValidationRules());
+
+        if ($validator->fails()) {
+            return [
+                'error' => [
+                    'store_id' => $storeId,
+                    'year' => Arr::get($data, 'year'),
+                    'month' => Arr::get($data, 'month'),
+                    'messages' => $validator->getMessageBag(),
+                ],
+            ];
+        }
+
+        return [
+            'data' => $validator->validated(),
+        ];
     }
 
     /**
@@ -100,24 +138,43 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getListByStore(string $storeId, array $filter = []): ?Collection
     {
-        $csvUsageFee = MqCost::CSV_USAGE_FEE;
-        $storeOpeningFee = MqCost::STORE_OPENING_FEE;
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
 
-        $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost']);
+        return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
+            ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
+            ->queryBuilder()
+            ->where('store_id', $storeId)
+            ->get()
+            ->map(function ($item) {
+                $item->fixed_cost = is_null($item->fixed_cost)
+                    ? $item->mqCost?->cost_sum + ($item->csv_usage_fee ?? 0) + ($item->store_opening_fee ?? 0)
+                    : $item->fixed_cost;
+                $item->mqCost->variable_cost_sum = is_null($item->mqCost?->variable_cost_sum)
+                    ? ($item->mqCost?->coupon_points_cost ?? 0)
+                        + ($item->mqCost?->ad_cost ?? 0)
+                        + ($item->mqCost?->cost_price ?? 0)
+                        + ($item->mqCost?->postage ?? 0)
+                        + ($item->mqCost?->commision ?? 0)
+                    : $item->mqCost?->variable_cost_sum;
+
+                return $item;
+            });
+    }
+
+    /**
+     * Get date range for filter.
+     */
+    public function getDateRangeFilter(array $filter): array
+    {
         $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
         $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
         $toDate->year($this->checkAndGetYearForFilter($toDate->year));
 
-        $this->useScope(['dateRange' => [$fromDate, $toDate]]);
-        $query = $this->queryBuilder()->where('store_id', $storeId)
-            ->select('*', DB::raw("{$csvUsageFee} as csv_usage_fee, {$storeOpeningFee} as store_opening_fee"));
-
-        return $query->get()->map(function ($item) use ($csvUsageFee, $storeOpeningFee) {
-            $item->fixed_cost = $item->mqCost->cost_sum + $csvUsageFee + $storeOpeningFee;
-
-            return $item;
-        });
+        return [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ];
     }
 
     /**
@@ -195,30 +252,32 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $mqUserTrends = $mqAccountingCsv->getDataMqUserTrends($column);
             $mqCost = $mqAccountingCsv->getDataMqCost($column);
             $tmpData = [
-                'year' => str_replace('年', '', $rows[0][$column]),
-                'month' => str_replace('月', '', $rows[1][$column]),
-                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[50][$column]),
-                'lim_cpa' => $this->removeStrangeCharacters($rows[51][$column]),
-                'cpo_via_ad' => $this->removeStrangeCharacters($rows[52][$column]),
+                'year' => intval(str_replace('年', '', $rows[0][$column])),
+                'month' => intval(str_replace('月', '', $rows[1][$column])),
+                'store_opening_fee' => $this->removeStrangeCharacters($rows[46][$column]),
+                'csv_usage_fee' => $this->removeStrangeCharacters($rows[47][$column]),
+                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[52][$column]),
+                'lim_cpa' => $this->removeStrangeCharacters($rows[53][$column]),
+                'cpo_via_ad' => $this->removeStrangeCharacters($rows[54][$column]),
             ];
             if (! empty($mqKpi)) {
-                $tmpData['mq_kpi'] = $mqKpi;
+                $tmpData = array_merge($tmpData, $mqKpi);
             }
 
             if (! empty($mqAccessNum)) {
-                $tmpData['mq_access_num'] = $mqAccessNum;
+                $tmpData = array_merge($tmpData, $mqAccessNum);
             }
 
             if (! empty($mqAdSalesAmnt)) {
-                $tmpData['mq_ad_sales_amnt'] = $mqAdSalesAmnt;
+                $tmpData = array_merge($tmpData, $mqAdSalesAmnt);
             }
 
             if (! empty($mqUserTrends)) {
-                $tmpData['mq_user_trends'] = $mqUserTrends;
+                $tmpData = array_merge($tmpData, $mqUserTrends);
             }
 
             if (! empty($mqCost)) {
-                $tmpData['mq_cost'] = $mqCost;
+                $tmpData = array_merge($tmpData, $mqCost);
             }
 
             $data[] = $tmpData;
@@ -261,9 +320,12 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $userTrends = MqUserTrend::updateOrCreate([
                 'id' => $mqAccounting?->mq_user_trends_id
             ], $rows['mq_user_trends']);
-            $cost = MqCost::updateOrCreate([
-                'id' => $mqAccounting?->mq_cost_id
-            ], $rows['mq_cost']);
+
+            $cost = $this->updateOrCreateMqCost($rows['mq_cost'], $mqAccounting?->mq_cost_id);
+
+            Arr::set($rows, 'fixed_cost', $cost->cost_sum
+                + Arr::get($rows, 'csv_usage_fee', $mqAccounting?->csv_usage_fee ?? 0)
+                + Arr::get($rows, 'store_opening_fee', $mqAccounting?->store_opening_fee ?? 0));
 
             if (is_null($mqAccounting)) {
                 $mqAccounting = new MqAccounting();
@@ -279,10 +341,42 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 ]);
             }
 
-            $mqAccounting->forceFill(Arr::only($rows, ['ltv_2y_amnt', 'lim_cpa', 'cpo_via_ad']))->save();
+            $mqAccounting->forceFill(Arr::only($rows, [
+                'ltv_2y_amnt',
+                'lim_cpa',
+                'cpo_via_ad',
+                'csv_usage_fee',
+                'store_opening_fee',
+                'fixed_cost',
+            ]))->save();
 
             return $mqAccounting;
         }, 'Update or create mq accounting');
+    }
+
+    /**
+     * Update an existing mq_cost or create a new mq_cost.
+     */
+    private function updateOrCreateMqCost(array $data, ?string $mqCostId = null): MqCost
+    {
+        if (! is_null($mqCostId)) {
+            $cost = MqCost::find($mqCostId);
+        }
+
+        $variableCostSum = Arr::get($data, 'coupon_points_cost', $cost?->coupon_points_cost ?? 0)
+            + Arr::get($data, 'ad_cost', $cost?->ad_cost ?? 0)
+            + Arr::get($data, 'cost_price', $cost?->cost_price ?? 0)
+            + Arr::get($data, 'postage', $cost?->postage ?? 0)
+            + Arr::get($data, 'commision', $cost?->commision ?? 0);
+        $costSum = Arr::get($data, 'management_agency_fee', $cost?->management_agency_fee ?? 0)
+            + Arr::get($data, 'reserve1', $cost?->reserve1 ?? 0)
+            + Arr::get($data, 'reserve2', $cost?->reserve2 ?? 0);
+        Arr::set($data, 'variable_cost_sum', $variableCostSum);
+        Arr::set($data, 'cost_sum', $costSum);
+
+        return MqCost::updateOrCreate([
+            'id' => $mqCostId,
+        ], $data);
     }
 
     /**
@@ -290,7 +384,15 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getDataForUpdate(array $data): array
     {
-        $rows = Arr::only($data, ['year', 'month', 'ltv_2y_amnt', 'lim_cpa', 'cpo_via_ad']);
+        $rows = Arr::only($data, [
+            'year',
+            'month',
+            'ltv_2y_amnt',
+            'lim_cpa',
+            'cpo_via_ad',
+            'csv_usage_fee',
+            'store_opening_fee',
+        ]);
         $kpi = Arr::only($data, (new MqKpi())->getFillable());
         $accessNum = Arr::only($data, (new MqAccessNum())->getFillable());
         $adSalesAmnt = Arr::only($data, (new MqAdSalesAmnt())->getFillable());
@@ -311,25 +413,66 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getTotalParamByStore(string $storeId, array $filter = []): Collection
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
-        $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
-        $toDate->year($this->checkAndGetYearForFilter($toDate->year));
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
 
-        $this->useScope(['dateRange' => [$fromDate, $toDate]]);
-        $query = $this->queryBuilder()
+        $query = $this->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
+            ->queryBuilder()
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->selectRaw("
-                        store_id,
-                        sum(mk.sales_amnt) as sales_amnt_total,
-                        sum(mc.cost_sum) as cost_sum_total,
-                        sum(mc.variable_cost_sum) as variable_cost_sum_total,
-                        sum(mc.profit) as profit_total
-                    ")
+                store_id,
+                sum(mk.sales_amnt) as sales_amnt_total,
+                sum(mq_accounting.fixed_cost) as cost_sum_total,
+                sum(mc.variable_cost_sum) as variable_cost_sum_total,
+                sum(mc.profit) as profit_total
+            ")
             ->groupBy('mq_accounting.store_id')
             ->where('store_id', $storeId);
 
         return $query->get();
+    }
+
+    /**
+     * Get forecast vs actual.
+     */
+    public function getForecastVsActual(string $storeId, array $filter = []): array
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
+
+        $expected = $this->useScope([
+                'dateRange' => [
+                    $dateRangeFilter['from_date'],
+                    $dateRangeFilter['to_date'],
+                ]
+            ])
+            ->queryBuilder()
+            ->where('store_id', $storeId)
+            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
+            ->select('mk.sales_amnt', 'mc.profit')
+            ->get()
+            ->reduce(function ($pre, $item) {
+                return [
+                    'sales_amnt' => $pre['sales_amnt'] + $item->sales_amnt,
+                    'profit' => $pre['profit'] + $item->profit,
+                ];
+            }, [
+                'sales_amnt' => 0,
+                'profit' => 0,
+            ]);
+        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filter);
+        $salesAmntRate = $expected['sales_amnt']
+            ? ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $expected['sales_amnt']
+            : 0;
+        $profitRate = $expected['profit']
+            ? ($actual['profit'] - $expected['profit']) * 100 / $expected['profit']
+            : 0;
+
+        return [
+            'sales_amnt_rate' => round($salesAmntRate, 2),
+            'profit_rate' => round($profitRate, 2),
+            'actual' => $actual,
+            'expected' => $expected,
+        ];
     }
 }

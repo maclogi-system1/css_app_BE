@@ -58,4 +58,12 @@ class MqAccountingService extends Service
 
         return $result;
     }
+
+    public function getForecastVsActual($storeId, array $filter = []): Collection
+    {
+        return collect([
+            'sales_amnt' => rand(7000000, 20000000),
+            'profit' => rand(7000000, 20000000),
+        ]);
+    }
 }
