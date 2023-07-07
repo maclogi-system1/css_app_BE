@@ -8,6 +8,7 @@ use App\Repositories\Repository;
 use App\Services\AI\MqAccountingService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MqChartRepository extends Repository implements MqChartRepositoryContract
 {
@@ -38,7 +39,10 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
                 'mq_accounting.store_id', 'mq_accounting.year', 'mq_accounting.month', 'mk.sales_amnt',
-                'mc.cost_sum', 'mc.variable_cost_sum', 'mc.profit'
+                'mc.variable_cost_sum', 'mc.profit', DB::raw('CASE WHEN (mq_accounting.fixed_cost IS NULL)
+                    THEN mc.cost_sum + mq_accounting.csv_usage_fee + mq_accounting.store_opening_fee
+                    ELSE mq_accounting.fixed_cost
+                END as fixed_cost')
             )
             ->get();
     }

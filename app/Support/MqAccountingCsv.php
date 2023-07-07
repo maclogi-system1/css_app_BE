@@ -82,10 +82,10 @@ class MqAccountingCsv
             'management_agency_fee' => $this->removeStrangeCharacters(Arr::get($this->rows, "43.{$column}")),
             'reserve1' => $this->removeStrangeCharacters(Arr::get($this->rows, "44.{$column}")),
             'reserve2' => $this->removeStrangeCharacters(Arr::get($this->rows, "45.{$column}")),
-            'management_agency_fee_rate' => $this->removeStrangeCharacters(Arr::get($this->rows, "46.{$column}")),
-            'cost_sum' => $this->removeStrangeCharacters(Arr::get($this->rows, "47.{$column}")),
-            'profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "48.{$column}")),
-            'sum_profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "49.{$column}")),
+            'management_agency_fee_rate' => $this->removeStrangeCharacters(Arr::get($this->rows, "48.{$column}")),
+            'cost_sum' => $this->removeStrangeCharacters(Arr::get($this->rows, "49.{$column}")),
+            'profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "50.{$column}")),
+            'sum_profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "51.{$column}")),
         ];
     }
 
@@ -317,7 +317,16 @@ class MqAccountingCsv
         }
         if (in_array('variable_cost_sum', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->variable_cost_sum;
+                $item = $mqAccounting->where('month', $month)->where('year', $year)->first();
+                $mqCost = $item?->mqCost;
+
+                return is_null($mqCost?->variable_cost_sum)
+                    ? ($mqCost?->coupon_points_cost ?? 0)
+                        + ($mqCost?->ad_cost ?? 0)
+                        + ($mqCost?->cost_price ?? 0)
+                        + ($mqCost?->postage ?? 0)
+                        + ($mqCost?->commision ?? 0)
+                    : ($mqCost?->variable_cost_sum ?? 0);
             }, $dateRange));
         }
         if (in_array('gross_profit', $options)) {
@@ -345,14 +354,30 @@ class MqAccountingCsv
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->reserve2;
             }, $dateRange));
         }
+        if (in_array('store_opening_fee', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '出店料'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->store_opening_fee;
+            }, $dateRange));
+        }
+        if (in_array('csv_usage_fee', $options)) {
+            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', 'CSV利用料'], function ($month, $year) use ($mqAccounting) {
+                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->csv_usage_fee;
+            }, $dateRange));
+        }
         if (in_array('management_agency_fee_rate', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '比率'], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee_rate;
             }, $dateRange));
         }
-        if (in_array('cost_sum', $options)) {
+        if (in_array('cost_sum', $options) || in_array('fixed_cost', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->cost_sum;
+                $item = $mqAccounting->where('month', $month)->where('year', $year)->first();
+
+                return is_null($item?->fixed_cost)
+                    ? ($item?->mqCost?->cost_sum ?? 0)
+                        + ($item?->store_opening_fee ?? 0)
+                        + ($item?->csv_usage_fee ?? 0)
+                    : ($item?->fixed_cost ?? 0);
             }, $dateRange));
         }
         if (in_array('profit', $options)) {

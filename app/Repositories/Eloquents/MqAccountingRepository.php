@@ -66,8 +66,10 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         'management_agency_fee',
         'reserve1',
         'reserve2',
+        'csv_usage_fee',
+        'store_opening_fee',
         'management_agency_fee_rate',
-        'cost_sum',
+        'fixed_cost',
         'profit',
         'sum_profit',
         'ltv_2y_amnt',
@@ -106,14 +108,21 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
             ->queryBuilder()
             ->where('store_id', $storeId)
-            ->select(
-                '*',
-                DB::raw('CASE
-                    WHEN (mq_accounting.`fixed_cost` IS NULL) THEN 0
-                    ELSE mq_accounting.`fixed_cost`
-                END as `fixed_cost`')
-            )
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->fixed_cost = is_null($item->fixed_cost)
+                    ? $item->mqCost?->cost_sum + ($item->csv_usage_fee ?? 0) + ($item->store_opening_fee ?? 0)
+                    : $item->fixed_cost;
+                $item->mqCost->variable_cost_sum = is_null($item->mqCost?->variable_cost_sum)
+                    ? ($item->mqCost?->coupon_points_cost ?? 0)
+                        + ($item->mqCost?->ad_cost ?? 0)
+                        + ($item->mqCost?->cost_price ?? 0)
+                        + ($item->mqCost?->postage ?? 0)
+                        + ($item->mqCost?->commision ?? 0)
+                    : $item->mqCost?->variable_cost_sum;
+
+                return $item;
+            });
     }
 
     /**
@@ -209,9 +218,11 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $tmpData = [
                 'year' => str_replace('年', '', $rows[0][$column]),
                 'month' => str_replace('月', '', $rows[1][$column]),
-                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[50][$column]),
-                'lim_cpa' => $this->removeStrangeCharacters($rows[51][$column]),
-                'cpo_via_ad' => $this->removeStrangeCharacters($rows[52][$column]),
+                'store_opening_fee' => $this->removeStrangeCharacters($rows[46][$column]),
+                'csv_usage_fee' => $this->removeStrangeCharacters($rows[47][$column]),
+                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[52][$column]),
+                'lim_cpa' => $this->removeStrangeCharacters($rows[53][$column]),
+                'cpo_via_ad' => $this->removeStrangeCharacters($rows[54][$column]),
             ];
             if (! empty($mqKpi)) {
                 $tmpData['mq_kpi'] = $mqKpi;
@@ -255,9 +266,6 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         return $this->handleSafely(function () use ($rows, $storeId) {
             $year = $rows['year'];
             $month = $rows['month'];
-            $rows['fixed_cost'] = Arr::get($rows, 'cost_sum', 0)
-                + Arr::get($rows, 'csv_usage_fee', 0)
-                + Arr::get($rows, 'store_opening_fee', 0);
 
             $mqAccounting = MqAccounting::where('store_id', $storeId)
                 ->where('year', $year)
@@ -276,9 +284,12 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $userTrends = MqUserTrend::updateOrCreate([
                 'id' => $mqAccounting?->mq_user_trends_id
             ], $rows['mq_user_trends']);
-            $cost = MqCost::updateOrCreate([
-                'id' => $mqAccounting?->mq_cost_id
-            ], $rows['mq_cost']);
+
+            $cost = $this->updateOrCreateMqCost($rows['mq_cost'], $mqAccounting?->mq_cost_id);
+
+            Arr::set($rows, 'fixed_cost', $cost->cost_sum
+                + Arr::get($rows, 'csv_usage_fee', $mqAccounting?->csv_usage_fee ?? 0)
+                + Arr::get($rows, 'store_opening_fee', $mqAccounting?->store_opening_fee ?? 0));
 
             if (is_null($mqAccounting)) {
                 $mqAccounting = new MqAccounting();
@@ -305,6 +316,31 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
             return $mqAccounting;
         }, 'Update or create mq accounting');
+    }
+
+    /**
+     * Update an existing mq_cost or create a new mq_cost.
+     */
+    private function updateOrCreateMqCost(array $data, ?string $mqCostId = null): MqCost
+    {
+        if (! is_null($mqCostId)) {
+            $cost = MqCost::find($mqCostId);
+        }
+
+        $variableCostSum = Arr::get($data, 'coupon_points_cost', $cost?->coupon_points_cost ?? 0)
+            + Arr::get($data, 'ad_cost', $cost?->ad_cost ?? 0)
+            + Arr::get($data, 'cost_price', $cost?->cost_price ?? 0)
+            + Arr::get($data, 'postage', $cost?->postage ?? 0)
+            + Arr::get($data, 'commision', $cost?->commision ?? 0);
+        $costSum = Arr::get($data, 'management_agency_fee', $cost?->management_agency_fee ?? 0)
+            + Arr::get($data, 'reserve1', $cost?->reserve1 ?? 0)
+            + Arr::get($data, 'reserve2', $cost?->reserve2 ?? 0);
+        Arr::set($data, 'variable_cost_sum', $variableCostSum);
+        Arr::set($data, 'cost_sum', $costSum);
+
+        return MqCost::updateOrCreate([
+            'id' => $mqCostId,
+        ], $data);
     }
 
     /**
@@ -348,12 +384,12 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->selectRaw("
-                        store_id,
-                        sum(mk.sales_amnt) as sales_amnt_total,
-                        sum(mc.cost_sum) as cost_sum_total,
-                        sum(mc.variable_cost_sum) as variable_cost_sum_total,
-                        sum(mc.profit) as profit_total
-                    ")
+                store_id,
+                sum(mk.sales_amnt) as sales_amnt_total,
+                sum(mq_accounting.fixed_cost) as cost_sum_total,
+                sum(mc.variable_cost_sum) as variable_cost_sum_total,
+                sum(mc.profit) as profit_total
+            ")
             ->groupBy('mq_accounting.store_id')
             ->where('store_id', $storeId);
 
