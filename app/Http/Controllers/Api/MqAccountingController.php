@@ -9,6 +9,8 @@ use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqChartRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -39,20 +41,39 @@ class MqAccountingController extends Controller
     public function updateByStore(Request $request, $storeId): JsonResponse
     {
         $numberFailures = 0;
+        $errors = [];
 
         foreach ($request->post() as $data) {
-            $rows = $this->mqAccountingRepository->getDataForUpdate($data);
-            $result = $this->mqAccountingRepository->updateOrCreate($rows, $storeId);
+            $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
+
+            if (isset($validated['error'])) {
+                $errors[] = $validated['error'];
+                $numberFailures++;
+
+                continue;
+            }
+
+            $result = $this->mqAccountingRepository->updateOrCreate(
+                $this->mqAccountingRepository->getDataForUpdate($validated['data']),
+                $storeId
+            );
 
             if (is_null($result)) {
                 $numberFailures++;
+                $errors[] = [
+                    'store_id' => $storeId,
+                    'year' => Arr::get($data, 'year'),
+                    'month' => Arr::get($data, 'month'),
+                    'messages' => 'Error',
+                ];
             }
         }
 
         return response()->json([
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
             'number_of_failures' => $numberFailures,
-        ]);
+            'errors' => $errors,
+        ], count($errors) || $numberFailures ? Response::HTTP_BAD_REQUEST : Response::HTTP_OK);
     }
 
     /**
@@ -64,7 +85,7 @@ class MqAccountingController extends Controller
             'options' => $this->mqAccountingRepository->getShowableRows(),
         ] + $request->only(['from_date', 'to_date']);
 
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter), 200, [
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -81,7 +102,7 @@ class MqAccountingController extends Controller
         $filter = $request->only(['from_date', 'to_date', 'options'])
             + ['options' => $this->mqAccountingRepository->getShowableRows()];
 
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), 200, [
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -95,7 +116,11 @@ class MqAccountingController extends Controller
      */
     public function downloadMqAccountingCsvSelection(Request $request, $storeId): StreamedResponse
     {
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($request->query(), $storeId), 200, [
+        $filter = $request->only(['from_date', 'to_date', 'options']);
+        $filter['options'][] = 'reserve1';
+        $filter['options'][] = 'reserve2';
+
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -112,11 +137,30 @@ class MqAccountingController extends Controller
         $rows = Excel::toArray(new MqAccountingImport(), $request->file('mq_accounting'))[0];
         $dataReaded = $this->mqAccountingRepository->readAndParseCsvFileContents($rows);
         $numberFailures = 0;
+        $errors = [];
 
         foreach ($dataReaded as $data) {
-            $result = $this->mqAccountingRepository->updateOrCreate($data, $storeId);
+            $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
+
+            if (isset($validated['error'])) {
+                $errors[] = $validated['error'];
+                $numberFailures++;
+
+                continue;
+            }
+
+            $result = $this->mqAccountingRepository->updateOrCreate(
+                $this->mqAccountingRepository->getDataForUpdate($validated['data']),
+                $storeId
+            );
 
             if (is_null($result)) {
+                $errors[] = [
+                    'store_id' => $storeId,
+                    'year' => Arr::get($data, 'year'),
+                    'month' => Arr::get($data, 'month'),
+                    'messages' => 'Error',
+                ];
                 $numberFailures++;
             }
         }
@@ -124,7 +168,8 @@ class MqAccountingController extends Controller
         return response()->json([
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
             'number_of_failures' => $numberFailures,
-        ]);
+            'errors' => $errors,
+        ], count($errors) || $numberFailures ? Response::HTTP_BAD_REQUEST : Response::HTTP_OK);
     }
 
     /**
