@@ -52,4 +52,14 @@ interface MqAccountingRepository extends Repository
      * Get forecast vs actual.
      */
     public function getForecastVsActual(string $storeId, array $filter = []): array;
+
+    /**
+     * Get a list of validation rules for validator
+     */
+    public function getValidationRules() : array;
+
+    /**
+     * Handle data validation to update mq_accounting.
+     */
+    public function handleValidationUpdate($data, $storeId): array;
 }
