@@ -215,4 +215,19 @@ class MqAccountingController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Get comparative analysis.
+     */
+    public function getComparativeAnalysis(Request $request, $storeId): JsonResponse
+    {
+        $year = Arr::get($request->query(), 'year', now()->year);
+        $filter = [
+            'from_date' => "{$year}-01",
+            'to_date' => "{$year}-12",
+        ];
+        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $filter);
+
+        return response()->json($result);
+    }
 }
