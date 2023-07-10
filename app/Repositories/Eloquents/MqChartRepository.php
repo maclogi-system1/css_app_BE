@@ -74,7 +74,7 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             [$year, $month] = explode('-', $yearMonth);
             $expected = $expectedMqAccounting->where('year', $year)->where('month', intval($month))->first()?->profit ?? 1;
             $actual = Arr::get($actualMqAccounting->where('year', $year)->where('month', intval($month))->first(), 'profit', 2);
-            $result = 100 * $actual / $expected;
+            $result = $expected != 0 ? 100 * $actual / $expected : 0;
             $profitAchievementRate[] = [
                 'store_id' => $storeId,
                 'year' => $year,
