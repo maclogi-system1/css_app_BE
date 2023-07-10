@@ -369,7 +369,7 @@ class MqAccountingCsv
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee_rate;
             }, $dateRange));
         }
-        if (in_array('cost_sum', $options) || in_array('fixed_cost', $options)) {
+        if (in_array('fixed_cost', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['合計', ''], function ($month, $year) use ($mqAccounting) {
                 $item = $mqAccounting->where('month', $month)->where('year', $year)->first();
 
