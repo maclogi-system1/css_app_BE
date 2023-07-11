@@ -12,15 +12,16 @@ use App\Repositories\Contracts\MqAccountingRepository as MqAccountingRepositoryC
 use App\Repositories\Repository;
 use App\Services\AI\MqAccountingService;
 use App\Support\MqAccountingCsv;
-use Carbon\CarbonPeriod;
+use App\Support\Traits\HasMqDateTimeHandler;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 
 class MqAccountingRepository extends Repository implements MqAccountingRepositoryContract
 {
+    use HasMqDateTimeHandler;
+
     protected array $validationRules = [
         'sales_amnt'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'sales_num'                 => ['nullable', 'integer', 'between:-2000000000,2000000000'],
@@ -58,8 +59,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         'cost_price_rate'           => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
         'postage'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'postage_rate'              => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'commision'                 => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'commision_rate'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'commision'                 => ['nullable', 'integer', 'between:-999999,999999'],
+        'commision_rate'            => ['nullable', 'decimal:0,6', 'between:-2000000000,2000000000'],
         'gross_profit'              => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'gross_profit_rate'         => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
         'variable_cost_sum'         => ['nullable'],
@@ -68,7 +69,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         'reserve2'                  => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'csv_usage_fee'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'store_opening_fee'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'management_agency_fee_rate'=> [ 'nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'management_agency_fee_rate'=> ['nullable', 'decimal:0,6', 'between:-999999,999999'],
         'fixed_cost'                => ['nullable'],
         'profit'                    => ['nullable', 'integer', 'between:-2000000000,2000000000'],
         'sum_profit'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
@@ -162,34 +163,6 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     }
 
     /**
-     * Get date range for filter.
-     */
-    public function getDateRangeFilter(array $filter): array
-    {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
-        $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
-        $toDate->year($this->checkAndGetYearForFilter($toDate->year));
-
-        return [
-            'from_date' => $fromDate,
-            'to_date' => $toDate,
-        ];
-    }
-
-    /**
-     * Check for filter by year, filter only year not less than current by 2 years
-     * and year not more than present by 1 year.
-     */
-    protected function checkAndGetYearForFilter($year): int
-    {
-        $year = $year < now()->subYear(2)->year ? now()->subYear(2)->year : $year;
-        $year = $year > now()->addYear()->year ? now()->addYear()->year : $year;
-
-        return $year;
-    }
-
-    /**
      * Get mq_accounting details from AI by storeId.
      */
     public function getListFromAIByStore(string $storeId, array $filter = []): ?array
@@ -203,9 +176,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     public function streamCsvFile(array $filter = [], ?string $storeId = ''): Closure
     {
         $mqAccounting = collect();
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
-        $dateRange = $this->getDateTimeRange($fromDate, $toDate);
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
         $options = Arr::get($filter, 'options', []);
 
         if ($storeId) {
@@ -223,18 +195,6 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
             fclose($file);
         };
-    }
-
-    protected function getDateTimeRange($fromDate, $toDate)
-    {
-        $period = new CarbonPeriod($fromDate, '1 month', $toDate);
-        $result = [];
-
-        foreach ($period as $dateTime) {
-            $result[] = $dateTime->format('Y-m');
-        }
-
-        return $result;
     }
 
     /**

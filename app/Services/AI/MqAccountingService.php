@@ -3,14 +3,14 @@
 namespace App\Services\AI;
 
 use App\Services\Service;
-use Carbon\CarbonPeriod;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
+use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
 class MqAccountingService extends Service
 {
+    use HasMqDateTimeHandler;
+
     public function getListByStore(string $storeId, array $filter = [])
     {
         return [];
@@ -26,9 +26,8 @@ class MqAccountingService extends Service
      */
     public function getCumulativeChangeInRevenueAndProfit($storeId, array $filter = []): Collection
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date'));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date'));
-        $dateRange = $this->getDateTimeRange($fromDate, $toDate);
+        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
 
         $result = [];
 
@@ -44,19 +43,6 @@ class MqAccountingService extends Service
         }
 
         return collect($result);
-    }
-
-    public function getDateTimeRange($fromDate, $toDate)
-    {
-        $period = new CarbonPeriod($fromDate, '1 month', $toDate);
-
-        $result = [];
-
-        foreach ($period as $dateTime) {
-            $result[] = $dateTime->format('Y-m');
-        }
-
-        return $result;
     }
 
     public function getForecastVsActual($storeId, array $filter = []): Collection
