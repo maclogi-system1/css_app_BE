@@ -42,6 +42,7 @@ class MqAccountingController extends Controller
     {
         $numberFailures = 0;
         $errors = [];
+        $status = Response::HTTP_OK;
 
         foreach ($request->post() as $data) {
             $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
@@ -49,6 +50,7 @@ class MqAccountingController extends Controller
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
                 $numberFailures++;
+                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
 
                 continue;
             }
@@ -64,8 +66,9 @@ class MqAccountingController extends Controller
                     'store_id' => $storeId,
                     'year' => Arr::get($data, 'year'),
                     'month' => Arr::get($data, 'month'),
-                    'messages' => 'Error',
+                    'messages' => "Something went wrong! Can't update or insert data.",
                 ];
+                $status = Response::HTTP_BAD_REQUEST;
             }
         }
 
@@ -73,7 +76,7 @@ class MqAccountingController extends Controller
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
             'number_of_failures' => $numberFailures,
             'errors' => $errors,
-        ], count($errors) || $numberFailures ? Response::HTTP_BAD_REQUEST : Response::HTTP_OK);
+        ], $status);
     }
 
     /**
@@ -138,6 +141,7 @@ class MqAccountingController extends Controller
         $dataReaded = $this->mqAccountingRepository->readAndParseCsvFileContents($rows);
         $numberFailures = 0;
         $errors = [];
+        $status = Response::HTTP_OK;
 
         foreach ($dataReaded as $data) {
             $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
@@ -145,6 +149,7 @@ class MqAccountingController extends Controller
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
                 $numberFailures++;
+                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
 
                 continue;
             }
@@ -159,9 +164,10 @@ class MqAccountingController extends Controller
                     'store_id' => $storeId,
                     'year' => Arr::get($data, 'year'),
                     'month' => Arr::get($data, 'month'),
-                    'messages' => 'Error',
+                    'messages' => "Something went wrong! Can't update or insert data.",
                 ];
                 $numberFailures++;
+                $status = Response::HTTP_BAD_REQUEST;
             }
         }
 
@@ -169,7 +175,7 @@ class MqAccountingController extends Controller
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
             'number_of_failures' => $numberFailures,
             'errors' => $errors,
-        ], count($errors) || $numberFailures ? Response::HTTP_BAD_REQUEST : Response::HTTP_OK);
+        ], $status);
     }
 
     /**
