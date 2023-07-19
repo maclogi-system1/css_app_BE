@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\Policy;
 use Illuminate\Support\Collection;
 
 interface PolicyRepository extends Repository
@@ -20,4 +21,9 @@ interface PolicyRepository extends Repository
      * Get a list of the option for select.
      */
     public function getOptions(): array;
+
+    /**
+     * Handle delete the specified policy.
+     */
+    public function delete(Policy $policy): ?Policy;
 }

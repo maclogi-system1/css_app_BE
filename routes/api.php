@@ -112,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     ->name('policy.')
     ->controller(PolicyController::class)
     ->group(function () {
+        Route::delete('/{policy}', 'destroy')->name('destroy');
         Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
         ->name('ai-recommendation-by-store');
         Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
