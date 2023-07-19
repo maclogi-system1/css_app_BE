@@ -64,4 +64,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         return compact('categories', 'kpis', 'templates', 'statuses');
     }
+
+    /**
+     * Handle delete the specified policy.
+     */
+    public function delete(Policy $policy): ?Policy
+    {
+        $policy->delete();
+
+        return $policy;
+    }
 }

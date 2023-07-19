@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PolicyResource;
+use App\Models\Policy;
 use App\Repositories\Contracts\PolicyRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
 
 class PolicyController extends Controller
 {
@@ -48,5 +50,17 @@ class PolicyController extends Controller
         $options = $this->policyRepository->getOptions();
 
         return response()->json($options);
+    }
+
+    /**
+     * Destroy a recommendations by uuid
+     */
+    public function destroy(Policy $policy) : JsonResource|JsonResponse
+    {
+        $policy = $this->policyRepository->delete($policy);
+
+        return $policy ? new PolicyResource($policy) : response()->json([
+            'message' => __('Deleted failure.'),
+        ], Response::HTTP_BAD_REQUEST);
     }
 }
