@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
@@ -105,5 +106,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/get-forecast-vs-actual/{storeId}', 'getForecastVsActual')->name('get-forecast-vs-actual');
             Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
+        });
+
+    Route::prefix('policy')
+    ->name('policy.')
+    ->controller(PolicyController::class)
+    ->group(function () {
+        Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
+        ->name('ai-recommendation-by-store');
+        Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
+        Route::get('/{storeId}', 'getListByStore')
+            ->name('get-list-by-store');
         });
 });
