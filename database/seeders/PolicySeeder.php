@@ -22,7 +22,7 @@ class PolicySeeder extends Seeder
             Policy::create([
                 'store_id' => 'store_1',
                 'name' => '松竹梅クーポン',
-                'category' => Policy::AI_RECOMMENDATION_CATEGORY,
+                'category' => Policy::MEDIUM_TERM_CATEGORY,
                 'kpi' => Policy::INCREASE_IN_AVERAGE_SPEND_PER_CUSTOMER_KPI,
                 'template' => Policy::COUPON_TEMPLATE,
                 'status' => Policy::CONFIRMED_STATUS,
@@ -32,7 +32,7 @@ class PolicySeeder extends Seeder
             Policy::create([
                 'store_id' => 'store_1',
                 'name' => 'ポイント5倍',
-                'category' => Policy::AI_RECOMMENDATION_CATEGORY,
+                'category' => Policy::LONG_TERM_CATEGORY,
                 'kpi' => Policy::INCREASE_IN_AVERAGE_SPEND_PER_CUSTOMER_KPI,
                 'template' => Policy::POINT_TEMPLATE,
                 'status' => Policy::CONFIRMED_STATUS,

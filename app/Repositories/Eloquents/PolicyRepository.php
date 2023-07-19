@@ -54,33 +54,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function getOptions(): array
     {
-        $categories = collect(Policy::CATEGORIES)->map(function ($text, $key) {
-            return [
-                'value' => $key,
-                'label' => $text,
-            ];
-        })->values();
-
-        $kpis = collect(Policy::KPIS)->map(function ($text, $key) {
-            return [
-                'value' => $key,
-                'label' => $text,
-            ];
-        })->values();
-
-        $templates = collect(Policy::TEMPLATES)->map(function ($text, $key) {
-            return [
-                'value' => $key,
-                'label' => $text,
-            ];
-        })->values();
-
-        $statuses = collect(Policy::STATUSES)->map(function ($text, $key) {
-            return [
-                'value' => $key,
-                'label' => $text,
-            ];
-        })->values();
+        $categories = collect(Policy::CATEGORIES)
+            ->only([Policy::MEDIUM_TERM_CATEGORY, Policy::LONG_TERM_CATEGORY])
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $kpis = collect(Policy::KPIS)->map(fn ($label, $value) => compact('value', 'label'))->values();
+        $templates = collect(Policy::TEMPLATES)->map(fn ($label, $value) => compact('value', 'label'))->values();
+        $statuses = collect(Policy::STATUSES)->map(fn ($label, $value) => compact('value', 'label'))->values();
 
         return compact('categories', 'kpis', 'templates', 'statuses');
     }

@@ -10,13 +10,13 @@ class Policy extends Model
 {
     use HasFactory, HasUuids;
 
-    public const AI_RECOMMENDATION_CATEGORY = 1;
-    public const MEDIUM_TERM_CATEGORY = 2;
-    public const LONG_TERM_CATEGORY = 3;
+    public const MEDIUM_TERM_CATEGORY = 1;
+    public const LONG_TERM_CATEGORY = 2;
+    public const AI_RECOMMENDATION_CATEGORY = 3;
     public const CATEGORIES = [
-        self::AI_RECOMMENDATION_CATEGORY => 'AIレコメンド施策',
         self::MEDIUM_TERM_CATEGORY => '中期施策',
         self::LONG_TERM_CATEGORY => '長期施策',
+        self::AI_RECOMMENDATION_CATEGORY => 'AIレコメンド施策',
     ];
 
     public const INCREASED_SALES_KPI = 1;
