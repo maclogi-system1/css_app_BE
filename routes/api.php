@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TeamController;
@@ -109,14 +110,25 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
     Route::prefix('policy')
-    ->name('policy.')
-    ->controller(PolicyController::class)
-    ->group(function () {
-        Route::delete('/{policy}', 'destroy')->name('destroy');
-        Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
-        ->name('ai-recommendation-by-store');
-        Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
-        Route::get('/{storeId}', 'getListByStore')
-            ->name('get-list-by-store');
+        ->name('policy.')
+        ->controller(PolicyController::class)
+        ->group(function () {
+            Route::delete('/{policy}', 'destroy')->name('destroy');
+            Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
+            ->name('ai-recommendation-by-store');
+            Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
+            Route::post('/{storeId}', 'storeMultiple')
+                ->name('store-multiple');
+        });
+
+    Route::prefix('policy-attachments')
+        ->name('policy-attachments.')
+        ->controller(PolicyAttachmentController::class)
+        ->group(function () {
+            Route::get('/generate-key', 'generateKey')->name('generate-key');
+            Route::post('/upload', 'upload')->name('upload');
+            Route::delete('/remove/{policyAttachment}', 'remove')->name('remove');
         });
 });

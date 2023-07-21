@@ -9,6 +9,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PolicyResource extends JsonResource
 {
     /**
+     * The "data" wrapper that should be applied.
+     *
+     * @var string|null
+     */
+    public static $wrap = 'policy';
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -34,6 +41,7 @@ class PolicyResource extends JsonResource
                 'flat_rate_discount' => $this->flat_rate_discount,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
+                'attachments' => PolicyAttachmentResource::collection($this->whenLoaded('attachments')),
             ];
     }
 }

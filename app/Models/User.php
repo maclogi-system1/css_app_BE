@@ -19,6 +19,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
+    public const PROFILE_PATH = 'images/profile_photo';
+
     /**
      * The attributes that are mass assignable.
      *
