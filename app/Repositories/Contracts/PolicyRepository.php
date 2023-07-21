@@ -26,4 +26,14 @@ interface PolicyRepository extends Repository
      * Handle delete the specified policy.
      */
     public function delete(Policy $policy): ?Policy;
+
+    /**
+     * Handle data validation to update/create policy.
+     */
+    public function handleValidation(array $data, int $index): array;
+
+    /**
+     * Handle create multiple policy.
+     */
+    public function create(array $data, string $storeId): ?Policy;
 }

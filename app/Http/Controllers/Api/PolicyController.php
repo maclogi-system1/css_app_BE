@@ -53,7 +53,7 @@ class PolicyController extends Controller
     }
 
     /**
-     * Destroy a recommendations by uuid
+     * Remove the specified policy from storage.
      */
     public function destroy(Policy $policy) : JsonResource|JsonResponse
     {
@@ -62,5 +62,44 @@ class PolicyController extends Controller
         return $policy ? new PolicyResource($policy) : response()->json([
             'message' => __('Deleted failure.'),
         ], Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Stores many newly created policies in storage.
+     */
+    public function storeMultiple(Request $request, string $storeId): JsonResponse
+    {
+        $numberFailures = 0;
+        $errors = [];
+        $status = Response::HTTP_OK;
+
+        foreach ($request->post() as $index => $data) {
+            $validated = $this->policyRepository->handleValidation($data, $index);
+
+            if (isset($validated['error'])) {
+                $errors[] = $validated['error'];
+                $status = $status != Response::HTTP_BAD_REQUEST
+                    ? Response::HTTP_UNPROCESSABLE_ENTITY
+                    : Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+                continue;
+            }
+
+            $result = $this->policyRepository->create($data, $storeId);
+
+            if (is_null($result)) {
+                $errors[] = [
+                    'messages' => "Something went wrong! Can't create policy.",
+                ];
+                $status = Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+            }
+        }
+
+        return response()->json([
+            'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
+            'number_of_failures' => $numberFailures,
+            'errors' => $errors,
+        ], $status);
     }
 }

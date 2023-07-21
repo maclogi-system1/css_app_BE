@@ -22,6 +22,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MqAccountingRepository::class => \App\Repositories\Eloquents\MqAccountingRepository::class,
         \App\Repositories\Contracts\MqChartRepository::class => \App\Repositories\Eloquents\MqChartRepository::class,
         \App\Repositories\Contracts\PolicyRepository::class => \App\Repositories\Eloquents\PolicyRepository::class,
+        \App\Repositories\Contracts\PolicyAttachmentRepository::class => \App\Repositories\Eloquents\PolicyAttachmentRepository::class,
     ];
 
     /**
