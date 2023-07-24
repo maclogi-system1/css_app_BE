@@ -122,7 +122,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         $template = Arr::get($data, 'template');
 
-        if ($template === Policy::POINT_TEMPLATE) {
+        if ($template == Policy::POINT_TEMPLATE) {
             $rules['point_rate'] = ['required', 'decimal:0,6', 'between:-999999,999999'];
             $rules['point_application_period'] = [
                 'required',
@@ -130,7 +130,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'after_or_equal:start_date',
                 'before_or_equal:end_date',
             ];
-        } elseif ($template === Policy::TIME_SALE_TEMPLATE) {
+        } elseif ($template == Policy::TIME_SALE_TEMPLATE) {
             $rules['flat_rate_discount'] = ['required', 'decimal:0,6', 'between:-999999,999999'];
         }
 
