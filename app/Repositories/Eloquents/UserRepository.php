@@ -284,7 +284,7 @@ class UserRepository extends Repository implements UserRepositoryContract
             ->snake()
             ->append('_'.time().'.'.$file->extension());
 
-        return $this->uploadFileService->uploadImage($file, $fileName, 'images/profile_photo');
+        return $this->uploadFileService->uploadImage($file, $fileName, User::PROFILE_PATH);
     }
 
     /**

@@ -11,10 +11,22 @@ class UploadFileService
      */
     public function uploadImage(UploadedFile $file, $fileName = null, $dir = 'images'): string
     {
-        $fileName ??= str($file->getClientOriginalName())
+        $fileName ??= str(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
             ->snake()
             ->append('_'.time().'.'.$file->extension());
 
         return $file->storeAs($dir, $fileName);
+    }
+
+    public function isImage(UploadedFile $file)
+    {
+        return in_array($file->getClientMimeType(), [
+            'image/png',
+            'image/jpeg',
+            'image/bmp',
+            'image/gif',
+            'image/webp',
+            'image/svg+xml',
+        ]);
     }
 }
