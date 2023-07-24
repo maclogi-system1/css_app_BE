@@ -36,4 +36,9 @@ interface PolicyRepository extends Repository
      * Handle create multiple policy.
      */
     public function create(array $data, string $storeId): ?Policy;
+
+    /**
+     * Handle delete multiple policies at the same time.
+     */
+    public function deleteMultiple(array $policyIds): ?bool;
 }

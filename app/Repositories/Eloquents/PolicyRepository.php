@@ -156,4 +156,20 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             return $policy;
         }, 'Create policy');
     }
+
+    /**
+     * Handle delete multiple policies at the same time.
+     */
+    public function deleteMultiple(array $policyIds): ?bool
+    {
+        if (empty($policyIds)) {
+            return null;
+        }
+
+        return $this->handleSafely(function () use ($policyIds) {
+            $result = $this->model()->whereIn('id', $policyIds)->delete();
+
+            return $result;
+        }, 'Delete multiple policies');
+    }
 }
