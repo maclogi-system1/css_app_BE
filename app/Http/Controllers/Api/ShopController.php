@@ -14,10 +14,11 @@ class ShopController extends Controller
         private ShopRepository $shopRepository
     ) {}
 
+    /**
+     * Get a listing of the shop from oss api.
+     */
     public function index(Request $request): JsonResponse
     {
-        $this->authorize('view_shop');
-
         $result = $this->shopRepository->getList($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
