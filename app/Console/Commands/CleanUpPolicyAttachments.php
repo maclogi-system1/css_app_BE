@@ -14,7 +14,8 @@ class CleanUpPolicyAttachments extends Command
      *
      * @var string
      */
-    protected $signature = 'app:clean-up-policy-attachments';
+    protected $signature = 'app:clean-up-policy-attachments
+        {--all-public : Delete all files in public that have been created more than 1 day}';
 
     /**
      * The console command description.
@@ -28,7 +29,11 @@ class CleanUpPolicyAttachments extends Command
      */
     public function handle()
     {
-        $policyAttachments = PolicyAttachment::whereNull('policy_id')
+        $policyAttachments = PolicyAttachment::leftJoin('policies as p', 'p.id', '=', 'policy_attachments.policy_id')
+            ->where(function ($query) {
+                $query->whereNull('policy_attachments.policy_id')
+                    ->orWhereNull('p.id');
+            })
             ->where('created_at', '<', now()->subDay())
             ->get();
         $policyAttachmentRepository = $this->getRepository();
@@ -36,10 +41,36 @@ class CleanUpPolicyAttachments extends Command
         foreach ($policyAttachments as $policyAttachment) {
             $policyAttachmentRepository->delete($policyAttachment);
         }
+
+        if ($this->option('all-public')) {
+            $this->deleteAllFiles();
+        }
+
+        return Command::SUCCESS;
     }
 
+    /**
+     * Get a instance of policy attachment repository.
+     */
     protected function getRepository(): PolicyAttachmentRepository
     {
         return app(PolicyAttachmentRepository::class);
+    }
+
+    /**
+     * Handles checking and deleting all files in public
+     * that have been created more than 1 day without being linked to any policy.
+     */
+    protected function deleteAllFiles(): void
+    {
+        $disk = Storage::disk('public');
+        $exceptionFiles = PolicyAttachment::all()->pluck('path')->toArray();
+        $filePaths = array_diff($disk->allFiles(PolicyAttachment::IMAGE_PATH), $exceptionFiles);
+
+        foreach ($filePaths as $filePath) {
+            if ($disk->lastModified($filePath) <= now()->subDay()->getTimestamp()) {
+                $disk->delete($filePath);
+            }
+        }
     }
 }

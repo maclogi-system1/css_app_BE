@@ -61,4 +61,26 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
 
         return $policyAttachment;
     }
+
+    /**
+     * Handle delete multiple policy attachment and remove file.
+     */
+    public function deleteMultiple(array $attachmentIds): ?bool
+    {
+        if (empty($attachmentIds)) {
+            return null;
+        }
+
+        return $this->handleSafely(function () use ($attachmentIds) {
+            $this->model()->whereIn('id', $attachmentIds)->get()->each(function ($policyAttachment) {
+                if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
+                    Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
+                }
+
+                $policyAttachment->delete();
+            });
+
+            return true;
+        }, 'Delete multiple policy attachment');
+    }
 }

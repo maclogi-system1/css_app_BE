@@ -10,6 +10,7 @@ use App\Repositories\Contracts\PolicyAttachmentRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
 
 class PolicyAttachmentController extends Controller
 {
@@ -48,5 +49,20 @@ class PolicyAttachmentController extends Controller
         $this->policyAttachmentRepository->delete($policyAttachment);
 
         return new PolicyAttachmentResource($policyAttachment);
+    }
+
+    /**
+     * Remove multiple policy attachment at the same time.
+     */
+    public function removeMultiple(Request $request): JsonResponse
+    {
+        return ! $this->policyAttachmentRepository->deleteMultiple($request->query('attachment_ids', []))
+            ? response()->json([
+                'message' => __('Delete failed. Please check your attachment ids!'),
+                'attachment_ids' => $request->query('attachment_ids', []),
+            ], Response::HTTP_BAD_REQUEST)
+            : response()->json([
+                'message' => __('The policy attachment have been deleted successfully.'),
+            ]);
     }
 }
