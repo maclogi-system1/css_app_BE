@@ -129,6 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::get('/generate-key', 'generateKey')->name('generate-key');
             Route::post('/upload', 'upload')->name('upload');
-            Route::delete('/remove/{policyAttachment}', 'remove')->name('remove');
+            Route::delete('/remove-multiple', 'removeMultiple')->name('remove-multiple');
+            Route::delete('/{policyAttachment}', 'remove')->name('remove');
         });
 });
