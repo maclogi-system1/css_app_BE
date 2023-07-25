@@ -102,4 +102,21 @@ class PolicyController extends Controller
             'errors' => $errors,
         ], $status);
     }
+
+    /*
+    * Delete multiple policies at the same time.
+    */
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        $policies = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
+
+        return ! $policies
+            ? response()->json([
+                'message' => __('Delete failed. Please check your policy ids!'),
+                'policy_ids' => $request->input('policy_ids', []),
+            ], Response::HTTP_BAD_REQUEST)
+            : response()->json([
+                'message' => __('The policy have been deleted successfully.'),
+            ]);
+    }
 }
