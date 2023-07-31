@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,6 +19,10 @@ return new class extends Migration
             $table->integer('simulation_promotional_expenses')->default(0)->after('end_date');
             $table->decimal('simulation_store_priority', 12, 6)->default(0)->after('simulation_promotional_expenses');
             $table->decimal('simulation_product_priority', 12, 6)->default(0)->after('simulation_store_priority');
+
+            // Modify column
+            $table->dateTime('start_date')->nullable()->change();
+            $table->dateTime('end_date')->nullable()->change();
 
             // Rename column
             $table->renameColumn('start_date', 'simulation_start_date');

@@ -27,7 +27,10 @@ class JobGroupService extends Service
             'status' => 200,
             'data' => [
                 'job_group' => [
-                    'id' => rand(1, 3),
+                    'id' => rand(1, 100),
+                ],
+                'single_job' => [
+                    'id' => rand(1, 100),
                 ],
             ],
         ]);
