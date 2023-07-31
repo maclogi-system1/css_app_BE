@@ -15,12 +15,13 @@ return new class extends Migration
         Schema::table('policies', function (Blueprint $table) {
             // New column
             $table->bigInteger('single_job_id')->nullable()->after('job_group_id');
-            $table->tinyInteger('immediate_reflection')->default(1)->comment('1. する, 2. しない')->after('description');
+            $table->tinyInteger('immediate_reflection')->default(1)->comment('1. する, 2. しない')->after('category');
             $table->integer('simulation_promotional_expenses')->default(0)->after('end_date');
             $table->decimal('simulation_store_priority', 12, 6)->default(0)->after('simulation_promotional_expenses');
             $table->decimal('simulation_product_priority', 12, 6)->default(0)->after('simulation_store_priority');
 
             // Modify column
+            $table->string('name', 100)->nullable()->change();
             $table->dateTime('start_date')->nullable()->change();
             $table->dateTime('end_date')->nullable()->change();
 
@@ -30,11 +31,13 @@ return new class extends Migration
 
             // Drop column
             $table->dropColumn([
+                'kpi',
                 'template',
                 'status',
                 'point_rate',
                 'point_application_period',
                 'flat_rate_discount',
+                'description',
             ]);
         });
     }
@@ -55,6 +58,18 @@ return new class extends Migration
 
             $table->renameColumn('simulation_start_date', 'start_date');
             $table->renameColumn('simulation_end_date', 'end_date');
+
+
+            if (!Schema::hasColumn('policies', 'description')) {
+                $table->text('description')->nullable()->after('simulation_end_date');
+            }
+
+            if (!Schema::hasColumn('policies', 'kpi')) {
+                $table->unsignedTinyInteger('kpi')
+                    ->comment('1: 売上向上, 2: アクセス向上, 3: 転換率向上, 4: 客単価向上, 5: その他')
+                    ->default(1)
+                    ->after('category');
+            }
 
             $table->unsignedTinyInteger('template')
                 ->comment('1: クーポン, 2: ポイント, 3: タイムセール')

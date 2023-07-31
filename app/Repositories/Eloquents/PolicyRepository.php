@@ -70,9 +70,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->only([Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY])
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
-        $kpis = collect(Policy::KPIS)->map(fn ($label, $value) => compact('value', 'label'))->values();
+        $controlActions = collect(Policy::CONTROL_ACTIONS)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
 
-        return compact('categories', 'kpis');
+        return [
+            'categories' => $categories,
+            'control_actions' => $controlActions,
+        ];
     }
 
     /**
@@ -117,10 +122,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getValidationRules(array $data)
     {
         $rules = [
-            'name' => ['required', 'max:100'],
+            'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
-            'kpi' => ['required', Rule::in(array_keys(Policy::KPIS))],
-            'description' => ['nullable', 'max:65535'],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
         ];
@@ -161,10 +164,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'item_name_text' => Arr::get($data, 'item_name_text'),
                     'item_name_text_error' => Arr::get($data, 'item_name_text_error'),
                     'point_magnification' => Arr::get($data, 'point_magnification'),
-                    'point_start_date' => Arr::get($data, 'point_start_date'),
-                    'point_start_time' => Arr::get($data, 'point_start_time'),
-                    'point_end_date' => Arr::get($data, 'point_end_date'),
-                    'point_end_time' => Arr::get($data, 'point_end_time'),
+                    'point_start' => Arr::get($data, 'point_start_date') . ' ' . Arr::get($data, 'point_start_time'),
+                    'point_end_date' => Arr::get($data, 'point_end_date') . ' ' . Arr::get($data, 'point_end_time'),
                     'point_error' => Arr::get($data, 'point_error'),
                     'point_operational' => Arr::get($data, 'point_operational'),
                     'discount_type' => Arr::get($data, 'discount_type'),
@@ -176,10 +177,12 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'double_price_text' => Arr::get($data, 'double_price_text'),
                     'shipping_fee' => Arr::get($data, 'shipping_fee'),
                     'stock_specify' => Arr::get($data, 'stock_specify'),
-                    'time_sale_start_date' => Arr::get($data, 'time_sale_start_date'),
-                    'time_sale_start_time' => Arr::get($data, 'time_sale_start_time'),
-                    'time_sale_end_date' => Arr::get($data, 'time_sale_end_date'),
-                    'time_sale_end_time' => Arr::get($data, 'time_sale_end_time'),
+                    'time_sale_start_date_time' => Arr::get($data, 'time_sale_start_date')
+                        . ' '
+                        . Arr::get($data, 'time_sale_start_time'),
+                    'time_sale_end_date_time' => Arr::get($data, 'time_sale_end_date')
+                        . ' '
+                        . Arr::get($data, 'time_sale_end_time'),
                     'is_unavailable_for_search' => Arr::get($data, 'is_unavailable_for_search'),
                     'description_for_pc' => Arr::get($data, 'description_for_pc'),
                     'description_for_sp' => Arr::get($data, 'description_for_sp'),

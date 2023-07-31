@@ -11,6 +11,15 @@ class Policy extends Model
 {
     use HasFactory, HasUuids;
 
+    public const EDIT_ACTION = 1;
+    public const CREATE_ACTION = 2;
+    public const REMOVE_ACTION = 3;
+    public const CONTROL_ACTIONS = [
+        self::EDIT_ACTION => '更新',
+        self::CREATE_ACTION => '新規',
+        self::REMOVE_ACTION => '削除',
+    ];
+
     public const MEASURES_CATEGORY = 1;
     public const PROJECT_CATEGORY = 2;
     public const SIMULATION_CATEGORY = 3;
@@ -18,19 +27,6 @@ class Policy extends Model
         self::MEASURES_CATEGORY => '施策一覧',
         self::PROJECT_CATEGORY => 'プロジェクト一覧',
         self::SIMULATION_CATEGORY => '施策シミュレーション',
-    ];
-
-    public const INCREASED_SALES_KPI = 1;
-    public const IMPROVED_ACCESS_KPI = 2;
-    public const IMPROVE_CONVERSION_RATE_KPI = 3;
-    public const INCREASE_IN_AVERAGE_SPEND_PER_CUSTOMER_KPI = 4;
-    public const OTHERS_KPI = 5;
-    public const KPIS = [
-        self::INCREASED_SALES_KPI => '売上向上',
-        self::IMPROVED_ACCESS_KPI => 'アクセス向上',
-        self::IMPROVE_CONVERSION_RATE_KPI => '転換率向上',
-        self::INCREASE_IN_AVERAGE_SPEND_PER_CUSTOMER_KPI => '客単価向上',
-        self::OTHERS_KPI => 'その他',
     ];
 
     public const NONE_BANNER = 1;
@@ -68,10 +64,5 @@ class Policy extends Model
     public function getCategoryForHumanAttribute(): string
     {
         return static::CATEGORIES[$this->category] ?? static::MEASURES_CATEGORY;
-    }
-
-    public function getKpiForHumanAttribute(): string
-    {
-        return static::KPIS[$this->kpi] ?? static::INCREASED_SALES_KPI;
     }
 }
