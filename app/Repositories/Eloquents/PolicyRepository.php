@@ -135,7 +135,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return [
             'title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
-            'explanation' => Arr::get($data, 'job_group_code'),
+            'explanation' => Arr::get($data, 'job_group_explanation'),
             'job_group_start_date' => Arr::get($data, 'execution_date'),
             'job_group_start_time' => Arr::get($data, 'execution_time'),
             'job_group_end_date' => Arr::get($data, 'undo_date'),
