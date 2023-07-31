@@ -11,12 +11,12 @@ class MqAccountingService extends Service
 {
     use HasMqDateTimeHandler;
 
-    public function getListByStore(string $storeId, array $filter = [])
+    public function getListByStore(string $storeId, array $filters = [])
     {
         return [];
     }
 
-    public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filter = [])
+    public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filters = [])
     {
         return [];
     }
@@ -24,9 +24,9 @@ class MqAccountingService extends Service
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function getCumulativeChangeInRevenueAndProfit($storeId, array $filter = []): Collection
+    public function getCumulativeChangeInRevenueAndProfit($storeId, array $filters = []): Collection
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
 
         $result = [];
@@ -45,7 +45,7 @@ class MqAccountingService extends Service
         return collect($result);
     }
 
-    public function getForecastVsActual($storeId, array $filter = []): Collection
+    public function getForecastVsActual($storeId, array $filters = []): Collection
     {
         return collect([
             'sales_amnt' => rand(7000000, 20000000),

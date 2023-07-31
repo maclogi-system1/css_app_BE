@@ -19,7 +19,7 @@ class VerificationController extends Controller
 
         $signatureVerify = $user->getSignatureVerifyEmail($hash, $expires);
 
-        if (! hash_equals($signature, $signatureVerify)) {
+        if (! hash_equals($signature, $signatureVerify) || now()->timestamp > $expires) {
             abort(404);
         }
 
@@ -29,9 +29,9 @@ class VerificationController extends Controller
         return <<<HTML
         <html>
         <head><title>Email verification</title></head>
-        <body style="font-size: 16px">
+        <body style="font-size: 16px;font-family: Consolas, monaco, monospace;">
         <div style="width: 100vw;height: 100vh;display: flex;justify-content: center;align-items: center">
-            <p style="font-size: 3rem">Successful Verification.</p>
+            <p style="font-size: 2.5rem;color: #d1d5db">メールアドレス認証が完了しました。</p>
         </div>
         </body>
         </html>

@@ -27,11 +27,11 @@ trait HasMqDateTimeHandler
     /**
      * Get date range for filter.
      */
-    public function getDateRangeFilter(array $filter): array
+    public function getDateRangeFilter(array $filters): array
     {
-        $fromDate = Carbon::create(Arr::get($filter, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
+        $fromDate = Carbon::create(Arr::get($filters, 'from_date', now()->subYears(2)->month(1)->format('Y-m')));
         $fromDate->year($this->checkAndGetYearForFilter($fromDate->year));
-        $toDate = Carbon::create(Arr::get($filter, 'to_date', now()->addYear()->month(12)->format('Y-m')));
+        $toDate = Carbon::create(Arr::get($filters, 'to_date', now()->addYear()->month(12)->format('Y-m')));
         $toDate->year($this->checkAndGetYearForFilter($toDate->year));
 
         return [

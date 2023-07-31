@@ -33,15 +33,15 @@ class ChatworkService extends Service
     /**
      * Get a list of the room.
      *
-     * @param  array  $filter
+     * @param  array  $filters
      * @return \Illuminate\Support\Collection
      */
-    public function getRooms(array $filter = []): Collection
+    public function getRooms(array $filters = []): Collection
     {
         $rooms = collect($this->chatworkApi->getRooms());
 
-        if (! empty($filter)) {
-            foreach ($filter as $key => $value) {
+        if (! empty($filters)) {
+            foreach ($filters as $key => $value) {
                 $rooms = $rooms->where($key, $value);
             }
         }

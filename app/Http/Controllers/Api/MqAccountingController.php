@@ -84,11 +84,11 @@ class MqAccountingController extends Controller
      */
     public function downloadTemplateCsv(Request $request): StreamedResponse
     {
-        $filter = [
+        $filters = [
             'options' => $this->mqAccountingRepository->getShowableRows(),
         ] + $request->only(['from_date', 'to_date']);
 
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter), Response::HTTP_OK, [
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filters), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -102,10 +102,10 @@ class MqAccountingController extends Controller
      */
     public function downloadMqAccountingCsv(Request $request, $storeId): StreamedResponse
     {
-        $filter = $request->only(['from_date', 'to_date', 'options'])
+        $filters = $request->only(['from_date', 'to_date', 'options'])
             + ['options' => $this->mqAccountingRepository->getShowableRows()];
 
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), Response::HTTP_OK, [
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filters, $storeId), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -119,11 +119,11 @@ class MqAccountingController extends Controller
      */
     public function downloadMqAccountingCsvSelection(Request $request, $storeId): StreamedResponse
     {
-        $filter = $request->only(['from_date', 'to_date', 'options']);
-        $filter['options'][] = 'reserve1';
-        $filter['options'][] = 'reserve2';
+        $filters = $request->only(['from_date', 'to_date', 'options']);
+        $filters['options'][] = 'reserve1';
+        $filters['options'][] = 'reserve2';
 
-        return response()->stream($this->mqAccountingRepository->streamCsvFile($filter, $storeId), Response::HTTP_OK, [
+        return response()->stream($this->mqAccountingRepository->streamCsvFile($filters, $storeId), Response::HTTP_OK, [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=mq_accounting.csv',
             'Pragma' => 'no-cache',
@@ -228,11 +228,11 @@ class MqAccountingController extends Controller
     public function getComparativeAnalysis(Request $request, $storeId): JsonResponse
     {
         $year = Arr::get($request->query(), 'year', now()->year);
-        $filter = [
+        $filters = [
             'from_date' => "{$year}-01",
             'to_date' => "{$year}-12",
         ];
-        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $filter);
+        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $filters);
 
         return response()->json($result);
     }

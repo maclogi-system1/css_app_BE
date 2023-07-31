@@ -7,10 +7,10 @@ interface MqChartRepository extends Repository
     /**
      * Get monthly changes in financial indicators.
      */
-    public function financialIndicatorsMonthly($storeId, array $filter = []);
+    public function financialIndicatorsMonthly($storeId, array $filters = []);
 
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function cumulativeChangeInRevenueAndProfit($storeId, array $filter = []);
+    public function cumulativeChangeInRevenueAndProfit($storeId, array $filters = []);
 }

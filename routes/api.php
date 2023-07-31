@@ -113,6 +113,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('policy.')
         ->controller(PolicyController::class)
         ->group(function () {
+            Route::get('/download-template', 'downloadTemplateCsv')
+                ->name('download-template')
+                ->withoutMiddleware('auth:sanctum');
+
             Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
             Route::delete('/{policy}', 'destroy')->name('destroy');
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')

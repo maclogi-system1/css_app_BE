@@ -11,8 +11,8 @@ class TaskService extends Service
     /**
      * Get a listing of the task using the OSS api.
      */
-    public function getList(array $filter = []): Collection
+    public function getList(array $filters = []): Collection
     {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('tasks.list'), $filter));
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('tasks.list'), $filters));
     }
 }

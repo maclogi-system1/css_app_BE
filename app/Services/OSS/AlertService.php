@@ -11,8 +11,8 @@ class AlertService extends Service
     /**
      * Get a listing of the shop using the OSS api.
      */
-    public function getList(array $filter = []): Collection
+    public function getList(array $filters = []): Collection
     {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.list'), $filter));
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.list'), $filters));
     }
 }
