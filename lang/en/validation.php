@@ -163,9 +163,8 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
-        ],
+        'min_year' => ':attribute',
+        'max_year' => ':attribute',
     ],
 
     /*

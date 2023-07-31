@@ -29,9 +29,9 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
     /**
      * Get monthly changes in financial indicators.
      */
-    public function financialIndicatorsMonthly($storeId, array $filter = [])
+    public function financialIndicatorsMonthly($storeId, array $filters = [])
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         return $this->model()
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
@@ -51,12 +51,12 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function cumulativeChangeInRevenueAndProfit($storeId, array $filter = [])
+    public function cumulativeChangeInRevenueAndProfit($storeId, array $filters = [])
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
 
-        $actualMqAccounting = $this->mqAccountingService->getCumulativeChangeInRevenueAndProfit($storeId, $filter);
+        $actualMqAccounting = $this->mqAccountingService->getCumulativeChangeInRevenueAndProfit($storeId, $filters);
         $expectedMqAccounting = $this->model()
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
             ->where('store_id', $storeId)

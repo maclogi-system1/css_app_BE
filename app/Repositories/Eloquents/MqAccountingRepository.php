@@ -137,9 +137,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get mq_accounting details by storeId.
      */
-    public function getListByStore(string $storeId, array $filter = []): ?Collection
+    public function getListByStore(string $storeId, array $filters = []): ?Collection
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
@@ -165,23 +165,23 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get mq_accounting details from AI by storeId.
      */
-    public function getListFromAIByStore(string $storeId, array $filter = []): ?array
+    public function getListFromAIByStore(string $storeId, array $filters = []): ?array
     {
-        return $this->mqAccountingService->getListByStore($storeId, $filter);
+        return $this->mqAccountingService->getListByStore($storeId, $filters);
     }
 
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile(array $filter = [], ?string $storeId = ''): Closure
+    public function streamCsvFile(array $filters = [], ?string $storeId = ''): Closure
     {
         $mqAccounting = collect();
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
-        $options = Arr::get($filter, 'options', []);
+        $options = Arr::get($filters, 'options', []);
 
         if ($storeId) {
-            $mqAccounting = $this->getListByStore($storeId, $filter);
+            $mqAccounting = $this->getListByStore($storeId, $filters);
         }
 
         return function () use ($mqAccounting, $options, $dateRange) {
@@ -371,9 +371,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filter = []): Collection
+    public function getTotalParamByStore(string $storeId, array $filters = []): Collection
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         $query = $this->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
             ->queryBuilder()
@@ -395,9 +395,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get forecast vs actual.
      */
-    public function getForecastVsActual(string $storeId, array $filter = []): array
+    public function getForecastVsActual(string $storeId, array $filters = []): array
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filter);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         $expected = $this->useScope([
                 'dateRange' => [
@@ -420,7 +420,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 'sales_amnt' => 0,
                 'profit' => 0,
             ]);
-        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filter);
+        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filters);
         $salesAmntRate = $expected['sales_amnt']
             ? ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $expected['sales_amnt']
             : 0;

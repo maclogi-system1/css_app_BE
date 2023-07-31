@@ -22,6 +22,7 @@ abstract class Service
     public function toResponse(Response $response): Collection
     {
         return collect([
+            'success' => $response->successful(),
             'status' => $response->status(),
             'data' => $response->collect(),
         ]);
