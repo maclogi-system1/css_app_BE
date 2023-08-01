@@ -125,8 +125,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
-            Route::post('/{storeId}', 'storeMultiple')
-                ->name('store-multiple');
+            Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         });
 
     Route::prefix('policy-attachments')

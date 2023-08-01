@@ -23,4 +23,19 @@ class PolicyRule extends Model
         self::NOT_CLEAR_CONDITION => '不明',
         self::SHIPPING_CONDITION => '対象商品',
     ];
+
+    protected $fillable = [
+        'policy_id',
+        'class',
+        'service',
+        'value',
+        'condition_1',
+        'condition_value_1',
+        'condition_2',
+        'condition_value_2',
+        'condition_3',
+        'condition_value_3',
+        'created_at',
+        'updated_at',
+    ];
 }

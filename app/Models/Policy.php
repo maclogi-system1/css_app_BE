@@ -61,8 +61,18 @@ class Policy extends Model
         return $this->hasMany(PolicyAttachment::class);
     }
 
+    public function policyRules(): HasMany
+    {
+        return $this->hasMany(PolicyRule::class);
+    }
+
     public function getCategoryForHumanAttribute(): string
     {
         return static::CATEGORIES[$this->category] ?? static::MEASURES_CATEGORY;
+    }
+
+    public function withAllRels(): static
+    {
+        return $this->where('id', $this->getKey())->with(['policyRules'])->first();
     }
 }

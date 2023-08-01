@@ -163,8 +163,8 @@ return [
     */
 
     'custom' => [
-        'min_year' => ':attribute',
-        'max_year' => ':attribute',
+        'min_year' => ':attributeは、:year/01/01以降を入力してください。',
+        'max_year' => ':attributeは、:year/12/31以下を入力してください。',
     ],
 
     /*
