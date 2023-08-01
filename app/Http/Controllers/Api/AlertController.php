@@ -14,12 +14,10 @@ class AlertController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * Get a listing of the alert from oss api.
      */
     public function index(Request $request)
     {
-        $this->authorize('view_alert');
-
         $result = $this->alertRepository->getList($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));

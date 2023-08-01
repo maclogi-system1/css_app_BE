@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Auth\UsersCompanyController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\JobGroupController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
@@ -113,14 +114,19 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('policy.')
         ->controller(PolicyController::class)
         ->group(function () {
+            Route::get('/download-template', 'downloadTemplateCsv')
+                ->name('download-template')
+                ->withoutMiddleware('auth:sanctum');
+
+            Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
             Route::delete('/{policy}', 'destroy')->name('destroy');
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
             ->name('ai-recommendation-by-store');
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
-            Route::post('/{storeId}', 'storeMultiple')
-                ->name('store-multiple');
+            Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         });
 
     Route::prefix('policy-attachments')
@@ -129,6 +135,15 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::get('/generate-key', 'generateKey')->name('generate-key');
             Route::post('/upload', 'upload')->name('upload');
-            Route::delete('/remove/{policyAttachment}', 'remove')->name('remove');
+            Route::delete('/remove-multiple', 'removeMultiple')->name('remove-multiple');
+            Route::delete('/{policyAttachment}', 'remove')->name('remove');
+        });
+
+    Route::prefix('job-groups')
+        ->name('job-groups.')
+        ->controller(JobGroupController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
         });
 });

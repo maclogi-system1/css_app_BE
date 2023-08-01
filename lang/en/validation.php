@@ -163,9 +163,8 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
-        ],
+        'min_year' => 'The :attribute field must be at least :year/01/01 or later',
+        'max_year' => 'The :attribute field must be no later than :year/12/31 or earlier',
     ],
 
     /*

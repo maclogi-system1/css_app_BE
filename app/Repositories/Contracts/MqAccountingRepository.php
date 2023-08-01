@@ -16,12 +16,12 @@ interface MqAccountingRepository extends Repository
     /**
      * Get mq_accounting details by storeId.
      */
-    public function getListByStore(string $storeId, array $filter = []): ?Collection;
+    public function getListByStore(string $storeId, array $filters = []): ?Collection;
 
     /**
      * Get mq_accounting details from AI by storeId.
      */
-    public function getListFromAIByStore(string $storeId, array $filter = []): ?array;
+    public function getListFromAIByStore(string $storeId, array $filters = []): ?array;
 
     /**
      * Read and parse csv file contents.
@@ -31,7 +31,7 @@ interface MqAccountingRepository extends Repository
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile(array $filter = [], ?string $storeId = ''): Closure;
+    public function streamCsvFile(array $filters = [], ?string $storeId = ''): Closure;
 
     /**
      * Update an existing model or create a new model.
@@ -46,12 +46,12 @@ interface MqAccountingRepository extends Repository
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filter = []): Collection;
+    public function getTotalParamByStore(string $storeId, array $filters = []): Collection;
 
     /**
      * Get forecast vs actual.
      */
-    public function getForecastVsActual(string $storeId, array $filter = []): array;
+    public function getForecastVsActual(string $storeId, array $filters = []): array;
 
     /**
      * Get a list of validation rules for validator

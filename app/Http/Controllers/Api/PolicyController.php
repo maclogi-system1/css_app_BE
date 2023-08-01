@@ -3,19 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
 use App\Repositories\Contracts\PolicyRepository;
+use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PolicyController extends Controller
 {
     public function __construct(
-        protected PolicyRepository $policyRepository
-    ) {}
+        protected PolicyRepository $policyRepository,
+        protected PolicyCsv $policyCsv,
+    ) {
+    }
 
     /**
      * Get a list of policies by store id in this site.
@@ -55,7 +61,7 @@ class PolicyController extends Controller
     /**
      * Remove the specified policy from storage.
      */
-    public function destroy(Policy $policy) : JsonResource|JsonResponse
+    public function destroy(Policy $policy): JsonResource|JsonResponse
     {
         $policy = $this->policyRepository->delete($policy);
 
@@ -72,6 +78,7 @@ class PolicyController extends Controller
         $numberFailures = 0;
         $errors = [];
         $status = Response::HTTP_OK;
+        $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
             $validated = $this->policyRepository->handleValidation($data, $index);
@@ -82,10 +89,11 @@ class PolicyController extends Controller
                     ? Response::HTTP_UNPROCESSABLE_ENTITY
                     : Response::HTTP_BAD_REQUEST;
                 $numberFailures++;
+
                 continue;
             }
 
-            $result = $this->policyRepository->create($data, $storeId);
+            $result = $this->policyRepository->create($validated, $storeId);
 
             if (is_null($result)) {
                 $errors[] = [
@@ -93,6 +101,12 @@ class PolicyController extends Controller
                 ];
                 $status = Response::HTTP_BAD_REQUEST;
                 $numberFailures++;
+            } else {
+                $this->policyRepository->handleStartEndTimeForJobGroup(
+                    Arr::get($result, 'job_group.id'),
+                    $data,
+                    $jobGroups
+                );
             }
         }
 
@@ -101,5 +115,50 @@ class PolicyController extends Controller
             'number_of_failures' => $numberFailures,
             'errors' => $errors,
         ], $status);
+    }
+
+    /**
+     * Stores a newly created simulation policy in storage.
+     */
+    public function storeSimulation(StoreSimulationPolicyRequest $request, string $storeId): JsonResource|JsonResponse
+    {
+        $simulationPolicy = $this->policyRepository->createSimulation($request->validated(), $storeId);
+
+        return $simulationPolicy
+            ? (new PolicyResource($simulationPolicy))->response($request)->setStatusCode(Response::HTTP_CREATED)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ], Response::HTTP_BAD_REQUEST);
+    }
+
+    /*
+    * Delete multiple policies at the same time.
+    */
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        $policies = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
+
+        return !$policies
+            ? response()->json([
+                'message' => __('Delete failed. Please check your policy ids!'),
+                'policy_ids' => $request->input('policy_ids', []),
+            ], Response::HTTP_BAD_REQUEST)
+            : response()->json([
+                'message' => __('The policy have been deleted successfully.'),
+            ]);
+    }
+
+    /**
+     * Download a template csv file.
+     */
+    public function downloadTemplateCsv(): StreamedResponse
+    {
+        return response()->stream(callback: $this->policyCsv->streamCsvFile(), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=policy_template.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
     }
 }

@@ -44,6 +44,13 @@ return [
             'tasks' => [
                 'list' => '/tasks',
             ],
+            'job_groups' => [
+                'list' => '/job-groups',
+                'detail' => '/job-groups/{id}',
+                'options' => '/job-groups/options',
+                'validate' => '/job-groups/validate',
+                'create' => '/job-groups',
+            ],
         ],
     ],
 
