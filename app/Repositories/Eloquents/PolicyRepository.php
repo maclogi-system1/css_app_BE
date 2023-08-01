@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquents;
 
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
+use App\Models\PolicyRule;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\AI\PolicyR2Service;
@@ -73,10 +74,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $controlActions = collect(Policy::CONTROL_ACTIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
+        $policyRules = collect(PolicyRule::CONDITIONS)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
 
         return [
             'categories' => $categories,
             'control_actions' => $controlActions,
+            'policy_rules' => $policyRules,
         ];
     }
 
@@ -227,6 +232,37 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'job_group' => $result['data']['job_group'],
             ];
         }, 'Create policy');
+    }
+
+    /**
+     * Handle create a new simulation policy.
+     */
+    public function createSimulation(array $data, string $storeId): ?Policy
+    {
+        return $this->handleSafely(function () use ($data, $storeId) {
+            $simulationStartDate = new Carbon($data['simulation_start_date'] . ' ' . $data['simulation_start_time']);
+            $simulationEndDate = new Carbon($data['simulation_end_date'] . ' ' . $data['simulation_end_time']);
+
+            $simulationPolicy = $this->model()->fill([
+                'store_id' => $storeId,
+                'name' => $data['name'],
+                'category' => Policy::SIMULATION_CATEGORY,
+                'simulation_start_date' => $simulationStartDate,
+                'simulation_end_date' => $simulationEndDate,
+                'simulation_promotional_expenses' => $data['simulation_promotional_expenses'],
+                'simulation_store_priority' => $data['simulation_store_priority'],
+                'simulation_product_priority' => $data['simulation_product_priority'],
+            ]);
+            $simulationPolicy->save();
+
+            if (!empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+                foreach ($policyRules as $policyRule) {
+                    $simulationPolicy->policyRules()->create($policyRule);
+                }
+            }
+
+            return $simulationPolicy->withAllRels();
+        }, 'Create simulation policy');
     }
 
     /**

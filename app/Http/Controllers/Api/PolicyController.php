@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
 use App\Repositories\Contracts\PolicyRepository;
@@ -114,6 +115,20 @@ class PolicyController extends Controller
             'number_of_failures' => $numberFailures,
             'errors' => $errors,
         ], $status);
+    }
+
+    /**
+     * Stores a newly created simulation policy in storage.
+     */
+    public function storeSimulation(StoreSimulationPolicyRequest $request, string $storeId): JsonResource|JsonResponse
+    {
+        $simulationPolicy = $this->policyRepository->createSimulation($request->validated(), $storeId);
+
+        return $simulationPolicy
+            ? (new PolicyResource($simulationPolicy))->response($request)->setStatusCode(Response::HTTP_CREATED)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ], Response::HTTP_BAD_REQUEST);
     }
 
     /*
