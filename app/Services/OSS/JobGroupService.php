@@ -13,7 +13,7 @@ class JobGroupService extends Service
      */
     public function getList(array $filters = []): Collection
     {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('job_groups.list', $filters)));
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('job_groups.list'), $filters));
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Auth\UsersCompanyController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\JobGroupController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
@@ -136,5 +137,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/upload', 'upload')->name('upload');
             Route::delete('/remove-multiple', 'removeMultiple')->name('remove-multiple');
             Route::delete('/{policyAttachment}', 'remove')->name('remove');
+        });
+
+    Route::prefix('job-groups')
+        ->name('job-groups.')
+        ->controller(JobGroupController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
         });
 });
