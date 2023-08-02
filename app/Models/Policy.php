@@ -61,7 +61,7 @@ class Policy extends Model
         return $this->hasMany(PolicyAttachment::class);
     }
 
-    public function policyRules(): HasMany
+    public function rules(): HasMany
     {
         return $this->hasMany(PolicyRule::class);
     }
@@ -73,6 +73,6 @@ class Policy extends Model
 
     public function withAllRels(): static
     {
-        return $this->where('id', $this->getKey())->with(['policyRules'])->first();
+        return $this->where('id', $this->getKey())->with(['rules'])->first();
     }
 }

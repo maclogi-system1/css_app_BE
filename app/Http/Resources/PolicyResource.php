@@ -40,7 +40,7 @@ class PolicyResource extends JsonResource
                 'simulation_product_priority' => $this->simulation_product_priority,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
-                'policy_rules' => PolicyRuleResource::collection($this->whenLoaded('policyRules')),
+                'policy_rules' => PolicyRuleResource::collection($this->whenLoaded('rules')),
             ]
             : [
                 'id' => $this->id,

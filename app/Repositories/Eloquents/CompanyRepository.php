@@ -26,9 +26,7 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
-        if (Arr::has($filters, 'with')) {
-            $this->useWith($filters['with']);
-        }
+        $this->enableUseWith(['teams', 'users'], $filters);
 
         return parent::getList($filters, $columns);
     }
@@ -38,9 +36,7 @@ class CompanyRepository extends Repository implements CompanyRepositoryContract
      */
     public function find($id, array $columns = ['*'], array $filters = []): ?Company
     {
-        if (Arr::has($filters, 'with')) {
-            $this->useWith($filters['with']);
-        }
+        $this->enableUseWith(['teams', 'users'], $filters);
 
         return $this->queryBuilder()->where('id', $id)->first($columns);
     }
