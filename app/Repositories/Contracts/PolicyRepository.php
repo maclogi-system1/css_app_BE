@@ -33,6 +33,16 @@ interface PolicyRepository extends Repository
     public function handleValidation(array $data, int $index): array;
 
     /**
+     * Get the policy input validation rules.
+     */
+    public function getValidationRules(array $data): array;
+
+    /**
+     * Get the data and parse it into a data structure for job_group.
+     */
+    public function getDataForJobGroup(array $data): array;
+
+    /**
      * Handle create multiple policy.
      */
     public function create(array $data, string $storeId): ?array;
