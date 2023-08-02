@@ -265,6 +265,22 @@ abstract class Repository
     }
 
     /**
+     * Enable "filters" to use "useWith".
+     *
+     * @param  array  $relationValid
+     * @param  array  $filters
+     * @return $this
+     */
+    public function enableUseWith(array $relationValid, array $filters = []): static
+    {
+        if (Arr::has($filters, 'with') && !array_diff($filters['with'], $relationValid)) {
+            $this->useWith($filters['with']);
+        }
+
+        return $this;
+    }
+
+    /**
      * Safely execute database interactions using transaction.
      *
      * @param  \Closure  $callback

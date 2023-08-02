@@ -38,7 +38,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function getListByStore($storeId, array $filters = []): Collection
     {
-        $this->useWith(['attachments']);
+        $this->enableUseWith(['attachments', 'rules'], $filters);
+
         $constName = str(Arr::get($filters, 'category'))
             ->upper()
             ->append('_CATEGORY')
@@ -92,7 +93,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function delete(Policy $policy): ?Policy
     {
         return $this->handleSafely(function () use ($policy) {
-            $policy->policyRules()->delete();
+            $policy->rules()->delete();
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
             $policy->delete();
 
@@ -287,7 +288,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             if (!empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
-                    $simulationPolicy->policyRules()->create($policyRule);
+                    $simulationPolicy->rules()->create($policyRule);
                 }
             }
 

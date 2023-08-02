@@ -38,9 +38,7 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
     {
-        if (Arr::has($filters, 'with')) {
-            $this->useWith($filters['with']);
-        }
+        $this->enableUseWith(['chatwork', 'company', 'teams', 'roles', 'permissions'], $filters);
 
         if ($role = Arr::pull($filters, 'search.role')) {
             $this->useHas(['roles' => function (Builder $query) use ($role) {
@@ -82,9 +80,7 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function find($id, array $columns = ['*'], array $filters = []): ?User
     {
-        if (Arr::has($filters, 'with')) {
-            $this->useWith($filters['with']);
-        }
+        $this->enableUseWith(['chatwork', 'teams', 'roles', 'permissions'], $filters);
 
         $this->useWith(['company']);
 
