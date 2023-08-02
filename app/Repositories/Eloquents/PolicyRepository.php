@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
+use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\AI\PolicyR2Service;
@@ -90,10 +91,33 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function delete(Policy $policy): ?Policy
     {
-        $policy->attachments()->delete();
-        $policy->delete();
+        return $this->handleSafely(function () use ($policy) {
+            $policy->policyRules()->delete();
+            app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
+            $policy->delete();
 
-        return $policy;
+            return $policy;
+        }, 'Delete policy');
+    }
+
+    /**
+     * Handle delete multiple policies at the same time.
+     */
+    public function deleteMultiple(array $policyIds): ?bool
+    {
+        if (empty($policyIds)) {
+            return null;
+        }
+
+        return $this->handleSafely(function () use ($policyIds) {
+            $policies = $this->model()->whereIn('id', $policyIds)->get();
+
+            foreach ($policies as $policy) {
+                $this->delete($policy);
+            }
+
+            return true;
+        }, 'Delete multiple policies');
     }
 
     /**
@@ -124,7 +148,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         ];
     }
 
-    public function getValidationRules(array $data)
+    /**
+     * Get the policy input validation rules.
+     */
+    public function getValidationRules(array $data): array
     {
         $rules = [
             'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
@@ -136,6 +163,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return $rules;
     }
 
+    /**
+     * Get the data and parse it into a data structure for job_group.
+     */
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time');
@@ -295,21 +325,5 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'end_date' => $dataEndDateTime,
             ];
         }
-    }
-
-    /**
-     * Handle delete multiple policies at the same time.
-     */
-    public function deleteMultiple(array $policyIds): ?bool
-    {
-        if (empty($policyIds)) {
-            return null;
-        }
-
-        return $this->handleSafely(function () use ($policyIds) {
-            $result = $this->model()->whereIn('id', $policyIds)->delete();
-
-            return $result;
-        }, 'Delete multiple policies');
     }
 }

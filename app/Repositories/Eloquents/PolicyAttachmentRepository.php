@@ -7,6 +7,7 @@ use App\Repositories\Contracts\PolicyAttachmentRepository as PolicyAttachmentRep
 use App\Repositories\Repository;
 use App\Services\UploadFileService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class PolicyAttachmentRepository extends Repository implements PolicyAttachmentRepositoryContract
@@ -53,9 +54,7 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
      */
     public function delete(PolicyAttachment $policyAttachment): ?PolicyAttachment
     {
-        if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
-            Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
-        }
+        $this->checkAndDeleteFile($policyAttachment);
 
         $policyAttachment->delete();
 
@@ -63,21 +62,27 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
     }
 
     /**
+     * Check the files of the policy attachments in the disk and delete them.
+     */
+    private function checkAndDeleteFile(PolicyAttachment $policyAttachment): void
+    {
+        if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
+            Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
+        }
+    }
+
+    /**
      * Handle delete multiple policy attachment and remove file.
      */
-    public function deleteMultiple(array $attachmentIds): ?bool
+    public function deleteMultiple(array|Collection $attachmentIds): ?bool
     {
-        if (empty($attachmentIds)) {
+        if (!count($attachmentIds)) {
             return null;
         }
 
         return $this->handleSafely(function () use ($attachmentIds) {
             $this->model()->whereIn('id', $attachmentIds)->get()->each(function ($policyAttachment) {
-                if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
-                    Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
-                }
-
-                $policyAttachment->delete();
+                $this->delete($policyAttachment);
             });
 
             return true;

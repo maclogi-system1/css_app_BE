@@ -93,20 +93,22 @@ class PolicyController extends Controller
                 continue;
             }
 
-            $result = $this->policyRepository->create($validated, $storeId);
+            if (Arr::get($validated, 'policy.control_actions') == Policy::CREATE_ACTION) {
+                $result = $this->policyRepository->create($validated, $storeId);
 
-            if (is_null($result)) {
-                $errors[] = [
-                    'messages' => "Something went wrong! Can't create policy.",
-                ];
-                $status = Response::HTTP_BAD_REQUEST;
-                $numberFailures++;
-            } else {
-                $this->policyRepository->handleStartEndTimeForJobGroup(
-                    Arr::get($result, 'job_group.id'),
-                    $data,
-                    $jobGroups
-                );
+                if (is_null($result)) {
+                    $errors[] = [
+                        'messages' => "Something went wrong! Can't create policy.",
+                    ];
+                    $status = Response::HTTP_BAD_REQUEST;
+                    $numberFailures++;
+                } else {
+                    $this->policyRepository->handleStartEndTimeForJobGroup(
+                        Arr::get($result, 'job_group.id'),
+                        $data,
+                        $jobGroups
+                    );
+                }
             }
         }
 
@@ -136,9 +138,9 @@ class PolicyController extends Controller
     */
     public function deleteMultiple(Request $request): JsonResponse
     {
-        $policies = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
+        $result = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
 
-        return !$policies
+        return !$result
             ? response()->json([
                 'message' => __('Delete failed. Please check your policy ids!'),
                 'policy_ids' => $request->input('policy_ids', []),
