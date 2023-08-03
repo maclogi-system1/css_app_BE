@@ -14,6 +14,9 @@ class PolicyAttachment extends Model
     public const IMAGE_TYPE = 'image';
     public const IMAGE_PATH = 'images/policy_attachment';
 
+    public const TEXT_TYPE = 'text';
+    public const TEXT_PATH = 'texts/policy_attachment';
+
     protected $fillable = [
         'policy_id',
         'attachment_key',

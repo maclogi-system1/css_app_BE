@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ShopUserController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
@@ -121,7 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
             Route::delete('/{policy}', 'destroy')->name('destroy');
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
-            ->name('ai-recommendation-by-store');
+                ->name('ai-recommendation-by-store');
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
@@ -146,4 +147,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
         });
+
+    Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
 });

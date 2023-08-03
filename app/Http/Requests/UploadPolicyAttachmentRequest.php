@@ -25,7 +25,9 @@ class UploadPolicyAttachmentRequest extends FormRequest
             'attachment_key' => ['required', 'string', 'size:16'],
             'attachment' => [
                 'required',
-                File::image()->max(1024),
+                'file',
+                'mimes:jpg,jpeg,png,bmp,gif,svg,webp,csv,txt',
+                'max:1024',
             ],
         ];
     }
