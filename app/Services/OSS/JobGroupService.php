@@ -41,7 +41,7 @@ class JobGroupService extends Service
      */
     public function getOptions(): Collection
     {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('job_groups.options')));
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.options')));
     }
 
     /**

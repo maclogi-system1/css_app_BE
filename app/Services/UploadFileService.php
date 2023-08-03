@@ -18,7 +18,10 @@ class UploadFileService
         return $file->storeAs($dir, $fileName);
     }
 
-    public function isImage(UploadedFile $file)
+    /**
+     * Check mime type of a file is image.
+     */
+    public function isImage(UploadedFile $file): bool
     {
         return in_array($file->getClientMimeType(), [
             'image/png',
@@ -27,6 +30,17 @@ class UploadFileService
             'image/gif',
             'image/webp',
             'image/svg+xml',
+        ]);
+    }
+
+    /**
+     * Check mime type of a file is csv or plain text.
+     */
+    public function isTextCsv(UploadedFile $file): bool
+    {
+        return in_array($file->getClientMimeType(), [
+            'text/csv',
+            'text/plain',
         ]);
     }
 }

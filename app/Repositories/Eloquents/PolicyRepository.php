@@ -14,6 +14,7 @@ use App\Support\DataAdapter\PolicyAdapter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
@@ -80,11 +81,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return [
-            'categories' => $categories,
+        return $this->jobGroupService->getOptions()->get('data')->merge([
             'control_actions' => $controlActions,
+            'categories' => $categories,
             'policy_rules' => $policyRules,
-        ];
+        ])->toArray();
     }
 
     /**
@@ -288,6 +289,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             if (!empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
                     $simulationPolicy->rules()->create($policyRule);
                 }
             }
@@ -297,7 +301,44 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
-     * Handle getting the start and end timestamps for job_group
+     * Handle the condition's data.
+     */
+    private function handleCondition(int $conditionNumber, array &$policyRule): void
+    {
+        $conditionName = "condition_{$conditionNumber}";
+        $conditionValue = "condition_value_{$conditionNumber}";
+        $value = [];
+
+        if ($attachmentKey = Arr::get($policyRule, "attachment_key_{$conditionNumber}")) {
+            $policyAttachment = PolicyAttachment::where('attachment_key', $attachmentKey)
+                ->where('type', PolicyAttachment::TEXT_TYPE)
+                ->where('created_at', '>=', now()->subDay())
+                ->whereNull('policy_id')
+                ->first();
+
+            if (!is_null($policyAttachment)) {
+                $fileContent = file(storage_path('app/public/' . $policyAttachment->path));
+
+                foreach ($fileContent as $content) {
+                    $value[] = str_replace([',', ' ', "\n"], '', $content);
+                }
+
+                if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
+                    Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
+                    $policyAttachment->delete();
+                }
+            }
+        }
+
+        if (Arr::get($policyRule, $conditionName) == PolicyRule::SHIPPING_CONDITION) {
+            $valueString = str_replace(["\n", ', '], ',', Arr::get($policyRule, $conditionValue, ''));
+            $value = array_merge($value, explode(',', $valueString));
+            $policyRule[$conditionValue] = implode(',', array_unique($value));
+        }
+    }
+
+    /**
+     * Handle getting the start and end timestamps for job_group.
      */
     public function handleStartEndTimeForJobGroup($jobGroupId, $data, array &$jobGroups): void
     {

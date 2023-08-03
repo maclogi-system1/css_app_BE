@@ -34,13 +34,21 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
             $fileName = str($file->getClientOriginalName())
                 ->snake()
                 ->append('_' . time() . '.' . $file->extension());
-            $pathUploadedFile = $this->uploadFileService->uploadImage(file: $file, dir: PolicyAttachment::IMAGE_PATH);
+            $dir = PolicyAttachment::IMAGE_PATH;
+            $type = PolicyAttachment::IMAGE_TYPE;
+
+            if ($this->uploadFileService->isTextCsv($file)) {
+                $dir = PolicyAttachment::TEXT_PATH;
+                $type = PolicyAttachment::TEXT_TYPE;
+            }
+
+            $pathUploadedFile = $this->uploadFileService->uploadImage(file: $file, dir: $dir);
 
             $policy = $this->model()->fill([
                 'attachment_key' => $attachmentKey,
                 'name' => $fileName,
                 'path' => $pathUploadedFile,
-                'type' => PolicyAttachment::IMAGE_TYPE,
+                'type' => $type,
                 'disk' => 'public',
             ]);
             $policy->save();
