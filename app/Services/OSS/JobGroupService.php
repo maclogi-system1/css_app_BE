@@ -49,6 +49,6 @@ class JobGroupService extends Service
      */
     public function validate(array $data): Collection
     {
-        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate', $data)));
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate'), $data));
     }
 }
