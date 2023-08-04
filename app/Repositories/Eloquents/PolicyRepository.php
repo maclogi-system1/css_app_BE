@@ -10,7 +10,9 @@ use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\AI\PolicyR2Service;
 use App\Services\OSS\JobGroupService;
+use App\Services\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -23,6 +25,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function __construct(
         protected PolicyR2Service $policyR2Service,
         protected JobGroupService $jobGroupService,
+        protected SingleJobService $singleJobService,
     ) {
     }
 
@@ -37,22 +40,47 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Get a list of the policy by store_id.
      */
-    public function getListByStore($storeId, array $filters = []): Collection
+    public function getListByStore($storeId, array $filters = []): Collection|LengthAwarePaginator
     {
         $this->enableUseWith(['attachments', 'rules'], $filters);
+        $page = Arr::get($filters, 'page', 1);
+        $perPage = Arr::get($filters, 'per_page', 10);
 
         $constName = str(Arr::get($filters, 'category'))
             ->upper()
             ->append('_CATEGORY')
             ->prepend(Policy::class . '::')
             ->toString();
-        $query = $this->queryBuilder()->where('store_id', $storeId);
+        $query = $this->getWithFilter($this->queryBuilder()->where('store_id', $storeId));
 
         if (Arr::has($filters, 'category') && defined($constName)) {
             $query->where('category', constant($constName));
         }
 
-        return $query->get();
+        if ($perPage < 0) {
+            return $query->get();
+        }
+
+        $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+        $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
+        $singleJobs = $this->singleJobService->getList(['store_id' => $storeId, 'filters' => [
+            'id' => $singleJobIds,
+            'with[]' => 'job_group',
+            'with[]' => 'managers',
+        ]]);
+
+        if ($singleJobs->get('success')) {
+            foreach ($policies->items() as $item) {
+                $singleJobData = Arr::where(
+                    $singleJobs->get('data'),
+                    fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id
+                );
+                $item->single_job = reset($singleJobData);
+            }
+        }
+
+
+        return $policies;
     }
 
     /**
@@ -81,7 +109,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return $this->jobGroupService->getOptions()->get('data')->merge([
+        return $this->singleJobService->getOptions()->get('data')->merge([
             'control_actions' => $controlActions,
             'categories' => $categories,
             'policy_rules' => $policyRules,
@@ -173,7 +201,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $executionTime = Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time');
 
         return [
-            'title' => Arr::get($data, 'job_group_title'),
+            'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
             'explanation' => Arr::get($data, 'job_group_explanation'),
             'job_group_start_date' => Arr::get($data, 'execution_date'),
@@ -184,12 +212,15 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
             'single_jobs' => [
                 [
+                    'uuid' => (string) str()->uuid(),
                     'status' => Arr::get($data, 'status'),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
-                    'execution_time' => $executionTime,
-                    'undo_time' => Arr::get($data, 'undo_date') . ' ' . Arr::get($data, 'undo_time'),
+                    'execution_date' => Arr::get($data, 'execution_date'),
+                    'execution_time' => Arr::get($data, 'execution_time'),
+                    'undo_date' => Arr::get($data, 'undo_date'),
+                    'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
                     'has_banner' => Arr::get($data, 'has_banner', 2),
@@ -201,8 +232,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'item_name_text' => Arr::get($data, 'item_name_text'),
                     'item_name_text_error' => Arr::get($data, 'item_name_text_error'),
                     'point_magnification' => Arr::get($data, 'point_magnification'),
-                    'point_start' => Arr::get($data, 'point_start_date') . ' ' . Arr::get($data, 'point_start_time'),
-                    'point_end_date' => Arr::get($data, 'point_end_date') . ' ' . Arr::get($data, 'point_end_time'),
+                    'point_start_date' => Arr::get($data, 'point_start_date'),
+                    'point_start_time' => Arr::get($data, 'point_start_time'),
+                    'point_end_date' => Arr::get($data, 'point_end_date'),
+                    'point_end_time' => Arr::get($data, 'point_end_time'),
                     'point_error' => Arr::get($data, 'point_error'),
                     'point_operational' => Arr::get($data, 'point_operational'),
                     'discount_type' => Arr::get($data, 'discount_type'),
@@ -214,12 +247,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'double_price_text' => Arr::get($data, 'double_price_text'),
                     'shipping_fee' => Arr::get($data, 'shipping_fee'),
                     'stock_specify' => Arr::get($data, 'stock_specify'),
-                    'time_sale_start_date_time' => Arr::get($data, 'time_sale_start_date')
-                        . ' '
-                        . Arr::get($data, 'time_sale_start_time'),
-                    'time_sale_end_date_time' => Arr::get($data, 'time_sale_end_date')
-                        . ' '
-                        . Arr::get($data, 'time_sale_end_time'),
+                    'time_sale_start_date' => Arr::get($data, 'time_sale_start_date'),
+                    'time_sale_start_time' => Arr::get($data, 'time_sale_start_time'),
+                    'time_sale_end_date' => Arr::get($data, 'time_sale_end_date'),
+                    'time_sale_end_time' => Arr::get($data, 'time_sale_end_time'),
                     'is_unavailable_for_search' => Arr::get($data, 'is_unavailable_for_search'),
                     'description_for_pc' => Arr::get($data, 'description_for_pc'),
                     'description_for_sp' => Arr::get($data, 'description_for_sp'),
