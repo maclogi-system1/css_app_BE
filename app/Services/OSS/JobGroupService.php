@@ -37,14 +37,6 @@ class JobGroupService extends Service
     }
 
     /**
-     * Get a list of the option for select.
-     */
-    public function getOptions(): Collection
-    {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.options')));
-    }
-
-    /**
      * Handle validation form request.
      */
     public function validate(array $data): Collection

@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Policy;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface PolicyRepository extends Repository
@@ -10,7 +11,7 @@ interface PolicyRepository extends Repository
     /**
      * Get a list of the policy by store_id.
      */
-    public function getListByStore($storeId, array $filters = []): Collection;
+    public function getListByStore($storeId, array $filters = []): Collection|LengthAwarePaginator;
 
     /**
      * Get a list of AI recommendations.
