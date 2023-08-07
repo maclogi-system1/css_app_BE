@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
+use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ShopUserController;
 use App\Http\Controllers\Api\TeamController;
@@ -127,7 +128,15 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
             Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
+        });
+
+    Route::prefix('policy-simulation-histories')
+        ->name('policy-simulation-histories.')
+        ->controller(PolicySimulationHistoryController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
         });
 
     Route::prefix('policy-attachments')

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Jobs\RunPolicySimulation;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
@@ -12,6 +13,7 @@ use App\Services\AI\PolicyR2Service;
 use App\Services\OSS\JobGroupService;
 use App\Services\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
+use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -45,16 +47,22 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $this->enableUseWith(['attachments', 'rules'], $filters);
         $page = Arr::get($filters, 'page', 1);
         $perPage = Arr::get($filters, 'per_page', 10);
+        $category = str(Arr::get($filters, 'category'));
 
-        $constName = str(Arr::get($filters, 'category'))
-            ->upper()
+        $constName = $category->upper()
             ->append('_CATEGORY')
             ->prepend(Policy::class . '::')
             ->toString();
         $query = $this->getWithFilter($this->queryBuilder()->where('store_id', $storeId));
 
-        if (Arr::has($filters, 'category') && defined($constName)) {
-            $query->where('category', constant($constName));
+        if (Arr::has($filters, 'category')) {
+            if (defined($constName)) {
+                $query->where('category', constant($constName));
+            }
+
+            if ($category->toString() == Policy::SIMULATION_CATEGORY) {
+                $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
+            }
         }
 
         if ($perPage < 0) {
@@ -65,8 +73,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         $singleJobs = $this->singleJobService->getList([
             'store_id' => $storeId,
-            'filters' => ['id' => $singleJobIds],
-            'with' => ['job_group', 'managers'],
+            'filters' => [
+                'single_job.id' => $singleJobIds,
+                'keyword' => Arr::get($filters, 'keyword'),
+                'from_date' => Arr::get($filters, 'from_date'),
+                'end_date' => Arr::get($filters, 'to_date'),
+            ],
+            'with' => ['job_group.jobGroupAssignee'],
         ]);
 
         if ($singleJobs->get('success')) {
@@ -380,5 +393,17 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $value = array_merge($value, explode(',', $valueString));
             $policyRule[$conditionValue] = implode(',', array_unique($value));
         }
+    }
+
+    /**
+     * Run policy simulation.
+     */
+    public function runSimulation(array $data)
+    {
+        $policy = $this->model()->find($data['policy_id']);
+        $policy->processing_status = Policy::RUNNING_PROCESSING_STATUS;
+        $policy->save();
+
+        RunPolicySimulation::dispatch($policy);
     }
 }

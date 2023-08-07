@@ -57,4 +57,9 @@ interface PolicyRepository extends Repository
      * Handle delete multiple policies at the same time.
      */
     public function deleteMultiple(array $policyIds): ?bool;
+
+    /**
+     * Run policy simulation.
+     */
+    public function runSimulation(array $data);
 }

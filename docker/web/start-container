@@ -19,7 +19,4 @@ if [ ${ENABLE_SSL} == true ]; then
     a2enmod ssl
 fi
 
-apachectl -D FOREGROUND
-
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
-exec /usr/sbin/apache2
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
