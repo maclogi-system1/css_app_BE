@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
+use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,7 @@ class PolicyController extends Controller
 {
     public function __construct(
         protected PolicyRepository $policyRepository,
+        protected JobGroupRepository $jobGroupRepository,
         protected PolicyCsv $policyCsv,
     ) {
     }
@@ -103,14 +105,16 @@ class PolicyController extends Controller
                     $status = Response::HTTP_BAD_REQUEST;
                     $numberFailures++;
                 } else {
-                    $this->policyRepository->handleStartEndTimeForJobGroup(
-                        Arr::get($result, 'job_group.id'),
+                    $this->jobGroupRepository->handleStartEndTime(
+                        Arr::get($result, 'job_group_id'),
                         $data,
                         $jobGroups
                     );
                 }
             }
         }
+
+        $this->jobGroupRepository->updateTime($jobGroups);
 
         return response()->json([
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
