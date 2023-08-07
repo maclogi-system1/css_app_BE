@@ -21,27 +21,7 @@ class JobGroupService extends Service
      */
     public function create(array $data): Collection
     {
-        // return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.create'), $data));
-        return collect([
-            'success' => true,
-            'status' => 200,
-            'data' => [
-                'job_group' => [
-                    'id' => rand(1, 100),
-                ],
-                'single_job' => [
-                    'id' => rand(1, 100),
-                ],
-            ],
-        ]);
-    }
-
-    /**
-     * Get a list of the option for select.
-     */
-    public function getOptions(): Collection
-    {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('job_groups.options')));
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.create'), $data));
     }
 
     /**
@@ -49,6 +29,14 @@ class JobGroupService extends Service
      */
     public function validate(array $data): Collection
     {
-        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate', $data)));
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate'), $data));
+    }
+
+    /**
+     * Handle update start time and end time for a list of the job group.
+     */
+    public function updateTime(array $data): Collection
+    {
+        return $this->toResponse(Http::oss()->patch(OSSService::getApiUri('job_groups.update_time'), $data));
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
+use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,7 @@ class PolicyController extends Controller
 {
     public function __construct(
         protected PolicyRepository $policyRepository,
+        protected JobGroupRepository $jobGroupRepository,
         protected PolicyCsv $policyCsv,
     ) {
     }
@@ -81,7 +83,7 @@ class PolicyController extends Controller
         $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
-            $validated = $this->policyRepository->handleValidation($data, $index);
+            $validated = $this->policyRepository->handleValidation($data + ['store_id' => $storeId], $index);
 
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
@@ -93,22 +95,26 @@ class PolicyController extends Controller
                 continue;
             }
 
-            $result = $this->policyRepository->create($validated, $storeId);
+            if (Arr::get($validated, 'policy.control_actions') == Policy::CREATE_ACTION) {
+                $result = $this->policyRepository->create($validated, $storeId);
 
-            if (is_null($result)) {
-                $errors[] = [
-                    'messages' => "Something went wrong! Can't create policy.",
-                ];
-                $status = Response::HTTP_BAD_REQUEST;
-                $numberFailures++;
-            } else {
-                $this->policyRepository->handleStartEndTimeForJobGroup(
-                    Arr::get($result, 'job_group.id'),
-                    $data,
-                    $jobGroups
-                );
+                if (is_null($result)) {
+                    $errors[] = [
+                        'messages' => "Something went wrong! Can't create policy.",
+                    ];
+                    $status = Response::HTTP_BAD_REQUEST;
+                    $numberFailures++;
+                } else {
+                    $this->jobGroupRepository->handleStartEndTime(
+                        Arr::get($result, 'job_group_id'),
+                        $data,
+                        $jobGroups
+                    );
+                }
             }
         }
+
+        $this->jobGroupRepository->updateTime($jobGroups);
 
         return response()->json([
             'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
@@ -136,9 +142,9 @@ class PolicyController extends Controller
     */
     public function deleteMultiple(Request $request): JsonResponse
     {
-        $policies = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
+        $result = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
 
-        return !$policies
+        return !$result
             ? response()->json([
                 'message' => __('Delete failed. Please check your policy ids!'),
                 'policy_ids' => $request->input('policy_ids', []),

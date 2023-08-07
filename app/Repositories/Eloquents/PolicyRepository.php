@@ -5,14 +5,18 @@ namespace App\Repositories\Eloquents;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
+use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\AI\PolicyR2Service;
 use App\Services\OSS\JobGroupService;
+use App\Services\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,6 +25,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function __construct(
         protected PolicyR2Service $policyR2Service,
         protected JobGroupService $jobGroupService,
+        protected SingleJobService $singleJobService,
     ) {
     }
 
@@ -35,21 +40,47 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Get a list of the policy by store_id.
      */
-    public function getListByStore($storeId, array $filters = []): Collection
+    public function getListByStore($storeId, array $filters = []): Collection|LengthAwarePaginator
     {
-        $this->useWith(['attachments']);
+        $this->enableUseWith(['attachments', 'rules'], $filters);
+        $page = Arr::get($filters, 'page', 1);
+        $perPage = Arr::get($filters, 'per_page', 10);
+
         $constName = str(Arr::get($filters, 'category'))
             ->upper()
             ->append('_CATEGORY')
             ->prepend(Policy::class . '::')
             ->toString();
-        $query = $this->queryBuilder()->where('store_id', $storeId);
+        $query = $this->getWithFilter($this->queryBuilder()->where('store_id', $storeId));
 
         if (Arr::has($filters, 'category') && defined($constName)) {
             $query->where('category', constant($constName));
         }
 
-        return $query->get();
+        if ($perPage < 0) {
+            return $query->get();
+        }
+
+        $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+        $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
+        $singleJobs = $this->singleJobService->getList(['store_id' => $storeId, 'filters' => [
+            'id' => $singleJobIds,
+            'with[]' => 'job_group',
+            'with[]' => 'managers',
+        ]]);
+
+        if ($singleJobs->get('success')) {
+            foreach ($policies->items() as $item) {
+                $singleJobData = Arr::where(
+                    $singleJobs->get('data'),
+                    fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id
+                );
+                $item->single_job = reset($singleJobData);
+            }
+        }
+
+
+        return $policies;
     }
 
     /**
@@ -78,11 +109,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return [
-            'categories' => $categories,
+        return $this->singleJobService->getOptions()->get('data')->merge([
             'control_actions' => $controlActions,
+            'categories' => $categories,
             'policy_rules' => $policyRules,
-        ];
+        ])->toArray();
     }
 
     /**
@@ -90,10 +121,33 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function delete(Policy $policy): ?Policy
     {
-        $policy->attachments()->delete();
-        $policy->delete();
+        return $this->handleSafely(function () use ($policy) {
+            $policy->rules()->delete();
+            app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
+            $policy->delete();
 
-        return $policy;
+            return $policy;
+        }, 'Delete policy');
+    }
+
+    /**
+     * Handle delete multiple policies at the same time.
+     */
+    public function deleteMultiple(array $policyIds): ?bool
+    {
+        if (empty($policyIds)) {
+            return null;
+        }
+
+        return $this->handleSafely(function () use ($policyIds) {
+            $policies = $this->model()->whereIn('id', $policyIds)->get();
+
+            foreach ($policies as $policy) {
+                $this->delete($policy);
+            }
+
+            return true;
+        }, 'Delete multiple policies');
     }
 
     /**
@@ -124,7 +178,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         ];
     }
 
-    public function getValidationRules(array $data)
+    /**
+     * Get the policy input validation rules.
+     */
+    public function getValidationRules(array $data): array
     {
         $rules = [
             'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
@@ -136,12 +193,15 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return $rules;
     }
 
+    /**
+     * Get the data and parse it into a data structure for job_group.
+     */
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time');
 
         return [
-            'title' => Arr::get($data, 'job_group_title'),
+            'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
             'explanation' => Arr::get($data, 'job_group_explanation'),
             'job_group_start_date' => Arr::get($data, 'execution_date'),
@@ -150,14 +210,18 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
             'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
+            'store_id' => Arr::get($data, 'store_id'),
+            'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
-                    'status' => Arr::get($data, 'status'),
+                    'uuid' => (string) str()->uuid(),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
-                    'execution_time' => $executionTime,
-                    'undo_time' => Arr::get($data, 'undo_date') . ' ' . Arr::get($data, 'undo_time'),
+                    'execution_date' => Arr::get($data, 'execution_date'),
+                    'execution_time' => Arr::get($data, 'execution_time'),
+                    'undo_date' => Arr::get($data, 'undo_date'),
+                    'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
                     'has_banner' => Arr::get($data, 'has_banner', 2),
@@ -169,8 +233,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'item_name_text' => Arr::get($data, 'item_name_text'),
                     'item_name_text_error' => Arr::get($data, 'item_name_text_error'),
                     'point_magnification' => Arr::get($data, 'point_magnification'),
-                    'point_start' => Arr::get($data, 'point_start_date') . ' ' . Arr::get($data, 'point_start_time'),
-                    'point_end_date' => Arr::get($data, 'point_end_date') . ' ' . Arr::get($data, 'point_end_time'),
+                    'point_start_date' => Arr::get($data, 'point_start_date'),
+                    'point_start_time' => Arr::get($data, 'point_start_time'),
+                    'point_end_date' => Arr::get($data, 'point_end_date'),
+                    'point_end_time' => Arr::get($data, 'point_end_time'),
                     'point_error' => Arr::get($data, 'point_error'),
                     'point_operational' => Arr::get($data, 'point_operational'),
                     'discount_type' => Arr::get($data, 'discount_type'),
@@ -182,12 +248,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'double_price_text' => Arr::get($data, 'double_price_text'),
                     'shipping_fee' => Arr::get($data, 'shipping_fee'),
                     'stock_specify' => Arr::get($data, 'stock_specify'),
-                    'time_sale_start_date_time' => Arr::get($data, 'time_sale_start_date')
-                        . ' '
-                        . Arr::get($data, 'time_sale_start_time'),
-                    'time_sale_end_date_time' => Arr::get($data, 'time_sale_end_date')
-                        . ' '
-                        . Arr::get($data, 'time_sale_end_time'),
+                    'time_sale_start_date' => Arr::get($data, 'time_sale_start_date'),
+                    'time_sale_start_time' => Arr::get($data, 'time_sale_start_time'),
+                    'time_sale_end_date' => Arr::get($data, 'time_sale_end_date'),
+                    'time_sale_end_time' => Arr::get($data, 'time_sale_end_time'),
                     'is_unavailable_for_search' => Arr::get($data, 'is_unavailable_for_search'),
                     'description_for_pc' => Arr::get($data, 'description_for_pc'),
                     'description_for_sp' => Arr::get($data, 'description_for_sp'),
@@ -214,22 +278,23 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     ->update(['policy_id' => $policy->id]);
             }
 
-            $result = $this->jobGroupService->create($data['job_group'] + ['store_id' => $storeId]);
+            $result = $this->jobGroupService->create($data['job_group']);
 
-            if (!$result['success']) {
+            if (!$result->get('success')) {
                 throw new Exception('Insert job_group failed.');
             }
 
-            $jobGroup = $result['data']['job_group'];
-            $singleJob = $result['data']['single_job'];
+            $singleJobs = $result->get('data')->get('single_jobs');
+            $singleJob = reset($singleJobs);
+            $jobGroupId = $singleJob['job_group_id'];
 
-            $policy->job_group_id = $jobGroup['id'];
+            $policy->job_group_id = $jobGroupId;
             $policy->single_job_id = $singleJob['id'];
             $policy->save();
 
             return [
                 'policy' => $policy,
-                'job_group' => $result['data']['job_group'],
+                'job_group_id' => $jobGroupId,
             ];
         }, 'Create policy');
     }
@@ -257,7 +322,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             if (!empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
-                    $simulationPolicy->policyRules()->create($policyRule);
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
+                    $simulationPolicy->rules()->create($policyRule);
                 }
             }
 
@@ -266,50 +334,39 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
-     * Handle getting the start and end timestamps for job_group
+     * Handle the condition's data.
      */
-    public function handleStartEndTimeForJobGroup($jobGroupId, $data, array &$jobGroups): void
+    private function handleCondition(int $conditionNumber, array &$policyRule): void
     {
-        $dataStartDateTime = new Carbon(
-            Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time')
-        );
-        $dataEndDateTime = new Carbon(
-            Arr::get($data, 'undo_date') . ' ' . Arr::get($data, 'undo_time')
-        );
+        $conditionName = "condition_{$conditionNumber}";
+        $conditionValue = "condition_value_{$conditionNumber}";
+        $value = [];
 
-        if (isset($jobGroups[$jobGroupId])) {
-            $jobGroupStartDateTime = new Carbon(Arr::get($jobGroups, "{$jobGroupId}.start_date"));
+        if ($attachmentKey = Arr::get($policyRule, "attachment_key_{$conditionNumber}")) {
+            $policyAttachment = PolicyAttachment::where('attachment_key', $attachmentKey)
+                ->where('type', PolicyAttachment::TEXT_TYPE)
+                ->where('created_at', '>=', now()->subDay())
+                ->whereNull('policy_id')
+                ->first();
 
-            if ($jobGroupStartDateTime->gt($dataStartDateTime)) {
-                Arr::set($jobGroups, "{$jobGroupId}.start_date", $dataStartDateTime);
+            if (!is_null($policyAttachment)) {
+                $fileContent = file(storage_path('app/public/' . $policyAttachment->path));
+
+                foreach ($fileContent as $content) {
+                    $value[] = str_replace([',', ' ', "\n"], '', $content);
+                }
+
+                if (Storage::disk($policyAttachment->disk)->exists($policyAttachment->path)) {
+                    Storage::disk($policyAttachment->disk)->delete($policyAttachment->path);
+                    $policyAttachment->delete();
+                }
             }
-
-            $jobGroupEndDateTime = new Carbon(Arr::get($jobGroups, "{$jobGroupId}.end_date"));
-
-            if ($jobGroupEndDateTime->lt($dataEndDateTime)) {
-                Arr::set($jobGroups, "{$jobGroupId}.end_date", $dataEndDateTime);
-            }
-        } else {
-            $jobGroups[$jobGroupId] = [
-                'start_date' => $dataStartDateTime,
-                'end_date' => $dataEndDateTime,
-            ];
-        }
-    }
-
-    /**
-     * Handle delete multiple policies at the same time.
-     */
-    public function deleteMultiple(array $policyIds): ?bool
-    {
-        if (empty($policyIds)) {
-            return null;
         }
 
-        return $this->handleSafely(function () use ($policyIds) {
-            $result = $this->model()->whereIn('id', $policyIds)->delete();
-
-            return $result;
-        }, 'Delete multiple policies');
+        if (Arr::get($policyRule, $conditionName) == PolicyRule::SHIPPING_CONDITION) {
+            $valueString = str_replace(["\n", ', '], ',', Arr::get($policyRule, $conditionValue, ''));
+            $value = array_merge($value, explode(',', $valueString));
+            $policyRule[$conditionValue] = implode(',', array_unique($value));
+        }
     }
 }

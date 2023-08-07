@@ -29,15 +29,6 @@ class Policy extends Model
         self::SIMULATION_CATEGORY => '施策シミュレーション',
     ];
 
-    public const NONE_BANNER = 1;
-    public const CANBE_BANNER = 2;
-    public const UNNECESSARY_BANNER = 3;
-    public const BANNERS = [
-        self::NONE_BANNER => 'なし',
-        self::CANBE_BANNER => 'あり',
-        self::UNNECESSARY_BANNER => '不要',
-    ];
-
     protected $fillable = [
         'store_id',
         'job_group_id',
@@ -61,7 +52,7 @@ class Policy extends Model
         return $this->hasMany(PolicyAttachment::class);
     }
 
-    public function policyRules(): HasMany
+    public function rules(): HasMany
     {
         return $this->hasMany(PolicyRule::class);
     }
@@ -73,6 +64,6 @@ class Policy extends Model
 
     public function withAllRels(): static
     {
-        return $this->where('id', $this->getKey())->with(['policyRules'])->first();
+        return $this->where('id', $this->getKey())->with(['rules'])->first();
     }
 }

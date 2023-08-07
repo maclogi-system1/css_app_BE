@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Policy;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface PolicyRepository extends Repository
@@ -10,7 +11,7 @@ interface PolicyRepository extends Repository
     /**
      * Get a list of the policy by store_id.
      */
-    public function getListByStore($storeId, array $filters = []): Collection;
+    public function getListByStore($storeId, array $filters = []): Collection|LengthAwarePaginator;
 
     /**
      * Get a list of AI recommendations.
@@ -33,6 +34,16 @@ interface PolicyRepository extends Repository
     public function handleValidation(array $data, int $index): array;
 
     /**
+     * Get the policy input validation rules.
+     */
+    public function getValidationRules(array $data): array;
+
+    /**
+     * Get the data and parse it into a data structure for job_group.
+     */
+    public function getDataForJobGroup(array $data): array;
+
+    /**
      * Handle create multiple policy.
      */
     public function create(array $data, string $storeId): ?array;
@@ -46,9 +57,4 @@ interface PolicyRepository extends Repository
      * Handle delete multiple policies at the same time.
      */
     public function deleteMultiple(array $policyIds): ?bool;
-
-    /**
-     * Handle getting the start and end timestamps for job_group
-     */
-    public function handleStartEndTimeForJobGroup($jobGroupId, $data, array &$jobGroups): void;
 }

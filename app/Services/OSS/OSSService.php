@@ -20,6 +20,6 @@ class OSSService
      */
     public static function getApiUri($key): string
     {
-        return config("services.maclogi_oss.api_uri.{$key}");
+        return config("services.maclogi_oss.api_uri.{$key}", '');
     }
 }

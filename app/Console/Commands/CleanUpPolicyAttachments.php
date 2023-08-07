@@ -34,7 +34,7 @@ class CleanUpPolicyAttachments extends Command
                 $query->whereNull('policy_attachments.policy_id')
                     ->orWhereNull('p.id');
             })
-            ->where('created_at', '<', now()->subDay())
+            ->where('policy_attachments.created_at', '<', now()->subDay())
             ->get();
         $policyAttachmentRepository = $this->getRepository();
 

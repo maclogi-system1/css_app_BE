@@ -47,9 +47,15 @@ return [
             'job_groups' => [
                 'list' => '/job-groups',
                 'detail' => '/job-groups/{id}',
-                'options' => '/job-groups/options',
-                'validate' => '/job-groups/validate',
+                'validate' => '/job-groups/validation',
                 'create' => '/job-groups',
+                'update_time' => '/job-groups/update-time',
+            ],
+            'single_jobs' => [
+                'options' => '/single-jobs/options',
+            ],
+            'users' => [
+                'shop_users' => '/users/shop-users',
             ],
         ],
     ],
