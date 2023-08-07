@@ -210,6 +210,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
             'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
+            'store_id' => Arr::get($data, 'store_id'),
             'single_jobs' => [
                 [
                     'uuid' => (string) str()->uuid(),
@@ -277,7 +278,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     ->update(['policy_id' => $policy->id]);
             }
 
-            $result = $this->jobGroupService->create($data['job_group'] + ['store_id' => $storeId]);
+            $result = $this->jobGroupService->create($data['job_group']);
 
             if (!$result['success']) {
                 throw new Exception('Insert job_group failed.');

@@ -81,7 +81,7 @@ class PolicyController extends Controller
         $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
-            $validated = $this->policyRepository->handleValidation($data, $index);
+            $validated = $this->policyRepository->handleValidation($data + ['store_id' => $storeId], $index);
 
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
