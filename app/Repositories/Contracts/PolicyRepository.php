@@ -57,9 +57,4 @@ interface PolicyRepository extends Repository
      * Handle delete multiple policies at the same time.
      */
     public function deleteMultiple(array $policyIds): ?bool;
-
-    /**
-     * Handle getting the start and end timestamps for job_group
-     */
-    public function handleStartEndTimeForJobGroup($jobGroupId, $data, array &$jobGroups): void;
 }

@@ -49,6 +49,7 @@ return [
                 'detail' => '/job-groups/{id}',
                 'validate' => '/job-groups/validation',
                 'create' => '/job-groups',
+                'update_time' => '/job-groups/update-time',
             ],
             'single_jobs' => [
                 'options' => '/single-jobs/options',

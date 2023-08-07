@@ -211,10 +211,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
             'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
             'store_id' => Arr::get($data, 'store_id'),
+            'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
                     'uuid' => (string) str()->uuid(),
-                    'status' => Arr::get($data, 'status'),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
@@ -280,20 +280,21 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $result = $this->jobGroupService->create($data['job_group']);
 
-            if (!$result['success']) {
+            if (!$result->get('success')) {
                 throw new Exception('Insert job_group failed.');
             }
 
-            $jobGroup = $result['data']['job_group'];
-            $singleJob = $result['data']['single_job'];
+            $singleJobs = $result->get('data')->get('single_jobs');
+            $singleJob = reset($singleJobs);
+            $jobGroupId = $singleJob['job_group_id'];
 
-            $policy->job_group_id = $jobGroup['id'];
+            $policy->job_group_id = $jobGroupId;
             $policy->single_job_id = $singleJob['id'];
             $policy->save();
 
             return [
                 'policy' => $policy,
-                'job_group' => $result['data']['job_group'],
+                'job_group_id' => $jobGroupId,
             ];
         }, 'Create policy');
     }
@@ -366,38 +367,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $valueString = str_replace(["\n", ', '], ',', Arr::get($policyRule, $conditionValue, ''));
             $value = array_merge($value, explode(',', $valueString));
             $policyRule[$conditionValue] = implode(',', array_unique($value));
-        }
-    }
-
-    /**
-     * Handle getting the start and end timestamps for job_group.
-     */
-    public function handleStartEndTimeForJobGroup($jobGroupId, $data, array &$jobGroups): void
-    {
-        $dataStartDateTime = new Carbon(
-            Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time')
-        );
-        $dataEndDateTime = new Carbon(
-            Arr::get($data, 'undo_date') . ' ' . Arr::get($data, 'undo_time')
-        );
-
-        if (isset($jobGroups[$jobGroupId])) {
-            $jobGroupStartDateTime = new Carbon(Arr::get($jobGroups, "{$jobGroupId}.start_date"));
-
-            if ($jobGroupStartDateTime->gt($dataStartDateTime)) {
-                Arr::set($jobGroups, "{$jobGroupId}.start_date", $dataStartDateTime);
-            }
-
-            $jobGroupEndDateTime = new Carbon(Arr::get($jobGroups, "{$jobGroupId}.end_date"));
-
-            if ($jobGroupEndDateTime->lt($dataEndDateTime)) {
-                Arr::set($jobGroups, "{$jobGroupId}.end_date", $dataEndDateTime);
-            }
-        } else {
-            $jobGroups[$jobGroupId] = [
-                'start_date' => $dataStartDateTime,
-                'end_date' => $dataEndDateTime,
-            ];
         }
     }
 }
