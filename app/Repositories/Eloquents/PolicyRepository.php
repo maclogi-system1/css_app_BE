@@ -63,11 +63,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
         $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
-        $singleJobs = $this->singleJobService->getList(['store_id' => $storeId, 'filters' => [
-            'id' => $singleJobIds,
-            'with[]' => 'job_group',
-            'with[]' => 'managers',
-        ]]);
+        $singleJobs = $this->singleJobService->getList([
+            'store_id' => $storeId,
+            'filters' => ['id' => $singleJobIds],
+            'with' => ['job_group', 'managers'],
+        ]);
 
         if ($singleJobs->get('success')) {
             foreach ($policies->items() as $item) {
@@ -78,7 +78,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 $item->single_job = reset($singleJobData);
             }
         }
-
 
         return $policies;
     }
@@ -105,14 +104,27 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $controlActions = collect(Policy::CONTROL_ACTIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
-        $policyRules = collect(PolicyRule::CONDITIONS)
+        $textInputConditions = collect(PolicyRule::TEXT_INPUT_CONDITIONS)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $uploadableConditions = collect(PolicyRule::UPLOADABLE_CONDITIONS)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $policyRuleClasses = collect(PolicyRule::CLASSES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $policyRuleServices = collect(PolicyRule::SERVICES)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
         return $this->singleJobService->getOptions()->get('data')->merge([
             'control_actions' => $controlActions,
             'categories' => $categories,
-            'policy_rules' => $policyRules,
+            'policy_rule_classes' => $policyRuleClasses,
+            'policy_rule_services' => $policyRuleServices,
+            'conditions_1' => $textInputConditions,
+            'conditions_2' => $uploadableConditions,
+            'conditions_3' => $textInputConditions,
         ])->toArray();
     }
 
@@ -203,7 +215,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
-            'explanation' => Arr::get($data, 'job_group_explanation'),
+            'job_group_explanation' => Arr::get($data, 'job_group_explanation'),
             'job_group_start_date' => Arr::get($data, 'execution_date'),
             'job_group_start_time' => Arr::get($data, 'execution_time'),
             'job_group_end_date' => Arr::get($data, 'undo_date'),

@@ -21,13 +21,16 @@ class TeamResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return array_merge(
-            parent::toArray($request),
-            [
-                'users' => UserResource::collection($this->whenLoaded('users')),
-                'owner' => new UserResource($this->whenLoaded('owner')),
-                'company' => new CompanyResource($this->whenLoaded('company')),
-            ]
-        );
+        return [
+            'id' => $this->resource->id,
+            'company_id' => $this->resource->company_id,
+            'name' => $this->resource->name,
+            'created_by' => $this->resource->created_by,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
+            'users' => $this->whenLoaded('users', fn () => UserResource::collection($this->users)),
+            'owner' => $this->whenLoaded('owner', fn () => new UserResource($this->owner)),
+            'company' => $this->whenLoaded('company', fn () => new CompanyResource($this->company)),
+        ];
     }
 }

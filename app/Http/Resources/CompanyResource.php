@@ -27,8 +27,8 @@ class CompanyResource extends JsonResource
             'name' => $this->name,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'users' => UserResource::collection($this->whenLoaded('users')),
-            'teams' => TeamResource::collection($this->whenLoaded('teams')),
+            'users' => $this->whenLoaded('users', fn () => UserResource::collection($this->users)),
+            'teams' => $this->whenLoaded('teams', fn () => TeamResource::collection($this->teams)),
         ];
     }
 }
