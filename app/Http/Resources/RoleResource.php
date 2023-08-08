@@ -21,12 +21,18 @@ class RoleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return array_merge(
-            parent::toArray($request),
-            [
-                'users' => UserResource::collection($this->whenLoaded('users')),
-                'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
-            ]
-        );
+        return [
+            'id' => $this->resource->id,
+            'display_name' => $this->resource->display_name,
+            'name' => $this->resource->name,
+            'guard_name' => $this->resource->guard_name,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
+            'users' => $this->whenLoaded('users', fn () => UserResource::collection($this->resource->users)),
+            'permissions' => $this->whenLoaded(
+                'permissions',
+                fn () => PermissionResource::collection($this->resource->permissions)
+            ),
+        ];
     }
 }
