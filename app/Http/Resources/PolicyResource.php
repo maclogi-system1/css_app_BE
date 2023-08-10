@@ -121,6 +121,7 @@ class PolicyResource extends JsonResource
             'simulation_promotional_expenses' => $this->simulation_promotional_expenses,
             'simulation_store_priority' => $this->simulation_store_priority,
             'simulation_product_priority' => $this->simulation_product_priority,
+            'processing_status' => $this->processing_status_for_human,
             'policy_rules' => PolicyRuleResource::collection($this->whenLoaded('rules')),
         ];
     }

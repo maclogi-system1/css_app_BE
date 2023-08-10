@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RunSimulationRequest;
 use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
@@ -165,6 +166,18 @@ class PolicyController extends Controller
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => 0,
+        ]);
+    }
+
+    /**
+     * Run policy simulation.
+     */
+    public function runSimulation(RunSimulationRequest $request): JsonResponse
+    {
+        $this->policyRepository->runSimulation($request->validated());
+
+        return response()->json([
+            'message' => 'Policy simulation is running...'
         ]);
     }
 }
