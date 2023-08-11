@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\JobGroupController;
+use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
@@ -158,4 +159,12 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
     Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
+
+    // Implement for macros
+    Route::prefix('macros')
+        ->name('macros.')
+        ->controller(MacroController::class)
+        ->group(function () {
+            Route::get('/list-table/{storeId}', 'getListTableByStoreId')->name('get-list-table');
+        });
 });

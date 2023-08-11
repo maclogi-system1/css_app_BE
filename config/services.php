@@ -37,6 +37,7 @@ return [
         'api_uri' => [
             'shops' => [
                 'list' => '/shops',
+                'get_project_id' => '/shops/{storeId}'
             ],
             'alerts' => [
                 'list' => '/alerts',
@@ -57,6 +58,10 @@ return [
             'users' => [
                 'shop_users' => '/users/shop-users',
             ],
+            'schema' => [
+                'get_columns' => '/schema/column',
+                'check_exist_with_store' => '/schema/check-exist-with-store',
+            ]
         ],
     ],
 
