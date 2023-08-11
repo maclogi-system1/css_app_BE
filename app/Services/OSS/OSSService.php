@@ -18,8 +18,10 @@ class OSSService
     /**
      * Get api uri.
      */
-    public static function getApiUri($key): string
+    public static function getApiUri($key, array|string $path = []): string
     {
-        return config("services.maclogi_oss.api_uri.{$key}", '');
+        $url = config("services.maclogi_oss.api_uri.{$key}", '');
+
+        return (string) str()->replaceArrayPreg('/\{[a-zA-Z0-9_]+\}/i', $path, $url);
     }
 }
