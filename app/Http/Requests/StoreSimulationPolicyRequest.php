@@ -25,9 +25,9 @@ class StoreSimulationPolicyRequest extends FormRequest
      */
     public function rules(): array
     {
-        $simulationStartDate = Carbon::create($this->simulation_start_date . ' ' . $this->simulation_start_time)
+        $simulationStartDate = Carbon::create($this->simulation_start_date.' '.$this->simulation_start_time)
             ->toImmutable();
-        $simulationEndDate = Carbon::create($this->simulation_end_date . ' ' . $this->simulation_end_time)
+        $simulationEndDate = Carbon::create($this->simulation_end_date.' '.$this->simulation_end_time)
             ->toImmutable();
 
         return [

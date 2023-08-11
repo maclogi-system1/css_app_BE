@@ -98,7 +98,7 @@ class PasswordController extends Controller
         ])->saveQuietly();
 
         return response()->json([
-            'message' => 'Your password has been change.'
+            'message' => 'Your password has been change.',
         ], Response::HTTP_OK);
     }
 }

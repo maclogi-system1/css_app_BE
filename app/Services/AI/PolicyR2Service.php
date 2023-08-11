@@ -3,7 +3,6 @@
 namespace App\Services\AI;
 
 use App\Services\Service;
-use Illuminate\Support\Facades\Http;
 
 class PolicyR2Service extends Service
 {

@@ -17,7 +17,8 @@ class CompanyController extends Controller
 {
     public function __construct(
         private CompanyRepository $companyRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the company.

@@ -14,7 +14,8 @@ class BookmarkController extends Controller
 {
     public function __construct(
         private BookmarkRepository $bookmarkRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource.

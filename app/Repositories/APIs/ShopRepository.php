@@ -10,7 +10,8 @@ class ShopRepository extends Repository implements ShopRepositoryContract
 {
     public function __construct(
         private ShopService $shopService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.
@@ -30,9 +31,18 @@ class ShopRepository extends Repository implements ShopRepositoryContract
             'projectDirectors',
             'projectDesigners',
             'projectConsultants',
+            'projectManagers',
             'createdUser',
         ]] + $filters;
 
         return $this->shopService->getList($filters);
+    }
+
+    /**
+     * Find a specified shop.
+     */
+    public function find($storeId)
+    {
+        return $this->shopService->find($storeId);
     }
 }

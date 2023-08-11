@@ -46,7 +46,7 @@ class MakeService extends Command
     public function handle(): int
     {
         $model = $this->option('model');
-        $modelClass = $this->rootNamespaceModel . '\\' . $model;
+        $modelClass = $this->rootNamespaceModel.'\\'.$model;
         $service = $this->getServiceName();
         $filePath = app_path($this->filePath);
 

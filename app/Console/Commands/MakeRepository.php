@@ -46,7 +46,7 @@ class MakeRepository extends Command
         $this->makeFolderRepositories();
 
         $model = $this->option('model') ?? '';
-        $modelClass = $this->rootNamespaceModel . '\\' . $model;
+        $modelClass = $this->rootNamespaceModel.'\\'.$model;
         $repositoryPath = app_path("Repositories/{$this->getRepo()}/{$this->getRepositoryName()}.php");
 
         if (file_exists($repositoryPath)) {
@@ -64,7 +64,7 @@ class MakeRepository extends Command
 
         $this->createRepository($repositoryPath, $repositoryStubPath, $model, $modelClass);
 
-        $contractDir = app_path("Repositories/Contracts");
+        $contractDir = app_path('Repositories/Contracts');
         if (! is_dir($contractDir)) {
             mkdir($contractDir, 0777);
         }
@@ -97,7 +97,7 @@ class MakeRepository extends Command
         string $path,
         string $stubPath,
         string $model,
-        string $modelClass
+        string $modelClass,
     ): void {
         $file = fopen($path, 'w+');
         $repositoryContent = file_get_contents($stubPath);
@@ -107,7 +107,7 @@ class MakeRepository extends Command
             '{{ class }}',
             '{{ model_basename }}',
         ], [
-            $this->rootNamespace."\\".$this->getRepo(),
+            $this->rootNamespace.'\\'.$this->getRepo(),
             $modelClass ?? '',
             $this->getRepositoryName(),
             $model ?? '',
@@ -190,6 +190,7 @@ class MakeRepository extends Command
                     ];
 
                 EOT;
+
                 break;
             }
         }

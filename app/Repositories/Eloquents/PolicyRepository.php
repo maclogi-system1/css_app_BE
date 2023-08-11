@@ -14,13 +14,14 @@ use App\Services\OSS\JobGroupService;
 use App\Services\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
 use Exception;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PolicyRepository extends Repository implements PolicyRepositoryContract
 {
@@ -47,23 +48,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $this->enableUseWith(['attachments', 'rules'], $filters);
         $page = Arr::get($filters, 'page', 1);
         $perPage = Arr::get($filters, 'per_page', 10);
-        $category = str(Arr::get($filters, 'category'));
+        $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
-        $constName = $category->upper()
-            ->append('_CATEGORY')
-            ->prepend(Policy::class . '::')
-            ->toString();
-        $query = $this->getWithFilter($this->queryBuilder()->where('store_id', $storeId));
-
-        if (Arr::has($filters, 'category')) {
-            if (defined($constName)) {
-                $query->where('category', constant($constName));
-            }
-
-            if ($category->toString() == Policy::SIMULATION_CATEGORY) {
-                $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
-            }
+        if (Arr::hasAny($filters, ['keyword', 'from_date', 'to_date'])) {
+            return $this->getListBySingleJob($storeId, $filters);
         }
+
+        $query = $this->handleFilterCategory($this->queryBuilder()->where('store_id', $storeId), $category);
 
         if ($perPage < 0) {
             return $query->get();
@@ -74,25 +65,75 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $singleJobs = $this->singleJobService->getList([
             'store_id' => $storeId,
             'filters' => [
-                'single_job.id' => $singleJobIds,
-                'keyword' => Arr::get($filters, 'keyword'),
-                'from_date' => Arr::get($filters, 'from_date'),
-                'end_date' => Arr::get($filters, 'to_date'),
+                'single_jobs.id' => implode(',', $singleJobIds),
             ],
             'with' => ['job_group.jobGroupAssignee'],
+            'per_page' => -1,
         ]);
 
         if ($singleJobs->get('success')) {
+            $singleJobData = $singleJobs->get('data')->get('single_jobs');
+
             foreach ($policies->items() as $item) {
-                $singleJobData = Arr::where(
-                    $singleJobs->get('data'),
-                    fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id
+                $singleJobMatches = array_filter(
+                    $singleJobData,
+                    fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id,
                 );
-                $item->single_job = reset($singleJobData);
+                $item->single_job = reset($singleJobMatches);
             }
         }
 
         return $policies;
+    }
+
+    /**
+     * Get category key from filters and handle query.
+     */
+    private function handleFilterCategory(Builder $query, $category): Builder
+    {
+        if (! is_null($category)) {
+            $constName = $category->upper()
+                ->append('_CATEGORY')
+                ->prepend(Policy::class.'::')
+                ->toString();
+
+            if (defined($constName)) {
+                $query->where('category', constant($constName));
+            }
+
+            if ($category->toString() == Policy::SIMULATION_CATEGORY) {
+                $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get the single_job list and handle the data filtering for the policies.
+     */
+    private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
+    {
+        $result = $this->singleJobService->getList($filters + ['store_id' => $storeId, 'per_page' => -1]);
+        $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
+
+        if ($result->get('success')) {
+            $singleJobs = collect($result->get('data')->get('single_jobs'));
+            $singleJobIds = $singleJobs->pluck('id')->unique();
+
+            $policies = $this->handleFilterCategory($this->queryBuilder(), $category)
+                ->whereIn('single_job_id', $singleJobIds)
+                ->paginate();
+
+            foreach ($policies->items() as $item) {
+                $singleJobMatches = $singleJobs->filter(fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id);
+                $item->single_job = $singleJobMatches->first();
+            }
+
+            return $policies;
+        }
+
+        return $result->get('data');
     }
 
     /**
@@ -184,7 +225,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $ossValidation = $this->jobGroupService->validate($this->getDataForJobGroup($data));
         $ossErrorMessages = Arr::get($ossValidation, 'data.errors.messages', []);
 
-        if ($validator->fails() || !empty($ossErrorMessages)) {
+        if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
                 'error' => [
                     'index' => $index,
@@ -223,7 +264,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function getDataForJobGroup(array $data): array
     {
-        $executionTime = Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time');
+        $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
@@ -305,7 +346,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $result = $this->jobGroupService->create($data['job_group']);
 
-            if (!$result->get('success')) {
+            if (! $result->get('success')) {
                 throw new Exception('Insert job_group failed.');
             }
 
@@ -330,8 +371,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function createSimulation(array $data, string $storeId): ?Policy
     {
         return $this->handleSafely(function () use ($data, $storeId) {
-            $simulationStartDate = new Carbon($data['simulation_start_date'] . ' ' . $data['simulation_start_time']);
-            $simulationEndDate = new Carbon($data['simulation_end_date'] . ' ' . $data['simulation_end_time']);
+            $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
+            $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
 
             $simulationPolicy = $this->model()->fill([
                 'store_id' => $storeId,
@@ -345,7 +386,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ]);
             $simulationPolicy->save();
 
-            if (!empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
                     $this->handleCondition(1, $policyRule);
                     $this->handleCondition(2, $policyRule);
@@ -374,8 +415,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 ->whereNull('policy_id')
                 ->first();
 
-            if (!is_null($policyAttachment)) {
-                $fileContent = file(storage_path('app/public/' . $policyAttachment->path));
+            if (! is_null($policyAttachment)) {
+                $fileContent = file(storage_path('app/public/'.$policyAttachment->path));
 
                 foreach ($fileContent as $content) {
                     $value[] = str_replace([',', ' ', "\n"], '', $content);

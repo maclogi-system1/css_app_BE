@@ -16,7 +16,8 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
 
     public function __construct(
         protected MqAccountingService $mqAccountingService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.
@@ -39,8 +40,13 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
-                'mq_accounting.store_id', 'mq_accounting.year', 'mq_accounting.month', 'mk.sales_amnt',
-                'mc.variable_cost_sum', 'mc.profit', DB::raw('CASE WHEN (mq_accounting.fixed_cost IS NULL)
+                'mq_accounting.store_id',
+                'mq_accounting.year',
+                'mq_accounting.month',
+                'mk.sales_amnt',
+                'mc.variable_cost_sum',
+                'mc.profit',
+                DB::raw('CASE WHEN (mq_accounting.fixed_cost IS NULL)
                     THEN mc.cost_sum + mq_accounting.csv_usage_fee + mq_accounting.store_opening_fee
                     ELSE mq_accounting.fixed_cost
                 END as fixed_cost')
@@ -63,8 +69,11 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
-                'mq_accounting.store_id', 'mq_accounting.year', 'mq_accounting.month',
-                'mk.sales_amnt', 'mc.profit'
+                'mq_accounting.store_id',
+                'mq_accounting.year',
+                'mq_accounting.month',
+                'mk.sales_amnt',
+                'mc.profit'
             )
             ->get();
 

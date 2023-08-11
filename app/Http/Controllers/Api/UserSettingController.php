@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserSettingRequest;
 use App\Http\Resources\UserSettingResource;
-use App\Models\UserSetting;
 use App\Repositories\Contracts\UserSettingRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,7 +13,8 @@ class UserSettingController extends Controller
 {
     public function __construct(
         private UserSettingRepository $userSettingRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource.

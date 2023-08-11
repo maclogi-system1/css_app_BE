@@ -16,7 +16,8 @@ class LoginController extends Controller
 {
     public function __construct(
         private UserRepository $userRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Handle login.
@@ -30,13 +31,13 @@ class LoginController extends Controller
         ]);
 
         $user = User::join('companies as c', function ($join) use ($data) {
-                $join->on('c.id', '=', 'users.company_id')
-                    ->where('c.company_id', $data['company_id']);
-            })
+            $join->on('c.id', '=', 'users.company_id')
+                ->where('c.company_id', $data['company_id']);
+        })
             ->where('email', $data['email'])
             ->first(['users.*', 'c.company_id as company_company_id', 'c.name as company_name']);
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);

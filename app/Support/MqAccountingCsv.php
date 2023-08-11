@@ -9,7 +9,8 @@ class MqAccountingCsv
 {
     public function __construct(
         protected array $rows = []
-    ) {}
+    ) {
+    }
 
     public function getDataMqKpi($column)
     {
@@ -432,7 +433,6 @@ class MqAccountingCsv
                 $additionalColumns[] = $callback($month, $year);
             }
         }
-
 
         return array_merge($row, $additionalColumns);
     }

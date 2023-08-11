@@ -31,7 +31,7 @@ class RoleResource extends JsonResource
             'users' => $this->whenLoaded('users', fn () => UserResource::collection($this->resource->users)),
             'permissions' => $this->whenLoaded(
                 'permissions',
-                fn () => PermissionResource::collection($this->resource->permissions)
+                fn () => PermissionResource::collection($this->resource->permissions),
             ),
         ];
     }

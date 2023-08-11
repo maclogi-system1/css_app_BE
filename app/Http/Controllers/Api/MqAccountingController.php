@@ -19,7 +19,8 @@ class MqAccountingController extends Controller
     public function __construct(
         private MqAccountingRepository $mqAccountingRepository,
         private MqChartRepository $mqChartRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get a listing of the "mq_accounting" by store id (corresponds to shop_url in OSS).
@@ -98,7 +99,7 @@ class MqAccountingController extends Controller
     }
 
     /**
-     * Download a csv file containing the data of mq_accounting by store_id and by time period
+     * Download a csv file containing the data of mq_accounting by store_id and by time period.
      */
     public function downloadMqAccountingCsv(Request $request, $storeId): StreamedResponse
     {

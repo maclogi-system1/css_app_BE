@@ -15,7 +15,8 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
     public function __construct(
         private ChatworkService $chatworkService,
         private NotificationRepository $notificationRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.
@@ -63,7 +64,7 @@ class ChatworkRepository extends Repository implements ChatworkRepositoryContrac
             }
 
             $this->notificationRepository->create($notificationData + [
-                'chatwork_ids' => $chatworks->pluck('id')->toArray()
+                'chatwork_ids' => $chatworks->pluck('id')->toArray(),
             ]);
 
             return true;

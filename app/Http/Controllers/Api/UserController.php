@@ -17,7 +17,8 @@ class UserController extends Controller
 {
     public function __construct(
         private UserRepository $userRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the user.

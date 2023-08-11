@@ -26,7 +26,7 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return <<<HTML
+        return <<<'HTML'
         <html>
         <head><title>Email verification</title></head>
         <body style="font-size: 16px;font-family: Consolas, monaco, monospace;">

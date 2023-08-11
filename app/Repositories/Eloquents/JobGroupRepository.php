@@ -40,10 +40,10 @@ class JobGroupRepository extends Repository implements JobGroupRepositoryContrac
     public function handleStartEndTime($jobGroupId, $data, array &$jobGroups): void
     {
         $dataStartDateTime = new Carbon(
-            Arr::get($data, 'execution_date') . ' ' . Arr::get($data, 'execution_time')
+            Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time')
         );
         $dataEndDateTime = new Carbon(
-            Arr::get($data, 'undo_date') . ' ' . Arr::get($data, 'undo_time')
+            Arr::get($data, 'undo_date').' '.Arr::get($data, 'undo_time')
         );
 
         if (isset($jobGroups[$jobGroupId])) {

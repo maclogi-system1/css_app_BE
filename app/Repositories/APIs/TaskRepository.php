@@ -10,7 +10,8 @@ class TaskRepository extends Repository implements TaskRepositoryContract
 {
     public function __construct(
         private TaskService $taskService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.

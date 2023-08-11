@@ -16,7 +16,8 @@ class PolicyAttachmentController extends Controller
 {
     public function __construct(
         protected PolicyAttachmentRepository $policyAttachmentRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Generate a new attachment key for upload.

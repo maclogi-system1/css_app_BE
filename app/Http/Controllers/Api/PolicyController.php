@@ -145,7 +145,7 @@ class PolicyController extends Controller
     {
         $result = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
 
-        return !$result
+        return ! $result
             ? response()->json([
                 'message' => __('Delete failed. Please check your policy ids!'),
                 'policy_ids' => $request->input('policy_ids', []),
@@ -177,7 +177,7 @@ class PolicyController extends Controller
         $this->policyRepository->runSimulation($request->validated());
 
         return response()->json([
-            'message' => 'Policy simulation is running...'
+            'message' => 'Policy simulation is running...',
         ]);
     }
 }

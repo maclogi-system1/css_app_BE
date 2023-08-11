@@ -37,7 +37,7 @@ return [
         'api_uri' => [
             'shops' => [
                 'list' => '/shops',
-                'get_project_id' => '/shops/{storeId}'
+                'detail' => '/shops/{storeId}',
             ],
             'alerts' => [
                 'list' => '/alerts',
@@ -53,6 +53,7 @@ return [
                 'update_time' => '/job-groups/update-time',
             ],
             'single_jobs' => [
+                'list' => '/single-jobs',
                 'options' => '/single-jobs/options',
             ],
             'users' => [
