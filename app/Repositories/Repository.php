@@ -2,9 +2,8 @@
 
 namespace App\Repositories;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
@@ -62,7 +61,7 @@ abstract class Repository
         $query = $this->getWithFilter($this->queryBuilder(), $filters);
 
         if ($perPage < 0) {
-            return $query->get();
+            return $query->get($columns);
         }
 
         return $query->paginate($perPage, $columns, 'page', $page)->withQueryString();
@@ -71,7 +70,7 @@ abstract class Repository
     /**
      * Get a builder to query data.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
      */
     protected function queryBuilder(): Builder
     {
@@ -106,6 +105,7 @@ abstract class Repository
             foreach ($this->doesntHave as $relation => $callback) {
                 if (is_numeric($relation)) {
                     $query->doesntHave($callback);
+
                     continue;
                 }
 
@@ -119,9 +119,9 @@ abstract class Repository
     /**
      * Set filter for builder.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Illuminate\Contracts\Database\Eloquent\Builder  $query
      * @param  array  $filters
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
      */
     protected function getWithFilter(Builder $builder, array $filters = []): Builder
     {
@@ -273,7 +273,7 @@ abstract class Repository
      */
     public function enableUseWith(array $relationValid, array $filters = []): static
     {
-        if (Arr::has($filters, 'with') && !array_diff($filters['with'], $relationValid)) {
+        if (Arr::has($filters, 'with') && ! array_diff($filters['with'], $relationValid)) {
             $this->useWith($filters['with']);
         }
 

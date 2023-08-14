@@ -2,23 +2,25 @@
 
 namespace App\Support\Traits;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
+
 trait HasCompositePrimaryKey
 {
     /**
      * Set the keys for a save update query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  \Illuminate\Contracts\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
      */
-    protected function setKeysForSaveQuery($query)
+    protected function setKeysForSaveQuery(Builder $query): Builder
     {
         $keys = $this->getKeyName();
 
-        if(! is_array($keys)){
+        if (! is_array($keys)) {
             return parent::setKeysForSaveQuery($query);
         }
 
-        foreach($keys as $keyName){
+        foreach ($keys as $keyName) {
             $query->where($keyName, '=', $this->getKeyForSaveQuery($keyName));
         }
 
@@ -33,7 +35,7 @@ trait HasCompositePrimaryKey
      */
     protected function getKeyForSaveQuery($keyName = null)
     {
-        if(is_null($keyName)){
+        if (is_null($keyName)) {
             $keyName = $this->getKeyName();
         }
 

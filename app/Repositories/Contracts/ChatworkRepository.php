@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 
 interface ChatworkRepository extends Repository
 {
-     /**
+    /**
      * Get room detail by id.
      */
     public function roomDetail($roomId): Collection;

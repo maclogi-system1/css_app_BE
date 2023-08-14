@@ -79,7 +79,7 @@ class MacroConstant
                 'job_group_id',
                 'single_job_id',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ],
         ],
         'policy_attachments' => [
@@ -89,7 +89,7 @@ class MacroConstant
                 'id',
                 'policy_id',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ],
         ],
         'policy_rules' => [
@@ -99,7 +99,7 @@ class MacroConstant
                 'id',
                 'policy_id',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ],
         ],
         'projects' => [
@@ -236,7 +236,7 @@ class MacroConstant
                 'deleted_by',
                 'deleted_at',
                 'job_id',
-                'gold_id'
+                'gold_id',
             ],
         ],
         'alert_types' => [
@@ -247,7 +247,7 @@ class MacroConstant
                 'created_at',
                 'updated_at',
             ],
-        ]
+        ],
     ];
 
     public const LIST_RELATIVE_TABLE = [
@@ -279,7 +279,7 @@ class MacroConstant
                     self::RELATIVE_TABLE_FOREIGN_KEY => 'mq_kpi_id',
                     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                 ],
-            ]
+            ],
         ],
         'policies' => [
             self::TABLE_NAME => 'policies',
@@ -314,14 +314,14 @@ class MacroConstant
                             self::RELATIVE_TABLE_FOREIGN_KEY => 'template_id',
                             self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                         ],
-                    ]
+                    ],
                 ],
                 'users' => [
                     self::TABLE_NAME => 'users',
                     self::RELATIVE_TABLE_FOREIGN_KEY => 'created_by',
                     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                 ],
-            ]
+            ],
         ],
         'tasks' => [
             self::TABLE_NAME => 'tasks',
@@ -340,8 +340,8 @@ class MacroConstant
                             self::TABLE_NAME => 'users',
                             self::RELATIVE_TABLE_FOREIGN_KEY => 'user_id',
                             self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
-                        ]
-                    ]
+                        ],
+                    ],
                 ],
                 'issue_types' => [
                     self::TABLE_NAME => 'issue_types',
@@ -363,7 +363,7 @@ class MacroConstant
                     self::RELATIVE_TABLE_FOREIGN_KEY => 'project_id',
                     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                 ],
-            ]
+            ],
         ],
         'alerts' => [
             self::TABLE_NAME => 'alerts',
@@ -383,7 +383,7 @@ class MacroConstant
                     self::RELATIVE_TABLE_FOREIGN_KEY => 'alert_type_id',
                     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                 ],
-            ]
+            ],
         ],
     ];
 }

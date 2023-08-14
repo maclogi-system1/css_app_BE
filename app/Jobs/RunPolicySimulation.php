@@ -56,7 +56,7 @@ class RunPolicySimulation implements ShouldQueue
 
             DB::commit();
         } catch (\Throwable $e) {
-            logger()->error('Run policy simulation: ' . $e->getMessage());
+            logger()->error('Run policy simulation: '.$e->getMessage());
             DB::rollBack();
 
             $this->policy->processing_status = Policy::ERROR_PROCESSING_STATUS;

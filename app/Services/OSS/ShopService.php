@@ -15,4 +15,12 @@ class ShopService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.list'), $filters));
     }
+
+    /**
+     * Find a specified shop.
+     */
+    public function find($storeId)
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId)));
+    }
 }

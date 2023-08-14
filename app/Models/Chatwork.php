@@ -28,7 +28,7 @@ class Chatwork extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function notifications():BelongsToMany
+    public function notifications(): BelongsToMany
     {
         return $this->belongsToMany(Notification::class);
     }

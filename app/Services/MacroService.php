@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Constants\MacroConstant;
 use App\Services\OSS\OSSService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 class MacroService extends Service
 {
@@ -25,7 +25,7 @@ class MacroService extends Service
             } else {
                 // Check shop exist in OSS system
                 $dataExist = false;
-                if (!$getProject) {
+                if (! $getProject) {
                     $projectId = $this->getProjectIdFromStoreIdOSSSystem($storeId);
                     $getProject = true;
                 }
@@ -124,7 +124,7 @@ class MacroService extends Service
      */
     private function getProjectInfoFromStoreIdOSSSystem(string $storeId): ?array
     {
-        $response = Http::oss()->get(OSSService::getApiUri('shops.get_project_id', $storeId), ['is_load_relation' => 0]);
+        $response = Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId), ['is_load_relation' => 0]);
 
         if (isset($response['data'])) {
             return $response['data'];
@@ -154,7 +154,7 @@ class MacroService extends Service
     {
         $response = Http::oss()->get(
             OSSService::getApiUri('schema.check_exist_with_store'),
-            ['project_id' => $projectId, 'table_name' => $tableName]
+            ['project_id' => $projectId, 'table_name' => $tableName],
         );
 
         if (isset($response['data'])) {

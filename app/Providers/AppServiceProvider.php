@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         foreach ($this->mixins as $class => $mixin) {
-            $class::mixin(new $mixin);
+            $class::mixin(new $mixin());
         }
     }
 

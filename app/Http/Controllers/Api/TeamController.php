@@ -18,7 +18,8 @@ class TeamController extends Controller
 {
     public function __construct(
         private TeamRepository $teamRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the team.

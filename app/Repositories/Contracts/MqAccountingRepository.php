@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Contracts;
 
-use App\Models\MqAccounting;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -54,9 +53,9 @@ interface MqAccountingRepository extends Repository
     public function getForecastVsActual(string $storeId, array $filters = []): array;
 
     /**
-     * Get a list of validation rules for validator
+     * Get a list of validation rules for validator.
      */
-    public function getValidationRules() : array;
+    public function getValidationRules(): array;
 
     /**
      * Handle data validation to update mq_accounting.

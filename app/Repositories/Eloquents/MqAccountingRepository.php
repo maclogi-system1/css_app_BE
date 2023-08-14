@@ -23,65 +23,66 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     use HasMqDateTimeHandler;
 
     protected array $validationRules = [
-        'sales_amnt'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'sales_num'                 => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'access_num'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'conversion_rate'           => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'sales_amnt_per_user'       => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'access_flow_sum'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'search_flow_num'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ranking_flow_num'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'instagram_flow_num'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'google_flow_num'           => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'cpc_num'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'display_num'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'sales_amnt_via_ad'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'sales_amnt_seasonal'       => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'sales_amnt_event'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'tda_access_num'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'tda_v_sales_amnt'          => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'tda_v_roas'                => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'new_sales_amnt'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'new_sales_num'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'new_price_per_user'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        're_sales_amnt'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        're_sales_num'              => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        're_price_per_user'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'coupon_points_cost'        => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'coupon_points_cost_rate'   => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'ad_cost'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ad_cpc_cost'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ad_season_cost'            => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ad_event_cost'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ad_tda_cost'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ad_cost_rate'              => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'cost_price'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'cost_price_rate'           => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'postage'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'postage_rate'              => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'commision'                 => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'commision_rate'            => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'gross_profit'              => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'gross_profit_rate'         => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'variable_cost_sum'         => ['nullable'],
-        'management_agency_fee'     => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'reserve1'                  => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'reserve2'                  => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'csv_usage_fee'             => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'store_opening_fee'         => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'management_agency_fee_rate'=> ['nullable', 'decimal:0,6', 'between:-999999,999999'],
-        'fixed_cost'                => ['nullable'],
-        'profit'                    => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'sum_profit'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'ltv_2y_amnt'               => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'lim_cpa'                   => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'cpo_via_ad'                => ['nullable', 'integer', 'between:-2000000000,2000000000'],
-        'cost_sum'                  => ['nullable'],
+        'sales_amnt' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'access_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'conversion_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'sales_amnt_per_user' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'access_flow_sum' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'search_flow_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ranking_flow_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'instagram_flow_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'google_flow_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cpc_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'display_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_via_ad' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_seasonal' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sales_amnt_event' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_access_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_v_sales_amnt' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'tda_v_roas' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'new_sales_amnt' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'new_sales_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'new_price_per_user' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_sales_amnt' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_sales_num' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        're_price_per_user' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'coupon_points_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'coupon_points_cost_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'ad_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_cpc_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_season_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_event_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_tda_cost' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ad_cost_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'cost_price' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cost_price_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'postage' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'postage_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'commision' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'commision_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'gross_profit' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'gross_profit_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'variable_cost_sum' => ['nullable'],
+        'management_agency_fee' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'reserve1' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'reserve2' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'csv_usage_fee' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'store_opening_fee' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'management_agency_fee_rate' => ['nullable', 'decimal:0,6', 'between:-999999,999999'],
+        'fixed_cost' => ['nullable'],
+        'profit' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'sum_profit' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'ltv_2y_amnt' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'lim_cpa' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cpo_via_ad' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+        'cost_sum' => ['nullable'],
     ];
 
     public function __construct(
         protected MqAccountingService $mqAccountingService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.
@@ -100,13 +101,13 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     }
 
     /**
-     * Get a list of validation rules for validator
+     * Get a list of validation rules for validator.
      */
-    public function getValidationRules() : array
+    public function getValidationRules(): array
     {
         return $this->validationRules +
             [
-                'year'  => ['required', 'integer', 'max:' . now()->addYear()->year, 'min:' . now()->subYear(2)->year],
+                'year' => ['required', 'integer', 'max:'.now()->addYear()->year, 'min:'.now()->subYear(2)->year],
                 'month' => ['required', 'integer', 'min:1', 'max:12'],
             ];
     }
@@ -275,10 +276,10 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 'id' => $mqAccounting?->mq_access_num_id,
             ], $rows['mq_access_num']);
             $adSalesAmnt = MqAdSalesAmnt::updateOrCreate([
-                'id' => $mqAccounting?->mq_ad_sales_amnt_id
+                'id' => $mqAccounting?->mq_ad_sales_amnt_id,
             ], $rows['mq_ad_sales_amnt']);
             $userTrends = MqUserTrend::updateOrCreate([
-                'id' => $mqAccounting?->mq_user_trends_id
+                'id' => $mqAccounting?->mq_user_trends_id,
             ], $rows['mq_user_trends']);
 
             $cost = $this->updateOrCreateMqCost($rows['mq_cost'], $mqAccounting?->mq_cost_id);
@@ -379,13 +380,13 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->queryBuilder()
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->selectRaw("
+            ->selectRaw('
                 store_id,
                 sum(mk.sales_amnt) as sales_amnt_total,
                 sum(mq_accounting.fixed_cost) as cost_sum_total,
                 sum(mc.variable_cost_sum) as variable_cost_sum_total,
                 sum(mc.profit) as profit_total
-            ")
+            ')
             ->groupBy('mq_accounting.store_id')
             ->where('store_id', $storeId);
 
@@ -400,11 +401,11 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         $expected = $this->useScope([
-                'dateRange' => [
-                    $dateRangeFilter['from_date'],
-                    $dateRangeFilter['to_date'],
-                ]
-            ])
+            'dateRange' => [
+                $dateRangeFilter['from_date'],
+                $dateRangeFilter['to_date'],
+            ],
+        ])
             ->queryBuilder()
             ->where('store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')

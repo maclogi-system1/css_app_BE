@@ -15,7 +15,8 @@ class PermissionController extends Controller
 {
     public function __construct(
         private PermissionRepository $permissionRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource.

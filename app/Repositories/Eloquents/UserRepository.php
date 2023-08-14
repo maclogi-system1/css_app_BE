@@ -10,20 +10,21 @@ use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\ChatworkService;
 use App\Services\UploadFileService;
-use LogicException;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use LogicException;
 
 class UserRepository extends Repository implements UserRepositoryContract
 {
     public function __construct(
         private UploadFileService $uploadFileService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.

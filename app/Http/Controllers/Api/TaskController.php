@@ -12,7 +12,8 @@ class TaskController extends Controller
 {
     public function __construct(
         private TaskRepository $taskRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get a listing of the task from oss api.

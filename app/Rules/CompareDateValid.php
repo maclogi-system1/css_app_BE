@@ -33,6 +33,7 @@ class CompareDateValid implements ValidationRule
                     'attribute' => $attribute,
                     'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
                 ]);
+
                 break;
             case 'gte':
                 $failed = $this->compare->lt($this->compareWith)
@@ -41,6 +42,7 @@ class CompareDateValid implements ValidationRule
                     'attribute' => $attribute,
                     'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
                 ]);
+
                 break;
             case 'lt':
                 $failed = $this->compare->gte($this->compareWith)
@@ -49,6 +51,7 @@ class CompareDateValid implements ValidationRule
                     'attribute' => $attribute,
                     'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
                 ]);
+
                 break;
             case 'lte':
                 $failed = $this->compare->gt($this->compareWith)
@@ -57,6 +60,7 @@ class CompareDateValid implements ValidationRule
                     'attribute' => $attribute,
                     'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
                 ]);
+
                 break;
         }
 

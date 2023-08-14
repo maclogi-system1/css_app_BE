@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rules\File;
-
 class UploadPolicyAttachmentRequest extends FormRequest
 {
     /**

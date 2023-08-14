@@ -17,7 +17,8 @@ class RoleController extends Controller
 {
     public function __construct(
         private RoleRepository $roleRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the role.
@@ -57,7 +58,7 @@ class RoleController extends Controller
         $role = $this->roleRepository->create($request->validated());
 
         return $role ? new RoleResource($role) : response()->json([
-            'message' => __('Created failure.')
+            'message' => __('Created failure.'),
         ], Response::HTTP_BAD_REQUEST);
     }
 
@@ -79,7 +80,7 @@ class RoleController extends Controller
         $role = $this->roleRepository->update($request->validated(), $role);
 
         return $role ? new RoleResource($role) : response()->json([
-            'message' => __('Updated failure.')
+            'message' => __('Updated failure.'),
         ], Response::HTTP_BAD_REQUEST);
     }
 
@@ -93,7 +94,7 @@ class RoleController extends Controller
         $role = $this->roleRepository->delete($role);
 
         return $role ? new RoleResource($role) : response()->json([
-            'message' => __('Deleted failure.')
+            'message' => __('Deleted failure.'),
         ], Response::HTTP_BAD_REQUEST);
     }
 
