@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
 use Illuminate\Support\Facades\Route;
 
+Route::any('/test', fn (\Illuminate\Http\Request $request) => ['headers' => $request->header(), 'body' => $request->all()]);
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
     ->name('send-password-reset-link');
@@ -121,6 +122,10 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('download-template')
                 ->withoutMiddleware('auth:sanctum');
 
+            Route::get('/{policy}', 'show')->name('show');
+            Route::get('/simulation/{policySimulation}', 'showSimulation')->name('show-simulation');
+            Route::put('/simulation/{policySimulation}', 'updateSimulation')->name('update-simulation');
+
             Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
             Route::delete('/{policy}', 'destroy')->name('destroy');
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
@@ -128,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
+
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
 

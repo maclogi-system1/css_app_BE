@@ -8,7 +8,7 @@ use App\Rules\DateValid;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
-class StoreSimulationPolicyRequest extends FormRequest
+class StorePolicySimulationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
