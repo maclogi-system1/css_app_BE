@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RunSimulationRequest;
 use App\Http\Requests\StoreSimulationPolicyRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
@@ -144,7 +145,7 @@ class PolicyController extends Controller
     {
         $result = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
 
-        return !$result
+        return ! $result
             ? response()->json([
                 'message' => __('Delete failed. Please check your policy ids!'),
                 'policy_ids' => $request->input('policy_ids', []),
@@ -166,5 +167,27 @@ class PolicyController extends Controller
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => 0,
         ]);
+    }
+
+    /**
+     * Run policy simulation.
+     */
+    public function runSimulation(RunSimulationRequest $request): JsonResponse
+    {
+        $this->policyRepository->runSimulation($request->validated());
+
+        return response()->json([
+            'message' => 'Policy simulation is running...',
+        ]);
+    }
+
+    /**
+     * Get list of work breakdown structure.
+     */
+    public function workBreakdownStructure(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->policyRepository->workBreakdownStructure($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 }

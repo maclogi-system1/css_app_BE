@@ -37,6 +37,7 @@ return [
         'api_uri' => [
             'shops' => [
                 'list' => '/shops',
+                'detail' => '/shops/{storeId}',
             ],
             'alerts' => [
                 'list' => '/alerts',
@@ -52,11 +53,17 @@ return [
                 'update_time' => '/job-groups/update-time',
             ],
             'single_jobs' => [
+                'list' => '/single-jobs',
                 'options' => '/single-jobs/options',
+                'schedule' => '/single-jobs/schedule',
             ],
             'users' => [
                 'shop_users' => '/users/shop-users',
             ],
+            'schema' => [
+                'get_columns' => '/schema/column',
+                'check_exist_with_store' => '/schema/check-exist-with-store',
+            ]
         ],
     ],
 

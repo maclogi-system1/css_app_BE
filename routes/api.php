@@ -9,10 +9,12 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\JobGroupController;
+use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
+use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ShopUserController;
 use App\Http\Controllers\Api\TeamController;
@@ -127,7 +129,19 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
+
+            // Work Breakdown Structure
+            Route::get('/wbs/{storeId}', 'workBreakdownStructure')->name('wbs');
+
             Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
+        });
+
+    Route::prefix('policy-simulation-histories')
+        ->name('policy-simulation-histories.')
+        ->controller(PolicySimulationHistoryController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
         });
 
     Route::prefix('policy-attachments')
@@ -149,4 +163,12 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
     Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
+
+    // Implement for macros
+    Route::prefix('macros')
+        ->name('macros.')
+        ->controller(MacroController::class)
+        ->group(function () {
+            Route::get('/list-table/{storeId}', 'getListTableByStoreId')->name('get-list-table');
+        });
 });

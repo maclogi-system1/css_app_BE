@@ -12,6 +12,7 @@ class AppServiceProvider extends ServiceProvider
     protected array $mixins = [
         \Illuminate\Database\Query\Builder::class => \App\Mixin\BuilderMixin::class,
         \Illuminate\Support\Facades\Http::class => \App\Mixin\HttpMixin::class,
+        \Illuminate\Support\Str::class => \App\Mixin\StrMixin::class,
     ];
 
     /**
@@ -20,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         foreach ($this->mixins as $class => $mixin) {
-            $class::mixin(new $mixin);
+            $class::mixin(new $mixin());
         }
     }
 

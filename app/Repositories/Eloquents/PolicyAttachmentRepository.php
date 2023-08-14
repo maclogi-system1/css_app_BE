@@ -33,7 +33,7 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
         return $this->handleSafely(function () use ($file, $attachmentKey) {
             $fileName = str($file->getClientOriginalName())
                 ->snake()
-                ->append('_' . time() . '.' . $file->extension());
+                ->append('_'.time().'.'.$file->extension());
             $dir = PolicyAttachment::IMAGE_PATH;
             $type = PolicyAttachment::IMAGE_TYPE;
 
@@ -84,7 +84,7 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
      */
     public function deleteMultiple(array|Collection $attachmentIds): ?bool
     {
-        if (!count($attachmentIds)) {
+        if (! count($attachmentIds)) {
             return null;
         }
 

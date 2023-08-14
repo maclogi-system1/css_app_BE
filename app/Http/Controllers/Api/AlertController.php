@@ -11,7 +11,8 @@ class AlertController extends Controller
 {
     public function __construct(
         private AlertRepository $alertRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get a listing of the alert from oss api.

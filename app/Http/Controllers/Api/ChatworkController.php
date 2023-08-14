@@ -11,7 +11,8 @@ class ChatworkController extends Controller
 {
     public function __construct(
         private ChatworkRepository $chatworkRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get a specified room by room id.

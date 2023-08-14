@@ -17,7 +17,8 @@ class UsersCompanyController extends Controller
     public function __construct(
         private CompanyRepository $companyRepository,
         private UserRepository $userRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Show current user's company and company's teams.

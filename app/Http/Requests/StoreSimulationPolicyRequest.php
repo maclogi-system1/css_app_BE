@@ -25,9 +25,9 @@ class StoreSimulationPolicyRequest extends FormRequest
      */
     public function rules(): array
     {
-        $simulationStartDate = Carbon::create($this->simulation_start_date . ' ' . $this->simulation_start_time)
+        $simulationStartDate = Carbon::create($this->simulation_start_date.' '.$this->simulation_start_time)
             ->toImmutable();
-        $simulationEndDate = Carbon::create($this->simulation_end_date . ' ' . $this->simulation_end_time)
+        $simulationEndDate = Carbon::create($this->simulation_end_date.' '.$this->simulation_end_time)
             ->toImmutable();
 
         return [
@@ -45,15 +45,15 @@ class StoreSimulationPolicyRequest extends FormRequest
             'simulation_store_priority' => ['required', 'decimal:0,6', 'between:-999999,999999'],
             'simulation_product_priority' => ['required', 'decimal:0,6', 'between:-999999,999999'],
             'policy_rules' => ['nullable', 'array'],
-            'policy_rules.*.class' => ['required'],
-            'policy_rules.*.service' => ['required'],
+            'policy_rules.*.class' => ['required', Rule::in(array_keys(PolicyRule::CLASSES))],
+            'policy_rules.*.service' => ['required', Rule::in(array_keys(PolicyRule::SERVICES))],
             'policy_rules.*.value' => ['required', 'integer', 'between:-2000000000,2000000000'],
-            'policy_rules.*.condition_1' => ['required', Rule::in(array_keys(PolicyRule::CONDITIONS))],
-            'policy_rules.*.condition_value_1' => ['nullable'],
-            'policy_rules.*.condition_2' => ['required', Rule::in(array_keys(PolicyRule::CONDITIONS))],
+            'policy_rules.*.condition_1' => ['required', Rule::in(array_keys(PolicyRule::TEXT_INPUT_CONDITIONS))],
+            'policy_rules.*.condition_value_1' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
+            'policy_rules.*.condition_2' => ['required', Rule::in(array_keys(PolicyRule::UPLOADABLE_CONDITIONS))],
             'policy_rules.*.condition_value_2' => ['nullable'],
-            'policy_rules.*.condition_3' => ['required', Rule::in(array_keys(PolicyRule::CONDITIONS))],
-            'policy_rules.*.condition_value_3' => ['nullable'],
+            'policy_rules.*.condition_3' => ['required', Rule::in(array_keys(PolicyRule::TEXT_INPUT_CONDITIONS))],
+            'policy_rules.*.condition_value_3' => ['nullable', 'integer', 'between:-2000000000,2000000000'],
             'policy_rules.*.attachment_key_1' => ['nullable', 'string', 'size:16'],
             'policy_rules.*.attachment_key_2' => ['nullable', 'string', 'size:16'],
             'policy_rules.*.attachment_key_3' => ['nullable', 'string', 'size:16'],

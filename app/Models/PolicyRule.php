@@ -9,18 +9,45 @@ class PolicyRule extends Model
 {
     use HasFactory;
 
+    public const COUPON_CLASS = 1;
+    public const POINT_CLASS = 2;
+    public const TIME_SALE_CLASS = 3;
+    public const CLASSES = [
+        self::COUPON_CLASS => 'クーポン',
+        self::POINT_CLASS => 'ポイント',
+        self::TIME_SALE_CLASS => 'タイムセール',
+    ];
+
+    public const FIXED_PRICE_DISCOUNT_SERVICE = 1;
+    public const FIXED_RATE_DISCOUNT_SERVICE = 2;
+    public const GIVE_DOUBLE_POINTS_SERVICE = 3;
+    public const YEN_SERVICE = 4;
+    public const POINT_BACK_SERVICE = 5;
+    public const LIMITED_SPECIAL_PRICE_SERVICE = 6;
+    public const SERVICES = [
+        self::FIXED_PRICE_DISCOUNT_SERVICE => '定額値引き',
+        self::FIXED_RATE_DISCOUNT_SERVICE => '定率値引き',
+        self::GIVE_DOUBLE_POINTS_SERVICE => 'ポイント倍付与',
+        self::YEN_SERVICE => '〇円ぽっきり',
+        self::POINT_BACK_SERVICE => 'ポイントバック',
+        self::LIMITED_SPECIAL_PRICE_SERVICE => '限定特価',
+    ];
+
     public const PURCHASE_AMOUNT_CONDITION = 1;
     public const NUMBER_OF_PURCHASES_CONDITION = 2;
     public const LIMITED_NUMBER_CONDITION = 3;
-    public const NONE_CONDITION = 4;
-    public const NOT_CLEAR_CONDITION = 5;
+    public const LIMITED_NUMBER_OF_COUPONS_CONDITION = 4;
+    public const NONE_CONDITION = 5;
     public const SHIPPING_CONDITION = 6;
-    public const CONDITIONS = [
+    public const TEXT_INPUT_CONDITIONS = [
         self::PURCHASE_AMOUNT_CONDITION => '購入金額',
         self::NUMBER_OF_PURCHASES_CONDITION => '購入点数',
         self::LIMITED_NUMBER_CONDITION => '個数限定',
+        self::LIMITED_NUMBER_OF_COUPONS_CONDITION => 'クーポン枚数限定',
         self::NONE_CONDITION => 'None',
-        self::NOT_CLEAR_CONDITION => '不明',
+    ];
+
+    public const UPLOADABLE_CONDITIONS = [
         self::SHIPPING_CONDITION => '対象商品',
     ];
 

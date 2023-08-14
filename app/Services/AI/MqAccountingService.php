@@ -5,7 +5,6 @@ namespace App\Services\AI;
 use App\Services\Service;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
 
 class MqAccountingService extends Service
 {

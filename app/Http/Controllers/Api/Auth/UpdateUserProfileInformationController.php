@@ -5,16 +5,16 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserProfileRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Repositories\Contracts\UserRepository;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class UpdateUserProfileInformationController extends Controller
 {
     public function __construct(
         private UserRepository $userRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Validate and update the given user's profile information.

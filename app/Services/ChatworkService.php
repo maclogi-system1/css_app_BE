@@ -40,7 +40,7 @@ class ChatworkService extends Service
     {
         $rooms = collect($this->chatworkApi->getRooms());
 
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             foreach ($filters as $key => $value) {
                 $rooms = $rooms->where($key, $value);
             }
@@ -112,7 +112,7 @@ class ChatworkService extends Service
         try {
             $this->chatworkRoom($roomId)->sendMessage($message);
         } catch (\Throwable $e) {
-            logger()->error('ChatworkService::sendMessage ' . $e->getMessage());
+            logger()->error('ChatworkService::sendMessage '.$e->getMessage());
         }
     }
 
@@ -157,7 +157,7 @@ class ChatworkService extends Service
 
     public function chatworkRoom(?string $roomId = null)
     {
-        if (!$this->useable()) {
+        if (! $this->useable()) {
             return optional();
         }
 

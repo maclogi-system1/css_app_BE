@@ -10,7 +10,8 @@ class AlertRepository extends Repository implements AlertRepositoryContract
 {
     public function __construct(
         private AlertService $alertService
-    ) {}
+    ) {
+    }
 
     /**
      * Get full name of model.

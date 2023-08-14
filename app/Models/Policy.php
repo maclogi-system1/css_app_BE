@@ -29,6 +29,17 @@ class Policy extends Model
         self::SIMULATION_CATEGORY => '施策シミュレーション',
     ];
 
+    public const NEW_PROCESSING_STATUS = 0;
+    public const RUNNING_PROCESSING_STATUS = 1;
+    public const DONE_PROCESSING_STATUS = 2;
+    public const ERROR_PROCESSING_STATUS = 3;
+    public const PROCESSING_STATES = [
+        self::NEW_PROCESSING_STATUS => 'New',
+        self::RUNNING_PROCESSING_STATUS => 'Running',
+        self::DONE_PROCESSING_STATUS => 'Done',
+        self::ERROR_PROCESSING_STATUS => 'Error',
+    ];
+
     protected $fillable = [
         'store_id',
         'job_group_id',
@@ -43,6 +54,7 @@ class Policy extends Model
         'simulation_product_priority',
         'description',
         'immediate_reflection',
+        'processing_status',
         'created_at',
         'updated_at',
     ];
@@ -65,5 +77,10 @@ class Policy extends Model
     public function withAllRels(): static
     {
         return $this->where('id', $this->getKey())->with(['rules'])->first();
+    }
+
+    public function getProcessingStatusForHumanAttribute(): string
+    {
+        return static::PROCESSING_STATES[$this->processing_status];
     }
 }
