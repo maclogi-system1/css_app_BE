@@ -22,6 +22,22 @@ class SingleJobService extends Service
     }
 
     /**
+     * Get a specified single job.
+     */
+    public function find($id, array $filters = [])
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.detail', $id), $filters));
+    }
+
+    /**
+     * Delete a specified single job.
+     */
+    public function delete($id)
+    {
+        return $this->toResponse(Http::oss()->delete(OSSService::getApiUri('single_jobs.delete', $id)));
+    }
+
+    /**
      * Get a list of the option for select.
      */
     public function getOptions(): Collection

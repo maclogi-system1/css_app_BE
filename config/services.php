@@ -48,12 +48,15 @@ return [
             'job_groups' => [
                 'list' => '/job-groups',
                 'detail' => '/job-groups/{id}',
-                'validate' => '/job-groups/validation',
+                'validate_create' => '/job-groups/validation',
+                'validate_update' => '/job-groups/validation-update',
                 'create' => '/job-groups',
                 'update_time' => '/job-groups/update-time',
             ],
             'single_jobs' => [
                 'list' => '/single-jobs',
+                'detail' => '/single-jobs/{id}',
+                'delete' => '/single-jobs/{id}',
                 'options' => '/single-jobs/options',
                 'schedule' => '/single-jobs/schedule',
             ],

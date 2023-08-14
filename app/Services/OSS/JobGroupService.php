@@ -25,11 +25,27 @@ class JobGroupService extends Service
     }
 
     /**
+     * Handle create a new job group and single job.
+     */
+    public function update(array $data, $id): Collection
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.update', $id), $data));
+    }
+
+    /**
      * Handle validation form request.
      */
-    public function validate(array $data): Collection
+    public function validateCreate(array $data): Collection
     {
-        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate'), $data));
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate_create'), $data));
+    }
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateUpdate(array $data): Collection
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate_update'), $data));
     }
 
     /**

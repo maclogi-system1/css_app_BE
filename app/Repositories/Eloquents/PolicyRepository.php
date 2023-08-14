@@ -147,6 +147,47 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
+     * Find a specified policy.
+     */
+    public function find($id, array $columns = ['*'], array $filters = []): ?Policy
+    {
+        $this->enableUseWith(['attachments', 'rules'], $filters);
+        $category = str(Arr::get($filters, 'category'));
+
+        $constName = $category->upper()
+            ->append('_CATEGORY')
+            ->prepend(Policy::class.'::')
+            ->toString();
+        $query = $this->queryBuilder()->where('id', $id);
+
+        if (Arr::has($filters, 'category')) {
+            if (defined($constName)) {
+                $query->where('category', constant($constName));
+            }
+
+            if ($category->toString() == Policy::SIMULATION_CATEGORY) {
+                $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
+            }
+        }
+
+        $policy = $query->first($columns);
+
+        if (is_null($policy)) {
+            return null;
+        }
+
+        if (! is_null($policy->single_job_id)) {
+            $singleJob = $this->singleJobService->find($policy->single_job_id, ['store_id' => $policy->store_id]);
+
+            if ($singleJob->get('success')) {
+                $policy->single_job = $singleJob->get('data')->get('data');
+            }
+        }
+
+        return $policy;
+    }
+
+    /**
      * Get a list of the option for select.
      */
     public function getOptions(): array
@@ -190,6 +231,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return $this->handleSafely(function () use ($policy) {
             $policy->rules()->delete();
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
+
+            if (! is_null($policy->single_job_id)) {
+                $this->singleJobService->delete($policy->single_job_id);
+            }
+
             $policy->delete();
 
             return $policy;
@@ -222,7 +268,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function handleValidation(array $data, int $index): array
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
-        $ossValidation = $this->jobGroupService->validate($this->getDataForJobGroup($data));
+
+        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION) {
+            $ossValidation = $this->jobGroupService->validateUpdate($this->getDataForJobGroup($data));
+        } else {
+            $ossValidation = $this->jobGroupService->validateCreate($this->getDataForJobGroup($data));
+        }
+
         $ossErrorMessages = Arr::get($ossValidation, 'data.errors.messages', []);
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
@@ -374,7 +426,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
             $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
 
-            $simulationPolicy = $this->model()->fill([
+            $policySimulation = $this->model()->fill([
                 'store_id' => $storeId,
                 'name' => $data['name'],
                 'category' => Policy::SIMULATION_CATEGORY,
@@ -384,19 +436,41 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'simulation_store_priority' => $data['simulation_store_priority'],
                 'simulation_product_priority' => $data['simulation_product_priority'],
             ]);
-            $simulationPolicy->save();
+            $policySimulation->save();
 
             if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
                     $this->handleCondition(1, $policyRule);
                     $this->handleCondition(2, $policyRule);
                     $this->handleCondition(3, $policyRule);
-                    $simulationPolicy->rules()->create($policyRule);
+                    $policySimulation->rules()->create($policyRule);
                 }
             }
 
-            return $simulationPolicy->withAllRels();
+            return $policySimulation->withAllRels();
         }, 'Create simulation policy');
+    }
+
+    /**
+     * Handle update a specified policy simulation.
+     */
+    public function updateSimulation(array $data, Policy $policySimulation): ?Policy
+    {
+        return $this->handleSafely(function () use ($data, $policySimulation) {
+            $policySimulation->fill($data)->save();
+
+            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+                $policySimulation->rules()->delete();
+                foreach ($policyRules as $policyRule) {
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
+                    $policySimulation->rules()->create($policyRule);
+                }
+            }
+
+            return $policySimulation->withAllRels();
+        }, 'Update policy simulation');
     }
 
     /**
