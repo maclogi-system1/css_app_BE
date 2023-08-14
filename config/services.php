@@ -55,6 +55,7 @@ return [
             'single_jobs' => [
                 'list' => '/single-jobs',
                 'options' => '/single-jobs/options',
+                'schedule' => '/single-jobs/schedule',
             ],
             'users' => [
                 'shop_users' => '/users/shop-users',

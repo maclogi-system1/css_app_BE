@@ -447,4 +447,50 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         RunPolicySimulation::dispatch($policy);
     }
+
+    /**
+     * Get list of work breakdown structure.
+     */
+    public function workBreakdownStructure(string $storeId, array $filters)
+    {
+        $jobGroupIds = null;
+
+        if ($policyCategory = Arr::get($filters, 'policy_category')) {
+            $jobGroupIds = $this->model()
+                ->where('category', $policyCategory)
+                ->distinct('job_group_id')
+                ->pluck('job_group_id')
+                ->join(',');
+
+            if (empty($jobGroupIds)) {
+                return collect([
+                    'data' => [
+                        'work_breakdown_structure' => [],
+                    ],
+                    'success' => true,
+                ]);
+            }
+        }
+
+        $result = $this->singleJobService->getSchedule($filters + [
+            'store_id' => $storeId,
+            'job_group_ids' => $jobGroupIds,
+        ]);
+
+        if ($result->get('success')) {
+            $jobGroupSchedule = [];
+
+            foreach ($result->get('data') as $jobGroupId => $schedules) {
+                $jobGroupSchedule[] = [
+                    'job_group_id' => $jobGroupId,
+                    'job_group_title' => Arr::first($schedules)['job_group_title'],
+                    'schedules' => $schedules,
+                ];
+            }
+
+            $result->put('data', ['work_breakdown_structure' => $jobGroupSchedule]);
+        }
+
+        return $result;
+    }
 }

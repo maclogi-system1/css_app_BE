@@ -130,6 +130,10 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('get-list-by-store');
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
+
+            // Work Breakdown Structure
+            Route::get('/wbs/{storeId}', 'workBreakdownStructure')->name('wbs');
+
             Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         });
 

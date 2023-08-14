@@ -28,4 +28,12 @@ class SingleJobService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.options')));
     }
+
+    /**
+     * Get schedule of single job and task.
+     */
+    public function getSchedule(array $filters = [])
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.schedule'), $filters));
+    }
 }
