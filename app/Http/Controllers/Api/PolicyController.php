@@ -180,4 +180,14 @@ class PolicyController extends Controller
             'message' => 'Policy simulation is running...',
         ]);
     }
+
+    /**
+     * Get list of work breakdown structure.
+     */
+    public function workBreakdownStructure(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->policyRepository->workBreakdownStructure($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
 }
