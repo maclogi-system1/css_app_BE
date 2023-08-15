@@ -303,6 +303,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $rules = [
             'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
+            'policy_id' => [
+                Rule::requiredIf(Arr::get($data, 'control_actions', Policy::CREATE_ACTION) == Policy::EDIT_ACTION),
+                Rule::exists('policies', 'id'),
+            ],
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
@@ -317,6 +321,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
+        $policy = null;
+
+        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION && ($policyId = Arr::get($data, 'policy_id'))) {
+            $policy = $this->model()->find($policyId);
+        }
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
@@ -327,12 +336,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'job_group_end_date' => Arr::get($data, 'undo_date'),
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
-            'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
+            'managers' => Arr::get($data, 'managers', []),
             'store_id' => Arr::get($data, 'store_id'),
             'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
-                    'uuid' => (string) str()->uuid(),
+                    'id' => $policy ? $policy->single_job_id : null,
+                    'uuid' => $policy ? null : (string) str()->uuid(),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
@@ -399,7 +409,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $result = $this->jobGroupService->create($data['job_group']);
 
             if (! $result->get('success')) {
-                throw new Exception('Insert job_group failed.');
+                throw new Exception('Insert job_group failed. '.$result->get('data')->get('message'));
             }
 
             $singleJobs = $result->get('data')->get('single_jobs');
@@ -449,6 +459,27 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             return $policySimulation->withAllRels();
         }, 'Create simulation policy');
+    }
+
+    /**
+     * Handle update a specified policy.
+     */
+    public function update(array $data, ?Policy $policy): ?bool
+    {
+        return $this->handleSafely(function () use ($data, $policy) {
+            $policyData = $data['policy'];
+            $policy->fill($policyData);
+            $policy->save();
+
+            $jobGroupData = $data['job_group'];
+            $result = $this->jobGroupService->update($jobGroupData, $jobGroupData['job_group_code']);
+
+            if (! $result->get('success')) {
+                throw new Exception('Update job_group failed. '.$result->get('data')->get('message'));
+            }
+
+            return true;
+        }, 'Update policy');
     }
 
     /**

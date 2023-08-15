@@ -27,9 +27,9 @@ class JobGroupService extends Service
     /**
      * Handle create a new job group and single job.
      */
-    public function update(array $data, $id): Collection
+    public function update(array $data, $jobGroupCode): Collection
     {
-        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.update', $id), $data));
+        return $this->toResponse(Http::oss()->put(OSSService::getApiUri('job_groups.update', $jobGroupCode), $data));
     }
 
     /**
