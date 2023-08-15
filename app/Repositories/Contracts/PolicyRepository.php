@@ -59,6 +59,11 @@ interface PolicyRepository extends Repository
     public function createSimulation(array $data, string $storeId): ?Policy;
 
     /**
+     * Handle update a specified policy.
+     */
+    public function update(array $data, ?Policy $policy): ?bool;
+
+    /**
      * Handle update a specified policy simulation.
      */
     public function updateSimulation(array $data, Policy $policySimulation): ?Policy;

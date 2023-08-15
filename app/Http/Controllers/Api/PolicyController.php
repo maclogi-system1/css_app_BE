@@ -116,7 +116,11 @@ class PolicyController extends Controller
 
                 if (is_null($result)) {
                     $errors[] = [
-                        'messages' => "Something went wrong! Can't create policy.",
+                        'index' => $index,
+                        'row' => $index + 1,
+                        'messages' => [
+                            'record' => "Something went wrong! Can't create policy."
+                        ],
                     ];
                     $status = Response::HTTP_BAD_REQUEST;
                     $numberFailures++;
@@ -126,6 +130,22 @@ class PolicyController extends Controller
                         $data,
                         $jobGroups
                     );
+                }
+            }
+
+            if (Arr::get($validated, 'policy.control_actions') == Policy::EDIT_ACTION) {
+                $result = $this->policyRepository->update($validated, Policy::find(Arr::get($validated, 'policy.policy_id')));
+
+                if (is_null($result)) {
+                    $errors[] = [
+                        'index' => $index,
+                        'row' => $index + 1,
+                        'messages' => [
+                            'record' => "Something went wrong! Can't create policy."
+                        ],
+                    ];
+                    $status = Response::HTTP_BAD_REQUEST;
+                    $numberFailures++;
                 }
             }
         }
@@ -159,8 +179,7 @@ class PolicyController extends Controller
     public function updateSimulation(
         UpdatePolicySimulationRequest $request,
         Policy $policySimulation
-    ): JsonResource|JsonResponse
-    {
+    ): JsonResource|JsonResponse {
         $policySimulation = $this->policyRepository->updateSimulation($request->validated(), $policySimulation);
 
         return $policySimulation ? new PolicyResource($policySimulation) : response()->json([

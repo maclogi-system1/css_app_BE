@@ -51,6 +51,7 @@ return [
                 'validate_create' => '/job-groups/validation',
                 'validate_update' => '/job-groups/validation-update',
                 'create' => '/job-groups',
+                'update' => '/job-groups/{jobGroupCode}',
                 'update_time' => '/job-groups/update-time',
             ],
             'single_jobs' => [
