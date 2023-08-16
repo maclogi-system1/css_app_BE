@@ -120,9 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('policy.')
         ->controller(PolicyController::class)
         ->group(function () {
-            Route::get('/download-template', 'downloadTemplateCsv')
-                ->name('download-template')
-                ->withoutMiddleware('auth:sanctum');
+            Route::get('/download-template/{storeId}', 'downloadTemplateCsv')
+                ->name('download-template');
 
             Route::get('/simulation/{policySimulation}', 'showSimulation')->name('show-simulation');
             Route::put('/simulation/{policySimulation}', 'updateSimulation')->name('update-simulation');
@@ -133,8 +132,6 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('ai-recommendation-by-store');
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/detail/{policy}', 'show')->name('show');
-            Route::get('/{storeId}', 'getListByStore')
-                ->name('get-list-by-store');
 
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
@@ -142,6 +139,8 @@ Route::middleware('auth:sanctum')->group(function () {
             // Work Breakdown Structure
             Route::get('/wbs/{storeId}', 'workBreakdownStructure')->name('wbs');
 
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
             Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         });
 

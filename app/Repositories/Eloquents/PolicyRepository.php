@@ -57,11 +57,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $query = $this->handleFilterCategory($this->queryBuilder()->where('store_id', $storeId), $category);
 
         if ($perPage < 0) {
-            return $query->get();
+            $policies = $query->get();
+            $singleJobIds = Arr::pluck($policies, 'single_job_id');
+        } else {
+            $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+            $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         }
 
-        $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
-        $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         $singleJobs = $this->singleJobService->getList([
             'store_id' => $storeId,
             'filters' => [
@@ -73,8 +75,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         if ($singleJobs->get('success')) {
             $singleJobData = $singleJobs->get('data')->get('single_jobs');
+            $items = $perPage < 0 ? $policies : $policies->items();
 
-            foreach ($policies->items() as $item) {
+            foreach ($items as $item) {
                 $singleJobMatches = array_filter(
                     $singleJobData,
                     fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id,
