@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ShopUserController;
+use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
@@ -164,6 +165,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('job-groups')
         ->name('job-groups.')
         ->controller(JobGroupController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
+        });
+
+    Route::prefix('single-jobs')
+        ->name('single-jobs.')
+        ->controller(SingleJobController::class)
         ->group(function () {
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
