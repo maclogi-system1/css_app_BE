@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\JobGroupController;
 use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
+use App\Http\Controllers\Api\MqCostController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
@@ -114,6 +115,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/get-forecast-vs-actual/{storeId}', 'getForecastVsActual')->name('get-forecast-vs-actual');
             Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
+        });
+
+    Route::prefix('mq-cost')
+        ->name('mq-cost.')
+        ->controller(MqCostController::class)
+        ->group(function () {
+            Route::get('/ad-cost/{storeId}', 'getAdCostByStore')->name('get-ad-cost-by-store');
         });
 
     Route::prefix('policy')
