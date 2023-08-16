@@ -122,4 +122,9 @@ class User extends Authenticatable
     {
         return $this->where('id', $this->getKey())->with(['chatwork', 'company', 'teams', 'roles'])->first();
     }
+
+    public function MacroConfigurations(): HasMany
+    {
+        return $this->hasMany(MacroConfiguration::class, 'created_by', 'id');
+    }
 }

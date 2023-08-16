@@ -20,6 +20,15 @@ class MacroConstant
     public const COLUMN_TYPE_DATETIME = 'datetime';
     public const REMOVE_COLUMNS = 'remove_columns';
 
+    public const MACRO_TYPE_AI = 0;
+    public const MACRO_TYPE_CSV = 1;
+    public const MACRO_TYPE_DB = 2;
+    public const MACRO_ARRAY = [
+        self::MACRO_TYPE_AI,
+        self::MACRO_TYPE_CSV,
+        self::MACRO_TYPE_DB
+    ];
+
     public const DESCRIPTION_TABLES = [
         'mq_accounting' => [
             self::TABLE_NAME => 'mq_accounting',
