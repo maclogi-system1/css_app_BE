@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Eloquents;
+namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\JobGroupRepository as JobGroupRepositoryContract;
 use App\Repositories\Repository;
