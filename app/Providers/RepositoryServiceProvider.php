@@ -25,6 +25,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\PolicyAttachmentRepository::class => \App\Repositories\Eloquents\PolicyAttachmentRepository::class,
         \App\Repositories\Contracts\JobGroupRepository::class => \App\Repositories\Eloquents\JobGroupRepository::class,
         \App\Repositories\Contracts\PolicySimulationHistoryRepository::class => \App\Repositories\Eloquents\PolicySimulationHistoryRepository::class,
+        \App\Repositories\Contracts\MqKpiRepository::class => \App\Repositories\Eloquents\MqKpiRepository::class,
     ];
 
     /**

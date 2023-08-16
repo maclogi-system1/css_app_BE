@@ -51,4 +51,14 @@ class MqAccountingService extends Service
             'profit' => rand(7000000, 20000000),
         ]);
     }
+
+    public function getListMqKpiByStoreId($storeId, array $filters = [])
+    {
+        return collect([
+            'sales_amnt' => rand(10000000, 20000000),
+            'access_num' => rand(10000, 100000),
+            'conversion_rate' => rand(10, 50),
+            'sales_amnt_per_user' => rand(10000000, 20000000),
+        ]);
+    }
 }
