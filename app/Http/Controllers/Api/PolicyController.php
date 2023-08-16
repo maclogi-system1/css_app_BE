@@ -207,9 +207,9 @@ class PolicyController extends Controller
     /**
      * Download a template csv file.
      */
-    public function downloadTemplateCsv(): StreamedResponse
+    public function downloadTemplateCsv(Request $request, string $storeId): StreamedResponse
     {
-        return response()->stream(callback: $this->policyCsv->streamCsvFile(), headers: [
+        return response()->stream(callback: $this->policyCsv->streamCsvFile($storeId, $request->query()), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=policy_template.csv',
             'Pragma' => 'no-cache',
