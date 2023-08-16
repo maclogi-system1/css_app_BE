@@ -14,7 +14,7 @@ use App\Services\OSS\JobGroupService;
 use App\Services\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
 use Exception;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;

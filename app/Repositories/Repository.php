@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +70,7 @@ abstract class Repository
     /**
      * Get a builder to query data.
      *
-     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function queryBuilder(): Builder
     {
@@ -119,9 +119,9 @@ abstract class Repository
     /**
      * Set filter for builder.
      *
-     * @param  \Illuminate\Contracts\Database\Eloquent\Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  array  $filters
-     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function getWithFilter(Builder $builder, array $filters = []): Builder
     {

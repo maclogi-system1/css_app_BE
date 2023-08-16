@@ -10,7 +10,7 @@ use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
 use App\Services\ChatworkService;
 use App\Services\UploadFileService;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
