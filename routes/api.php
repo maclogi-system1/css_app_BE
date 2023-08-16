@@ -124,7 +124,6 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('download-template')
                 ->withoutMiddleware('auth:sanctum');
 
-            Route::get('/{policy}', 'show')->name('show');
             Route::get('/simulation/{policySimulation}', 'showSimulation')->name('show-simulation');
             Route::put('/simulation/{policySimulation}', 'updateSimulation')->name('update-simulation');
 
@@ -133,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
                 ->name('ai-recommendation-by-store');
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
+            Route::get('/detail/{policy}', 'show')->name('show');
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
 
