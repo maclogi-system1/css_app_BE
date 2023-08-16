@@ -25,7 +25,7 @@ trait HasMqDateTimeHandler
     }
 
     /**
-     * Get date range for filter.
+     * Get date range for filter. Returned [ from_date, to_date ].
      */
     public function getDateRangeFilter(array $filters): array
     {
