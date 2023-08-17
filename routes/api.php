@@ -204,5 +204,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->controller(KpiController::class)
         ->group(function () {
             Route::get('/summary/{storeId}', 'summary')->name('summary');
+            Route::get('/chart-user-trends/{storeId}', 'chartUserTrends')->name('chart-user-trends');
         });
 });

@@ -7,7 +7,7 @@ use App\Models\MacroConfiguration;
 interface MacroConfigurationRepository extends Repository
 {
     /**
-     * Handle create a new macro configuration
+     * Handle create a new macro configuration.
      */
     public function create(array $data): ?MacroConfiguration;
 

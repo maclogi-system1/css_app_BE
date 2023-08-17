@@ -99,7 +99,7 @@ class MacroController extends Controller
                     'message' => __('Configuration have been updated'),
                     'result' => $result,
                 ], Response::HTTP_OK);
-            }else{
+            } else {
                 return response()->json([
                     'message' => __('Id does not exist'),
                     'result' => false,
