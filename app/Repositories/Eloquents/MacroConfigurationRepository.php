@@ -33,6 +33,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         return $this->handleSafely(function () use ($data) {
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
+
             return $macroConfiguration;
         }, 'Create macroConfiguration');
     }
@@ -45,6 +46,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         return $this->handleSafely(function () use ($data, $macroConfiguration) {
             $macroConfiguration->fill($data);
             $macroConfiguration->save();
+
             return $macroConfiguration->refresh();
         }, 'Update macroConfiguration');
     }
@@ -56,6 +58,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         $macroConfiguration->deleted_by = Auth::id();
         $macroConfiguration->save();
+
         return $macroConfiguration->delete();
     }
 }

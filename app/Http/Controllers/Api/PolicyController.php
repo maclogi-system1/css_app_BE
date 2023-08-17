@@ -119,7 +119,7 @@ class PolicyController extends Controller
                         'index' => $index,
                         'row' => $index + 1,
                         'messages' => [
-                            'record' => "Something went wrong! Can't create policy."
+                            'record' => "Something went wrong! Can't create policy.",
                         ],
                     ];
                     $status = Response::HTTP_BAD_REQUEST;
@@ -141,7 +141,7 @@ class PolicyController extends Controller
                         'index' => $index,
                         'row' => $index + 1,
                         'messages' => [
-                            'record' => "Something went wrong! Can't create policy."
+                            'record' => "Something went wrong! Can't create policy.",
                         ],
                     ];
                     $status = Response::HTTP_BAD_REQUEST;

@@ -37,6 +37,7 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
 
         $expectedMqKpi = $this->mqAccountingRepository->model()
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->where('mq_accounting.store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->selectRaw('
                 SUM(mk.sales_amnt) as sales_amnt,
