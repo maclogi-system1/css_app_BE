@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Constants\MacroConstant;
-use App\Models\MacroConfiguration;
 use Illuminate\Validation\Rule;
 
 class MacroConfigurationRequest extends FormRequest
@@ -25,6 +24,7 @@ class MacroConfigurationRequest extends FormRequest
     {
         if ($this->id) {
             return [
+                'name' => ['nullable', 'string'],
                 'conditions' => ['nullable'],
                 'time_conditions' => ['nullable'],
                 'macro_type' => ['nullable', Rule::in(MacroConstant::MACRO_ARRAY)],
@@ -33,12 +33,13 @@ class MacroConfigurationRequest extends FormRequest
                     'exists:macro_configurations,id', // Check if 'id' exists in the 'macroConfiguration' table
                 ],
             ];
-        }else{
-            return [
-                'conditions' => ['required'],
-                'time_conditions' => ['required'],
-                'macro_type' => ['required', Rule::in(MacroConstant::MACRO_ARRAY)],
-            ];
         }
+
+        return [
+            'name' => ['required', 'string'],
+            'conditions' => ['required'],
+            'time_conditions' => ['required'],
+            'macro_type' => ['required', Rule::in(MacroConstant::MACRO_ARRAY)],
+        ];
     }
 }
