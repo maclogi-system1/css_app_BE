@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\MqKpiRepository;
+use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ class KpiController extends Controller
 {
     public function __construct(
         protected MqKpiRepository $mqKpiRepository,
-        protected UserTrendRepository $userTrendRepository
+        protected UserTrendRepository $userTrendRepository,
+        protected UserAccessRepository $userAccessRepository
     ) {
     }
 
@@ -33,6 +35,56 @@ class KpiController extends Controller
     public function chartUserTrends(Request $request, string $storeId): JsonResponse
     {
         $result = $this->userTrendRepository->getDataChartUserTrends($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get total user access.
+     */
+    public function totalUserAccess(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->userAccessRepository->getTotalUserAccess($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart data user access from AI.
+     */
+    public function chartUserAccess(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->userAccessRepository->getDataChartUserAccess($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart data user access with ads and none ads from AI.
+     */
+    public function chartUserAccessAds(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->userAccessRepository->getDataChartUserAccessAds($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart data access source from AI.
+     */
+    public function chartAccessSource(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->userAccessRepository->getDataChartAccessSource($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get table data access source from AI.
+     */
+    public function tableAccessSource(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->userAccessRepository->getDataTableAccessSource($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
