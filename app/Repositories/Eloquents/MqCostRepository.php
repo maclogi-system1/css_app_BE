@@ -45,6 +45,6 @@ class MqCostRepository extends Repository implements MqCostRepositoryContract
             ')
             ->first();
 
-        return $mqCost->ad_cost;
+        return $mqCost?->ad_cost ?? 0;
     }
 }
