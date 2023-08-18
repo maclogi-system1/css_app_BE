@@ -12,7 +12,7 @@ class MacroConfiguration extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by'
+        'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
     ];
 
     public function user(): BelongsTo
@@ -20,4 +20,3 @@ class MacroConfiguration extends Model
         return $this->belongsTo(User::class, 'id', 'created_by');
     }
 }
-

@@ -64,10 +64,11 @@ class MacroController extends Controller
     public function storeMacroConfiguration(MacroConfigurationRequest $request): JsonResponse
     {
         try {
+            $name = $request->get('name', null);
             $conditions = $request->get('conditions', null);
             $timeConditions = $request->get('time_conditions', null);
             $macroType = $request->get('macro_type', MacroConstant::MACRO_TYPE_AI);
-            $result = $this->macroService->storeMacroConfiguration($conditions, $timeConditions, $macroType);
+            $result = $this->macroService->storeMacroConfiguration($conditions, $timeConditions, $macroType, $name);
 
             return response()->json([
                 'message' => __('Configuration have been stored'),
@@ -90,10 +91,11 @@ class MacroController extends Controller
         try {
             $macroConfigurationId = $request->get('id', null);
             if ($macroConfigurationId) {
+                $name = $request->get('name', null);
                 $conditions = $request->get('conditions', null);
                 $timeConditions = $request->get('time_conditions', null);
                 $macroType = $request->get('macro_type', null);
-                $result = $this->macroService->updateMacroConfiguration($macroConfigurationId, $conditions, $timeConditions, $macroType);
+                $result = $this->macroService->updateMacroConfiguration($macroConfigurationId, $conditions, $timeConditions, $macroType, $name);
 
                 return response()->json([
                     'message' => __('Configuration have been updated'),
@@ -121,11 +123,17 @@ class MacroController extends Controller
     {
         try {
             $result = $this->macroService->deleteMacroConfiguration($macroConfigurationId);
-
-            return response()->json([
-                'message' => __('Configuration have been deleted'),
-                'result' => $result,
-            ], Response::HTTP_OK);
+            if ($result) {
+                return response()->json([
+                    'message' => __('Configuration have been deleted'),
+                    'result' => $result,
+                ], Response::HTTP_OK);
+            } else {
+                return response()->json([
+                    'message' => __('Fails'),
+                    'result' => $result,
+                ], Response::HTTP_OK);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'message' => __('Something went wrong'),

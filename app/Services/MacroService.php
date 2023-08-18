@@ -28,7 +28,9 @@ class MacroService extends Service
         $projectId = null;
         $getProject = false;
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
-            if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+            if (
+                MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL
+            ) {
                 // Check data for internal system
                 $dataExist = DB::table($tableName)->where('store_id', '=', $storeId)->exists();
             } else {
@@ -122,7 +124,10 @@ class MacroService extends Service
                 $columnDetails[$column] = $columnType;
             }
         } else {
-            $columnDetails = json_decode(Http::oss()->get(OSSService::getApiUri('schema.get_columns'), ['table_name' => $tableName]), true);
+            $columnDetails = json_decode(Http::oss()->get(
+                OSSService::getApiUri('schema.get_columns'),
+                ['table_name' => $tableName]
+            ), true);
         }
 
         return $columnDetails;
@@ -196,10 +201,15 @@ class MacroService extends Service
     /**
      * Store macro configuration.
      */
-    public function storeMacroConfiguration(array $conditions, array $timeConditions, int $macroType): ?MacroConfiguration
-    {
+    public function storeMacroConfiguration(
+        array $conditions,
+        array $timeConditions,
+        int $macroType,
+        string $name
+    ): ?MacroConfiguration {
         $user = Auth::user();
         $data = [
+            'name' => $name,
             'conditions' => json_encode($conditions),
             'time_conditions' => json_encode($timeConditions),
             'macro_type' => $macroType,
@@ -213,10 +223,16 @@ class MacroService extends Service
     /**
      * Update macro configuration.
      */
-    public function updateMacroConfiguration(int $macroConfigurationId, ?array $conditions, ?array $timeConditions, ?int $macroType): ?MacroConfiguration
-    {
+    public function updateMacroConfiguration(
+        int $macroConfigurationId,
+        ?array $conditions,
+        ?array $timeConditions,
+        ?int $macroType,
+        ?string $name
+    ): ?MacroConfiguration {
         $user = Auth::user();
         $macroConfiguration = $this->findMacroConfiguration($macroConfigurationId);
+
         if ($macroConfiguration) {
             $data['updated_by'] = $user->id;
             if ($conditions) {
@@ -228,11 +244,14 @@ class MacroService extends Service
             if ($macroType) {
                 $data['macro_type'] = $macroType;
             }
+            if ($name) {
+                $data['name'] = $name;
+            }
 
             return $this->macroConfigurationRepository->update($data, $macroConfiguration);
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
