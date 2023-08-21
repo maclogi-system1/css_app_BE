@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MacroConfigurationRequest;
-use App\Services\MacroService;
+use App\WebServices\MacroService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 

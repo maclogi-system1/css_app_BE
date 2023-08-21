@@ -4,7 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\AlertRepository as AlertRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\OSS\AlertService;
+use App\WebServices\OSS\AlertService;
 
 class AlertRepository extends Repository implements AlertRepositoryContract
 {

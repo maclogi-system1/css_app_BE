@@ -10,7 +10,7 @@ use App\Models\MqKpi;
 use App\Models\MqUserTrend;
 use App\Repositories\Contracts\MqAccountingRepository as MqAccountingRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\AI\MqAccountingService;
+use App\WebServices\AI\MqAccountingService;
 use App\Support\MqAccountingCsv;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Closure;

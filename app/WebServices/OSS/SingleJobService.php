@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\OSS;
+namespace App\WebServices\OSS;
 
-use App\Services\Service;
+use App\WebServices\Service;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;

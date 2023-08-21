@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\AI;
+namespace App\WebServices\AI;
 
-use App\Services\Service;
+use App\WebServices\Service;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Collection;
 

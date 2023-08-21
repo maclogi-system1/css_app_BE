@@ -6,7 +6,7 @@ use App\Models\MqKpi;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqKpiRepository as MqKpiRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\AI\MqAccountingService;
+use App\WebServices\AI\MqAccountingService;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Arr;
 

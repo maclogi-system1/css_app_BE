@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Unit\Services;
+namespace Tests\Unit\WebServices;
 
-use App\Services\ChatworkService;
+use App\WebServices\ChatworkService;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
 

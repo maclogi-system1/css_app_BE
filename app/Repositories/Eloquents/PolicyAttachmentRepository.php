@@ -5,7 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Models\PolicyAttachment;
 use App\Repositories\Contracts\PolicyAttachmentRepository as PolicyAttachmentRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\UploadFileService;
+use App\WebServices\UploadFileService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;

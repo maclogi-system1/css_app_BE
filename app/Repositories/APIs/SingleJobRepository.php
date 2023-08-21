@@ -4,7 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\SingleJobRepository as SingleJobRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\OSS\SingleJobService;
+use App\WebServices\OSS\SingleJobService;
 use Illuminate\Support\Collection;
 
 class SingleJobRepository extends Repository implements SingleJobRepositoryContract

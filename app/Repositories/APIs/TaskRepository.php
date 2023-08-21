@@ -4,7 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\TaskRepository as TaskRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\OSS\TaskService;
+use App\WebServices\OSS\TaskService;
 
 class TaskRepository extends Repository implements TaskRepositoryContract
 {

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace App\WebServices;
 
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository;
-use App\Services\OSS\OSSService;
+use App\WebServices\OSS\OSSService;
 use Auth;
 use Exception;
 use Illuminate\Support\Facades\DB;

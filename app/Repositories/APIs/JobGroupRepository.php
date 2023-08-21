@@ -4,7 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\JobGroupRepository as JobGroupRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\OSS\JobGroupService;
+use App\WebServices\OSS\JobGroupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;

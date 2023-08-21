@@ -4,7 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\UserTrendRepository as UserTrendRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\AI\UserTrendService;
+use App\WebServices\AI\UserTrendService;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
