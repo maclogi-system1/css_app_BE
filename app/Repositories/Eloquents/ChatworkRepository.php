@@ -7,7 +7,7 @@ use App\Models\Notification;
 use App\Repositories\Contracts\ChatworkRepository as ChatworkRepositoryContract;
 use App\Repositories\Contracts\NotificationRepository;
 use App\Repositories\Repository;
-use App\Services\ChatworkService;
+use App\WebServices\ChatworkService;
 use Illuminate\Support\Collection;
 
 class ChatworkRepository extends Repository implements ChatworkRepositoryContract

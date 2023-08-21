@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\OSS;
+namespace App\WebServices\OSS;
 
-use App\Services\Service;
+use App\WebServices\Service;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +19,22 @@ class SingleJobService extends Service
         }
 
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.list'), $filters));
+    }
+
+    /**
+     * Get a specified single job.
+     */
+    public function find($id, array $filters = [])
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('single_jobs.detail', $id), $filters));
+    }
+
+    /**
+     * Delete a specified single job.
+     */
+    public function delete($id)
+    {
+        return $this->toResponse(Http::oss()->delete(OSSService::getApiUri('single_jobs.delete', $id)));
     }
 
     /**

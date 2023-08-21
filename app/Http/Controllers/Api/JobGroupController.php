@@ -16,15 +16,18 @@ class JobGroupController extends Controller
     }
 
     /**
-     * Get a list of policies by store id in this site.
+     * Get a list of job group by store id.
      */
     public function getListByStore(Request $request, string $storeId): JsonResponse
     {
-        $policyCollection = $this->jobGroupRepository->getListByStore(
+        $jobGroupCollection = $this->jobGroupRepository->getListByStore(
             $storeId,
             $request->query(),
         );
 
-        return response()->json($policyCollection->get('data'), $policyCollection->get('status', Response::HTTP_OK));
+        return response()->json(
+            $jobGroupCollection->get('data'),
+            $jobGroupCollection->get('status', Response::HTTP_OK)
+        );
     }
 }

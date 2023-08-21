@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Support\Traits\HasCompositePrimaryKey;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;

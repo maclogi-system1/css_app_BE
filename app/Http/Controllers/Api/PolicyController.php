@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RunSimulationRequest;
-use App\Http\Requests\StoreSimulationPolicyRequest;
+use App\Http\Requests\StorePolicySimulationRequest;
+use App\Http\Requests\UpdatePolicySimulationRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
 use App\Repositories\Contracts\JobGroupRepository;
@@ -52,6 +53,14 @@ class PolicyController extends Controller
     }
 
     /**
+     * Display the specified policy.
+     */
+    public function show(Policy $policy)
+    {
+        return new PolicyResource($policy);
+    }
+
+    /**
      * Get a list of options for select.
      */
     public function getOptions(): JsonResponse
@@ -84,6 +93,12 @@ class PolicyController extends Controller
         $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
+            if (Arr::get($data, 'control_actions') == Policy::REMOVE_ACTION) {
+                $result = $this->policyRepository->delete($this->policyRepository->find(Arr::get($data, 'policy_id')));
+
+                continue;
+            }
+
             $validated = $this->policyRepository->handleValidation($data + ['store_id' => $storeId], $index);
 
             if (isset($validated['error'])) {
@@ -101,7 +116,11 @@ class PolicyController extends Controller
 
                 if (is_null($result)) {
                     $errors[] = [
-                        'messages' => "Something went wrong! Can't create policy.",
+                        'index' => $index,
+                        'row' => $index + 1,
+                        'messages' => [
+                            'record' => "Something went wrong! Can't create policy.",
+                        ],
                     ];
                     $status = Response::HTTP_BAD_REQUEST;
                     $numberFailures++;
@@ -111,6 +130,22 @@ class PolicyController extends Controller
                         $data,
                         $jobGroups
                     );
+                }
+            }
+
+            if (Arr::get($validated, 'policy.control_actions') == Policy::EDIT_ACTION) {
+                $result = $this->policyRepository->update($validated, Policy::find(Arr::get($validated, 'policy.policy_id')));
+
+                if (is_null($result)) {
+                    $errors[] = [
+                        'index' => $index,
+                        'row' => $index + 1,
+                        'messages' => [
+                            'record' => "Something went wrong! Can't create policy.",
+                        ],
+                    ];
+                    $status = Response::HTTP_BAD_REQUEST;
+                    $numberFailures++;
                 }
             }
         }
@@ -127,15 +162,29 @@ class PolicyController extends Controller
     /**
      * Stores a newly created simulation policy in storage.
      */
-    public function storeSimulation(StoreSimulationPolicyRequest $request, string $storeId): JsonResource|JsonResponse
+    public function storeSimulation(StorePolicySimulationRequest $request, string $storeId): JsonResource|JsonResponse
     {
-        $simulationPolicy = $this->policyRepository->createSimulation($request->validated(), $storeId);
+        $policySimulation = $this->policyRepository->createSimulation($request->validated(), $storeId);
 
-        return $simulationPolicy
-            ? (new PolicyResource($simulationPolicy))->response($request)->setStatusCode(Response::HTTP_CREATED)
+        return $policySimulation
+            ? (new PolicyResource($policySimulation))->response($request)->setStatusCode(Response::HTTP_CREATED)
             : response()->json([
                 'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Update the specified simulation in storage.
+     */
+    public function updateSimulation(
+        UpdatePolicySimulationRequest $request,
+        Policy $policySimulation
+    ): JsonResource|JsonResponse {
+        $policySimulation = $this->policyRepository->updateSimulation($request->validated(), $policySimulation);
+
+        return $policySimulation ? new PolicyResource($policySimulation) : response()->json([
+            'message' => __('Updated failure.'),
+        ], Response::HTTP_BAD_REQUEST);
     }
 
     /*
@@ -158,9 +207,9 @@ class PolicyController extends Controller
     /**
      * Download a template csv file.
      */
-    public function downloadTemplateCsv(): StreamedResponse
+    public function downloadTemplateCsv(Request $request, string $storeId): StreamedResponse
     {
-        return response()->stream(callback: $this->policyCsv->streamCsvFile(), headers: [
+        return response()->stream(callback: $this->policyCsv->streamCsvFile($storeId, $request->query()), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=policy_template.csv',
             'Pragma' => 'no-cache',
@@ -189,5 +238,13 @@ class PolicyController extends Controller
         $result = $this->policyRepository->workBreakdownStructure($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Display the specified simulation.
+     */
+    public function showSimulation(Policy $policySimulation)
+    {
+        return new PolicyResource($policySimulation);
     }
 }

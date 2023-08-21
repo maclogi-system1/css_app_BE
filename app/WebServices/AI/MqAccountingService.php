@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\AI;
+namespace App\WebServices\AI;
 
-use App\Services\Service;
+use App\WebServices\Service;
 use App\Support\Traits\HasMqDateTimeHandler;
 use Illuminate\Support\Collection;
 
@@ -49,6 +49,16 @@ class MqAccountingService extends Service
         return collect([
             'sales_amnt' => rand(7000000, 20000000),
             'profit' => rand(7000000, 20000000),
+        ]);
+    }
+
+    public function getListMqKpiByStoreId($storeId, array $filters = [])
+    {
+        return collect([
+            'sales_amnt' => rand(10000000, 20000000),
+            'access_num' => rand(10000, 100000),
+            'conversion_rate' => rand(10, 50),
+            'sales_amnt_per_user' => rand(10000000, 20000000),
         ]);
     }
 }

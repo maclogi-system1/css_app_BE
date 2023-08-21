@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\OSS;
+namespace App\WebServices\OSS;
 
 class OSSService
 {

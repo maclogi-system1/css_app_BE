@@ -1,15 +1,24 @@
 <?php
 
-namespace App\Services;
+namespace App\WebServices;
 
 use App\Constants\MacroConstant;
-use App\Services\OSS\OSSService;
+use App\Models\MacroConfiguration;
+use App\Repositories\Contracts\MacroConfigurationRepository;
+use App\WebServices\OSS\OSSService;
+use Auth;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 
 class MacroService extends Service
 {
+    public function __construct(
+        protected MacroConfigurationRepository $macroConfigurationRepository,
+    ) {
+    }
+
     /**
      * Get list table by storeId.
      */
@@ -19,7 +28,9 @@ class MacroService extends Service
         $projectId = null;
         $getProject = false;
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
-            if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+            if (
+                MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL
+            ) {
                 // Check data for internal system
                 $dataExist = DB::table($tableName)->where('store_id', '=', $storeId)->exists();
             } else {
@@ -113,7 +124,10 @@ class MacroService extends Service
                 $columnDetails[$column] = $columnType;
             }
         } else {
-            $columnDetails = json_decode(Http::oss()->get(OSSService::getApiUri('schema.get_columns'), ['table_name' => $tableName]), true);
+            $columnDetails = json_decode(Http::oss()->get(
+                OSSService::getApiUri('schema.get_columns'),
+                ['table_name' => $tableName]
+            ), true);
         }
 
         return $columnDetails;
@@ -124,13 +138,17 @@ class MacroService extends Service
      */
     private function getProjectInfoFromStoreIdOSSSystem(string $storeId): ?array
     {
-        $response = Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId), ['is_load_relation' => 0]);
+        try {
+            $response = Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId), ['is_load_relation' => 0]);
 
-        if (isset($response['data'])) {
-            return $response['data'];
+            if (isset($response['data'])) {
+                return $response['data'];
+            }
+
+            return null;
+        } catch(Exception $e) {
+            return null;
         }
-
-        return null;
     }
 
     /**
@@ -138,13 +156,17 @@ class MacroService extends Service
      */
     private function getProjectIdFromStoreIdOSSSystem(string $storeId): ?string
     {
-        $project = $this->getProjectInfoFromStoreIdOSSSystem($storeId);
+        try {
+            $project = $this->getProjectInfoFromStoreIdOSSSystem($storeId);
 
-        if ($project) {
-            return $project['id'];
+            if ($project) {
+                return $project['id'];
+            }
+
+            return null;
+        } catch(Exception $e) {
+            return '';
         }
-
-        return null;
     }
 
     /**
@@ -152,15 +174,96 @@ class MacroService extends Service
      */
     private function checkProjectIdExistInTableOSSSystem(string $projectId, string $tableName): bool
     {
-        $response = Http::oss()->get(
-            OSSService::getApiUri('schema.check_exist_with_store'),
-            ['project_id' => $projectId, 'table_name' => $tableName],
-        );
+        try {
+            $response = Http::oss()->get(
+                OSSService::getApiUri('schema.check_exist_with_store'),
+                ['project_id' => $projectId, 'table_name' => $tableName],
+            );
 
-        if (isset($response['data'])) {
-            return $response['data']['is_existed'];
+            if (isset($response['data'])) {
+                return $response['data']['is_existed'];
+            }
+
+            return false;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Find specify macro configuration.
+     */
+    public function findMacroConfiguration(int $macroConfigurationId): ?MacroConfiguration
+    {
+        return $this->macroConfigurationRepository->find($macroConfigurationId);
+    }
+
+    /**
+     * Store macro configuration.
+     */
+    public function storeMacroConfiguration(
+        array $conditions,
+        array $timeConditions,
+        int $macroType,
+        string $name
+    ): ?MacroConfiguration {
+        $user = Auth::user();
+        $data = [
+            'name' => $name,
+            'conditions' => json_encode($conditions),
+            'time_conditions' => json_encode($timeConditions),
+            'macro_type' => $macroType,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ];
+
+        return $this->macroConfigurationRepository->create($data);
+    }
+
+    /**
+     * Update macro configuration.
+     */
+    public function updateMacroConfiguration(
+        int $macroConfigurationId,
+        ?array $conditions,
+        ?array $timeConditions,
+        ?int $macroType,
+        ?string $name
+    ): ?MacroConfiguration {
+        $user = Auth::user();
+        $macroConfiguration = $this->findMacroConfiguration($macroConfigurationId);
+
+        if ($macroConfiguration) {
+            $data['updated_by'] = $user->id;
+            if ($conditions) {
+                $data['conditions'] = $conditions;
+            }
+            if ($timeConditions) {
+                $data['time_conditions'] = $timeConditions;
+            }
+            if ($macroType) {
+                $data['macro_type'] = $macroType;
+            }
+            if ($name) {
+                $data['name'] = $name;
+            }
+
+            return $this->macroConfigurationRepository->update($data, $macroConfiguration);
         }
 
         return false;
+    }
+
+    /**
+     * Delete specify macro configuration.
+     */
+    public function deleteMacroConfiguration(int $macroConfigurationId): bool
+    {
+        $macroConfiguration = $this->findMacroConfiguration($macroConfigurationId);
+        if ($macroConfiguration) {
+            return $this->macroConfigurationRepository->delete($macroConfiguration);
+        } else {
+            return false;
+        }
     }
 }

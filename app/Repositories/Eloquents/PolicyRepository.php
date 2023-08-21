@@ -9,13 +9,13 @@ use App\Models\PolicyRule;
 use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\AI\PolicyR2Service;
-use App\Services\OSS\JobGroupService;
-use App\Services\OSS\SingleJobService;
+use App\WebServices\AI\PolicyR2Service;
+use App\WebServices\OSS\JobGroupService;
+use App\WebServices\OSS\SingleJobService;
 use App\Support\DataAdapter\PolicyAdapter;
 use Exception;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -57,11 +57,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $query = $this->handleFilterCategory($this->queryBuilder()->where('store_id', $storeId), $category);
 
         if ($perPage < 0) {
-            return $query->get();
+            $policies = $query->get();
+            $singleJobIds = Arr::pluck($policies, 'single_job_id');
+        } else {
+            $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+            $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         }
 
-        $policies = $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
-        $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         $singleJobs = $this->singleJobService->getList([
             'store_id' => $storeId,
             'filters' => [
@@ -73,8 +75,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         if ($singleJobs->get('success')) {
             $singleJobData = $singleJobs->get('data')->get('single_jobs');
+            $items = $perPage < 0 ? $policies : $policies->items();
 
-            foreach ($policies->items() as $item) {
+            foreach ($items as $item) {
                 $singleJobMatches = array_filter(
                     $singleJobData,
                     fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id,
@@ -147,6 +150,47 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
+     * Find a specified policy.
+     */
+    public function find($id, array $columns = ['*'], array $filters = []): ?Policy
+    {
+        $this->enableUseWith(['attachments', 'rules'], $filters);
+        $category = str(Arr::get($filters, 'category'));
+
+        $constName = $category->upper()
+            ->append('_CATEGORY')
+            ->prepend(Policy::class.'::')
+            ->toString();
+        $query = $this->queryBuilder()->where('id', $id);
+
+        if (Arr::has($filters, 'category')) {
+            if (defined($constName)) {
+                $query->where('category', constant($constName));
+            }
+
+            if ($category->toString() == Policy::SIMULATION_CATEGORY) {
+                $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
+            }
+        }
+
+        $policy = $query->first($columns);
+
+        if (is_null($policy)) {
+            return null;
+        }
+
+        if (! is_null($policy->single_job_id)) {
+            $singleJob = $this->singleJobService->find($policy->single_job_id, ['store_id' => $policy->store_id]);
+
+            if ($singleJob->get('success')) {
+                $policy->single_job = $singleJob->get('data')->get('data');
+            }
+        }
+
+        return $policy;
+    }
+
+    /**
      * Get a list of the option for select.
      */
     public function getOptions(): array
@@ -190,6 +234,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         return $this->handleSafely(function () use ($policy) {
             $policy->rules()->delete();
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
+
+            if (! is_null($policy->single_job_id)) {
+                $this->singleJobService->delete($policy->single_job_id);
+            }
+
             $policy->delete();
 
             return $policy;
@@ -222,7 +271,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function handleValidation(array $data, int $index): array
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
-        $ossValidation = $this->jobGroupService->validate($this->getDataForJobGroup($data));
+
+        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION) {
+            $ossValidation = $this->jobGroupService->validateUpdate($this->getDataForJobGroup($data));
+        } else {
+            $ossValidation = $this->jobGroupService->validateCreate($this->getDataForJobGroup($data));
+        }
+
         $ossErrorMessages = Arr::get($ossValidation, 'data.errors.messages', []);
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
@@ -251,6 +306,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $rules = [
             'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
+            'policy_id' => [
+                Rule::requiredIf(Arr::get($data, 'control_actions', Policy::CREATE_ACTION) == Policy::EDIT_ACTION),
+                Rule::exists('policies', 'id'),
+            ],
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
@@ -265,6 +324,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
+        $policy = null;
+
+        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION && ($policyId = Arr::get($data, 'policy_id'))) {
+            $policy = $this->model()->find($policyId);
+        }
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
@@ -275,12 +339,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'job_group_end_date' => Arr::get($data, 'undo_date'),
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
-            'managers' => preg_replace('/ *\, */', ',', Arr::get($data, 'managers', '')),
+            'managers' => Arr::get($data, 'managers', []),
             'store_id' => Arr::get($data, 'store_id'),
             'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
-                    'uuid' => (string) str()->uuid(),
+                    'id' => $policy ? $policy->single_job_id : null,
+                    'uuid' => $policy ? null : (string) str()->uuid(),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
@@ -347,7 +412,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $result = $this->jobGroupService->create($data['job_group']);
 
             if (! $result->get('success')) {
-                throw new Exception('Insert job_group failed.');
+                throw new Exception('Insert job_group failed. '.$result->get('data')->get('message'));
             }
 
             $singleJobs = $result->get('data')->get('single_jobs');
@@ -374,7 +439,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
             $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
 
-            $simulationPolicy = $this->model()->fill([
+            $policySimulation = $this->model()->fill([
                 'store_id' => $storeId,
                 'name' => $data['name'],
                 'category' => Policy::SIMULATION_CATEGORY,
@@ -384,19 +449,62 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'simulation_store_priority' => $data['simulation_store_priority'],
                 'simulation_product_priority' => $data['simulation_product_priority'],
             ]);
-            $simulationPolicy->save();
+            $policySimulation->save();
 
             if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
                 foreach ($policyRules as $policyRule) {
                     $this->handleCondition(1, $policyRule);
                     $this->handleCondition(2, $policyRule);
                     $this->handleCondition(3, $policyRule);
-                    $simulationPolicy->rules()->create($policyRule);
+                    $policySimulation->rules()->create($policyRule);
                 }
             }
 
-            return $simulationPolicy->withAllRels();
+            return $policySimulation->withAllRels();
         }, 'Create simulation policy');
+    }
+
+    /**
+     * Handle update a specified policy.
+     */
+    public function update(array $data, ?Policy $policy): ?bool
+    {
+        return $this->handleSafely(function () use ($data, $policy) {
+            $policyData = $data['policy'];
+            $policy->fill($policyData);
+            $policy->save();
+
+            $jobGroupData = $data['job_group'];
+            $result = $this->jobGroupService->update($jobGroupData, $jobGroupData['job_group_code']);
+
+            if (! $result->get('success')) {
+                throw new Exception('Update job_group failed. '.$result->get('data')->get('message'));
+            }
+
+            return true;
+        }, 'Update policy');
+    }
+
+    /**
+     * Handle update a specified policy simulation.
+     */
+    public function updateSimulation(array $data, Policy $policySimulation): ?Policy
+    {
+        return $this->handleSafely(function () use ($data, $policySimulation) {
+            $policySimulation->fill($data)->save();
+
+            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+                $policySimulation->rules()->delete();
+                foreach ($policyRules as $policyRule) {
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
+                    $policySimulation->rules()->create($policyRule);
+                }
+            }
+
+            return $policySimulation->withAllRels();
+        }, 'Update policy simulation');
     }
 
     /**

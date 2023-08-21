@@ -8,6 +8,8 @@
 
 [`Laravel sanctum v3`](https://github.com/laravel/sanctum)
 
+[`PHP-CS-Fixer v3`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer)
+
 ## Getting started
 
 First, run command make `.env` file and install composer.

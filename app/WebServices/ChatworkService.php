@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\WebServices;
 
 use Illuminate\Support\Collection;
 use wataridori\ChatworkSDK\ChatworkApi;

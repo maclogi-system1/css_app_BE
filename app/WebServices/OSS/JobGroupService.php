@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\OSS;
+namespace App\WebServices\OSS;
 
-use App\Services\Service;
+use App\WebServices\Service;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
@@ -25,11 +25,27 @@ class JobGroupService extends Service
     }
 
     /**
+     * Handle create a new job group and single job.
+     */
+    public function update(array $data, $jobGroupCode): Collection
+    {
+        return $this->toResponse(Http::oss()->put(OSSService::getApiUri('job_groups.update', $jobGroupCode), $data));
+    }
+
+    /**
      * Handle validation form request.
      */
-    public function validate(array $data): Collection
+    public function validateCreate(array $data): Collection
     {
-        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate'), $data));
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate_create'), $data));
+    }
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateUpdate(array $data): Collection
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('job_groups.validate_update'), $data));
     }
 
     /**

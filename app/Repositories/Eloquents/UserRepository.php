@@ -8,9 +8,9 @@ use App\Models\Company;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
-use App\Services\ChatworkService;
-use App\Services\UploadFileService;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use App\WebServices\ChatworkService;
+use App\WebServices\UploadFileService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -94,10 +94,24 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function create(array $data): ?User
     {
         return $this->handleSafely(function () use ($data) {
-            $user = $this->model();
             $password = str()->random(8);
             $data['password'] = bcrypt($password);
-            $user->fill($data)->save();
+
+            $deletedUser = $this->model()
+                ->onlyTrashed()
+                ->where('email', $data['email'])
+                ->first();
+
+            if (! is_null($deletedUser)) {
+                $deletedUser->forceFill(Arr::only($data, $this->model()->getFillable()) + [
+                    'deleted_at' => null,
+                    'email_verified_at' => null,
+                ])->saveQuietly();
+                $user = $deletedUser;
+            } else {
+                $user = $this->model();
+                $user->fill($data)->save();
+            }
 
             $user->syncRoles(Arr::get($data, 'roles', []));
 

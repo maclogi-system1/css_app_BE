@@ -23,8 +23,13 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MqChartRepository::class => \App\Repositories\Eloquents\MqChartRepository::class,
         \App\Repositories\Contracts\PolicyRepository::class => \App\Repositories\Eloquents\PolicyRepository::class,
         \App\Repositories\Contracts\PolicyAttachmentRepository::class => \App\Repositories\Eloquents\PolicyAttachmentRepository::class,
-        \App\Repositories\Contracts\JobGroupRepository::class => \App\Repositories\Eloquents\JobGroupRepository::class,
+        \App\Repositories\Contracts\JobGroupRepository::class => \App\Repositories\APIs\JobGroupRepository::class,
         \App\Repositories\Contracts\PolicySimulationHistoryRepository::class => \App\Repositories\Eloquents\PolicySimulationHistoryRepository::class,
+        \App\Repositories\Contracts\SingleJobRepository::class => \App\Repositories\APIs\SingleJobRepository::class,
+        \App\Repositories\Contracts\MqKpiRepository::class => \App\Repositories\Eloquents\MqKpiRepository::class,
+        \App\Repositories\Contracts\MqCostRepository::class => \App\Repositories\Eloquents\MqCostRepository::class,
+        \App\Repositories\Contracts\MacroConfigurationRepository::class => \App\Repositories\Eloquents\MacroConfigurationRepository::class,
+        \App\Repositories\Contracts\UserTrendRepository::class => \App\Repositories\APIs\UserTrendRepository::class,
     ];
 
     /**

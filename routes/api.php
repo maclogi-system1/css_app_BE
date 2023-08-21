@@ -9,19 +9,23 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ChatworkController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\JobGroupController;
+use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
+use App\Http\Controllers\Api\MqCostController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ShopUserController;
+use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
 use Illuminate\Support\Facades\Route;
 
+Route::any('/test', fn (\Illuminate\Http\Request $request) => ['headers' => $request->header(), 'body' => $request->all()]);
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
     ->name('send-password-reset-link');
@@ -113,27 +117,38 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
         });
 
+    Route::prefix('mq-cost')
+        ->name('mq-cost.')
+        ->controller(MqCostController::class)
+        ->group(function () {
+            Route::get('/ad-cost/{storeId}', 'getAdCostByStore')->name('get-ad-cost-by-store');
+        });
+
     Route::prefix('policy')
         ->name('policy.')
         ->controller(PolicyController::class)
         ->group(function () {
-            Route::get('/download-template', 'downloadTemplateCsv')
-                ->name('download-template')
-                ->withoutMiddleware('auth:sanctum');
+            Route::get('/download-template/{storeId}', 'downloadTemplateCsv')
+                ->name('download-template');
+
+            Route::get('/simulation/{policySimulation}', 'showSimulation')->name('show-simulation');
+            Route::put('/simulation/{policySimulation}', 'updateSimulation')->name('update-simulation');
 
             Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
             Route::delete('/{policy}', 'destroy')->name('destroy');
             Route::get('/ai-recommendation/{storeId}', 'getAiRecommendationByStore')
                 ->name('ai-recommendation-by-store');
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
-            Route::get('/{storeId}', 'getListByStore')
-                ->name('get-list-by-store');
+            Route::get('/detail/{policy}', 'show')->name('show');
+
             Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
 
             // Work Breakdown Structure
             Route::get('/wbs/{storeId}', 'workBreakdownStructure')->name('wbs');
 
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
             Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         });
 
@@ -162,6 +177,14 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('get-list-by-store');
         });
 
+    Route::prefix('single-jobs')
+        ->name('single-jobs.')
+        ->controller(SingleJobController::class)
+        ->group(function () {
+            Route::get('/{storeId}', 'getListByStore')
+                ->name('get-list-by-store');
+        });
+
     Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
 
     // Implement for macros
@@ -170,5 +193,17 @@ Route::middleware('auth:sanctum')->group(function () {
         ->controller(MacroController::class)
         ->group(function () {
             Route::get('/list-table/{storeId}', 'getListTableByStoreId')->name('get-list-table');
+            Route::get('/macro-configuration/{macroConfigurationId}', 'findMacroConfiguration')->name('find-configuration');
+            Route::post('/macro-configuration', 'storeMacroConfiguration')->name('store-configuration');
+            Route::post('/macro-configuration/update', 'updateMacroConfiguration')->name('update-configuration');
+            Route::delete('/macro-configuration/{macroConfigurationId}', 'deleteMacroConfiguration')->name('delete-configuration');
+        });
+
+    Route::prefix('kpi')
+        ->name('kpi.')
+        ->controller(KpiController::class)
+        ->group(function () {
+            Route::get('/summary/{storeId}', 'summary')->name('summary');
+            Route::get('/chart-user-trends/{storeId}', 'chartUserTrends')->name('chart-user-trends');
         });
 });

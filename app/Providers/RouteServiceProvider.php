@@ -24,6 +24,7 @@ class RouteServiceProvider extends ServiceProvider
         'role' => \App\Repositories\Contracts\RoleRepository::class,
         'company' => \App\Repositories\Contracts\CompanyRepository::class,
         'team' => \App\Repositories\Contracts\TeamRepository::class,
+        'policy' => \App\Repositories\Contracts\PolicyRepository::class,
     ];
 
     /**
@@ -66,8 +67,14 @@ class RouteServiceProvider extends ServiceProvider
         foreach ($this->bindingModels as $key => $repository) {
             Route::bind($key, function ($value) use ($key, $repository) {
                 return app($repository)->find($value, ['*'], request()->query())
-                    ?? abort(404, str($key)->title()->append(' not found.')->toString());
+                    ?? abort(404, str($key)->studly()->append(' not found.')->toString());
             });
         }
+
+        Route::bind('policySimulation', function ($value) {
+            return app(\App\Repositories\Contracts\PolicyRepository::class)
+                ->find(id: $value, filters: ['category' => 'simulation', 'with' => ['rules']])
+                ?? abort(404, str('policySimulation')->studly()->append(' not found.')->toString());
+        });
     }
 }

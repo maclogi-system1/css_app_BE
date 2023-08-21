@@ -2,7 +2,7 @@
 
 namespace App\Mixin;
 
-use App\Services\OSS\OSSService;
+use App\WebServices\OSS\OSSService;
 use Closure;
 use Illuminate\Support\Facades\Http;
 

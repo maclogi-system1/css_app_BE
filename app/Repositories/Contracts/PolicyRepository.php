@@ -19,6 +19,11 @@ interface PolicyRepository extends Repository
     public function getAiRecommendation($storeId, array $filters = []);
 
     /**
+     * Find a specified policy.
+     */
+    public function find($id, array $columns = ['*'], array $filters = []): ?Policy;
+
+    /**
      * Get a list of the option for select.
      */
     public function getOptions(): array;
@@ -52,6 +57,16 @@ interface PolicyRepository extends Repository
      * Handle create a new simulation policy.
      */
     public function createSimulation(array $data, string $storeId): ?Policy;
+
+    /**
+     * Handle update a specified policy.
+     */
+    public function update(array $data, ?Policy $policy): ?bool;
+
+    /**
+     * Handle update a specified policy simulation.
+     */
+    public function updateSimulation(array $data, Policy $policySimulation): ?Policy;
 
     /**
      * Handle delete multiple policies at the same time.
