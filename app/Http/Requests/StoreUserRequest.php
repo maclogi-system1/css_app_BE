@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Support\Traits\PasswordValidationRules;
+use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -25,7 +26,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
             'company_id' => ['nullable', 'integer'],
             'roles' => ['required', 'array'],
             'chatwork_account_id' => ['nullable', 'max:8'],
