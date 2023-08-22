@@ -7,6 +7,11 @@ use App\Models\MacroConfiguration;
 interface MacroConfigurationRepository extends Repository
 {
     /**
+     * Get list table.
+     */
+    public function getListTable(): array;
+
+    /**
      * Handle create a new macro configuration.
      */
     public function create(array $data): ?MacroConfiguration;
@@ -24,5 +29,10 @@ interface MacroConfigurationRepository extends Repository
     /**
      * Handle delete the specified macroConfiguration.
      */
-    public function delete(MacroConfiguration $macroConfiguration): bool;
+    public function delete(MacroConfiguration $macroConfiguration): ?MacroConfiguration;
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array;
 }

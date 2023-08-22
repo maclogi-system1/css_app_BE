@@ -192,11 +192,16 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('macros.')
         ->controller(MacroController::class)
         ->group(function () {
-            Route::get('/list-table/{storeId}', 'getListTableByStoreId')->name('get-list-table');
-            Route::get('/macro-configuration/{macroConfigurationId}', 'findMacroConfiguration')->name('find-configuration');
-            Route::post('/macro-configuration', 'storeMacroConfiguration')->name('store-configuration');
-            Route::post('/macro-configuration/update', 'updateMacroConfiguration')->name('update-configuration');
-            Route::delete('/macro-configuration/{macroConfigurationId}', 'deleteMacroConfiguration')->name('delete-configuration');
+            Route::get('/list-table', 'getListTableByStoreId')->name('get-list-table');
+
+            Route::prefix('macro-configuration')
+                ->group(function () {
+                    Route::post('/', 'store')->name('configuration.store');
+                    Route::get('/options', 'getOptions')->name('configuration.options');
+                    Route::get('/{macroConfiguration}', 'show')->name('configuration.show');
+                    Route::put('/{macroConfiguration}', 'update')->name('configuration.update');
+                    Route::delete('/{macroConfiguration}', 'destroy')->name('configuration.destroy');
+                });
         });
 
     Route::prefix('kpi')
