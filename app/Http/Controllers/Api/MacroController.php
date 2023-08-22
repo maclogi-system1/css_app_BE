@@ -2,144 +2,98 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MacroConfigurationRequest;
-use App\WebServices\MacroService;
+use App\Http\Resources\MacroConfigurationResource;
+use App\Models\MacroConfiguration;
+use App\Repositories\Contracts\MacroConfigurationRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class MacroController extends Controller
 {
     public function __construct(
-        protected MacroService $macroService,
+        protected MacroConfigurationRepository $macroConfigurationRepository,
     ) {
     }
 
     /**
      * Get list table by store Id.
      */
-    public function getListTableByStoreId(string $storeId): JsonResponse
+    public function getListTableByStoreId(): JsonResponse
     {
-        try {
-            $result = $this->macroService->getListTableByStoreId($storeId);
+        $tables = $this->macroConfigurationRepository->getListTable();
 
-            return response()->json([
-                'message' => __('Get list table done'),
-                'result' => $result,
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => __('Something went wrong'),
-                'detail' => $e->getMessage(),
-                'result' => false,
-            ], Response::HTTP_BAD_REQUEST);
-        }
+        return response()->json([
+            'tables' => $tables,
+        ], Response::HTTP_OK);
     }
 
     /**
      * Find specified macro configuration.
      */
-    public function findMacroConfiguration(int $macroConfigurationId): JsonResponse
+    public function show(MacroConfiguration $macroConfiguration): JsonResource
     {
-        try {
-            $result = $this->macroService->findMacroConfiguration($macroConfigurationId);
-
-            return response()->json([
-                'message' => __('Get macro config done'),
-                'result' => $result,
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => __('Something went wrong'),
-                'detail' => $e->getMessage(),
-                'result' => false,
-            ], Response::HTTP_BAD_REQUEST);
-        }
+        return new MacroConfigurationResource($macroConfiguration);
     }
 
     /**
      * Store macro configuration.
      */
-    public function storeMacroConfiguration(MacroConfigurationRequest $request): JsonResponse
+    public function store(MacroConfigurationRequest $request): JsonResource|JsonResponse
     {
-        try {
-            $name = $request->get('name', null);
-            $conditions = $request->get('conditions', null);
-            $timeConditions = $request->get('time_conditions', null);
-            $macroType = $request->get('macro_type', MacroConstant::MACRO_TYPE_AI);
-            $result = $this->macroService->storeMacroConfiguration($conditions, $timeConditions, $macroType, $name);
+        $data = $request->validated() + [
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
+        ];
 
-            return response()->json([
-                'message' => __('Configuration have been stored'),
-                'result' => $result,
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => __('Something went wrong'),
-                'detail' => $e->getMessage(),
-                'result' => false,
+        $macroConfiguration = $this->macroConfigurationRepository->create($data);
+
+        return $macroConfiguration
+            ? new MacroConfigurationResource($macroConfiguration)
+            : response()->json([
+                'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
-        }
     }
 
     /**
      * Update macro configuration.
      */
-    public function updateMacroConfiguration(MacroConfigurationRequest $request): JsonResponse
-    {
-        try {
-            $macroConfigurationId = $request->get('id', null);
-            if ($macroConfigurationId) {
-                $name = $request->get('name', null);
-                $conditions = $request->get('conditions', null);
-                $timeConditions = $request->get('time_conditions', null);
-                $macroType = $request->get('macro_type', null);
-                $result = $this->macroService->updateMacroConfiguration($macroConfigurationId, $conditions, $timeConditions, $macroType, $name);
+    public function update(
+        MacroConfigurationRequest $request,
+        MacroConfiguration $macroConfiguration
+    ): JsonResource|JsonResponse {
+        $data = $request->validated() + [
+            'updated_by' => $request->user()->id,
+        ];
 
-                return response()->json([
-                    'message' => __('Configuration have been updated'),
-                    'result' => $result,
-                ], Response::HTTP_OK);
-            } else {
-                return response()->json([
-                    'message' => __('Id does not exist'),
-                    'result' => false,
-                ], Response::HTTP_OK);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => __('Something went wrong'),
-                'detail' => $e->getMessage(),
-                'result' => false,
+        $macroConfiguration = $this->macroConfigurationRepository->update($data, $macroConfiguration);
+
+        return $macroConfiguration
+            ? new MacroConfigurationResource($macroConfiguration)
+            : response()->json([
+                'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
-        }
     }
 
     /**
      * Delete specified macro configuration.
      */
-    public function deleteMacroConfiguration(int $macroConfigurationId): JsonResponse
+    public function destroy(MacroConfiguration $macroConfiguration): JsonResource|JsonResponse
     {
-        try {
-            $result = $this->macroService->deleteMacroConfiguration($macroConfigurationId);
-            if ($result) {
-                return response()->json([
-                    'message' => __('Configuration have been deleted'),
-                    'result' => $result,
-                ], Response::HTTP_OK);
-            } else {
-                return response()->json([
-                    'message' => __('Fails'),
-                    'result' => $result,
-                ], Response::HTTP_OK);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => __('Something went wrong'),
-                'detail' => $e->getMessage(),
-                'result' => false,
-            ], Response::HTTP_BAD_REQUEST);
-        }
+        $macroConfiguration = $this->macroConfigurationRepository->delete($macroConfiguration);
+
+        return $macroConfiguration ? new MacroConfigurationResource($macroConfiguration) : response()->json([
+            'message' => __('Deleted failure.'),
+        ], Response::HTTP_BAD_REQUEST);
+    }
+
+    public function getOptions(Request $request): JsonResponse
+    {
+        $options = $this->macroConfigurationRepository->getOptions();
+
+        return response()->json($options);
     }
 }
