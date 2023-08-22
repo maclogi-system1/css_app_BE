@@ -2,8 +2,8 @@
 
 namespace App\WebServices\AI;
 
-use App\WebServices\Service;
 use App\Support\Traits\HasMqDateTimeHandler;
+use App\WebServices\Service;
 use Illuminate\Support\Collection;
 
 class MqAccountingService extends Service

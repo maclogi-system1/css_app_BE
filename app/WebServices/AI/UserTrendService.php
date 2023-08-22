@@ -2,8 +2,8 @@
 
 namespace App\WebServices\AI;
 
-use App\WebServices\Service;
 use App\Support\Traits\HasMqDateTimeHandler;
+use App\WebServices\Service;
 use Illuminate\Support\Collection;
 
 class UserTrendService extends Service
@@ -39,7 +39,9 @@ class UserTrendService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => collect([
+                'chart_user_trend' => $dataFake,
+            ]),
         ]);
     }
 }

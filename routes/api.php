@@ -205,5 +205,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::get('/summary/{storeId}', 'summary')->name('summary');
             Route::get('/chart-user-trends/{storeId}', 'chartUserTrends')->name('chart-user-trends');
+            Route::get('/total-user-access/{storeId}', 'totalUserAccess')->name('total-user-access');
+            Route::get('/chart-user-access/{storeId}', 'chartUserAccess')->name('chart-user-access');
+            Route::get('/chart-user-access-ads/{storeId}', 'chartUserAccessAds')->name('chart-user-access-ads');
+            Route::get('/chart-access-source/{storeId}', 'chartAccessSource')->name('chart-access-source');
+            Route::get('/table-access-source/{storeId}', 'tableAccessSource')->name('table-access-source');
         });
 });

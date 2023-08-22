@@ -5,8 +5,8 @@ namespace App\Repositories\Eloquents;
 use App\Models\MqAccounting;
 use App\Repositories\Contracts\MqChartRepository as MqChartRepositoryContract;
 use App\Repositories\Repository;
-use App\WebServices\AI\MqAccountingService;
 use App\Support\Traits\HasMqDateTimeHandler;
+use App\WebServices\AI\MqAccountingService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 

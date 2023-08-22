@@ -26,7 +26,7 @@ class MacroConstant
     public const MACRO_ARRAY = [
         self::MACRO_TYPE_AI,
         self::MACRO_TYPE_CSV,
-        self::MACRO_TYPE_DB
+        self::MACRO_TYPE_DB,
     ];
 
     public const DESCRIPTION_TABLES = [
