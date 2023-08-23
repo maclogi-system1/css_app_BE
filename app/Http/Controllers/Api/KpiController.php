@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\MqKpiRepository;
+use App\Repositories\Contracts\ReportSearchRepository;
 use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,8 @@ class KpiController extends Controller
     public function __construct(
         protected MqKpiRepository $mqKpiRepository,
         protected UserTrendRepository $userTrendRepository,
-        protected UserAccessRepository $userAccessRepository
+        protected UserAccessRepository $userAccessRepository,
+        protected ReportSearchRepository $reportSearchRepository
     ) {
     }
 
@@ -85,6 +87,36 @@ class KpiController extends Controller
     public function tableAccessSource(Request $request, string $storeId): JsonResponse
     {
         $result = $this->userAccessRepository->getDataTableAccessSource($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get trending keywords data report search for chart from AI.
+     */
+    public function chartReportSearch(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reportSearchRepository->getDataChartReportSearch($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get ranking keywords data report search for table from AI.
+     */
+    public function tableReportSearch(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reportSearchRepository->getDataTableReportSearch($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get detail data report search keywords by product from AI.
+     */
+    public function detailReportSearchByProduct(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reportSearchRepository->getDataReportSearchByProduct($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }

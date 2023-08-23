@@ -11,9 +11,11 @@ trait HasMqDateTimeHandler
     /**
      * Get a list of year-month in a range.
      */
-    public function getDateTimeRange($fromDate, $toDate, string $format = 'Y-m'): array
+    public function getDateTimeRange($fromDate, $toDate, array|string $options = 'Y-m'): array
     {
-        $period = new CarbonPeriod($fromDate, '1 month', $toDate);
+        $step = Arr::get($options, 'step', '1 month');
+        $format = is_string($options) ? $options : Arr::get($options, 'format', 'Y-m');
+        $period = new CarbonPeriod($fromDate, $step, $toDate);
 
         $result = [];
 
