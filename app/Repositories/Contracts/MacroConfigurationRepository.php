@@ -35,4 +35,9 @@ interface MacroConfigurationRepository extends Repository
      * Get a list of the option for select.
      */
     public function getOptions(): array;
+
+    /**
+     * Build query from conditions of a specified macro configuration.
+     */
+    public function getQueryResults(MacroConfiguration $macroConfiguration);
 }

@@ -118,6 +118,16 @@ protected $repositories = [
 ]
 ```
 
+## Format code
+
+We are lovers of beauty. The code is formatted according to the PSR standard. To make sure our code is up to standard,
+after we write the code, we have to run the command to format the code according to the syntax
+`bin/format <file path to format>`.
+
+```bash
+bin/format app/Http/Controllers/SampleController.php
+```
+
 ## Git rules
 
 ### Create branch

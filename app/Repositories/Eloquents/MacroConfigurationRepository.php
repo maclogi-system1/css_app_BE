@@ -10,6 +10,7 @@ use App\Repositories\Repository;
 use App\WebServices\MacroService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class MacroConfigurationRepository extends Repository implements MacroConfigurationRepositoryContract
@@ -49,10 +50,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     private function getAllColumnOfTableAndRelativeTable($tableName, $relativeTables): Collection
     {
-        $columns = $this->getAllCollumnOfTable($tableName);
+        $columns = $this->getAllColumnOfTable($tableName);
 
         foreach ($relativeTables as $relativeTable) {
-            $columns = $columns->merge($this->getAllCollumnOfTable($relativeTable['table_name']));
+            $columns = $columns->merge($this->getAllColumnOfTable($relativeTable['table_name']));
         }
 
         return $columns;
@@ -61,10 +62,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Get all columns of a table.
      */
-    private function getAllCollumnOfTable($tableName): Collection
+    private function getAllColumnOfTable($tableName): Collection
     {
         if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
-            return $this->getAllCollumnOfTableOSS($tableName);
+            return $this->getAllColumnOfTableOSS($tableName);
         }
 
         $columns = collect(Schema::getColumnListing($tableName));
@@ -85,7 +86,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Get all columns of a table (in OSS).
      */
-    private function getAllCollumnOfTableOSS($tableName): Collection
+    private function getAllColumnOfTableOSS($tableName): Collection
     {
         $result = $this->macroService->getColumnTableOSS($tableName);
 
@@ -217,5 +218,152 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return 'string';
+    }
+
+    /**
+     * Build query from conditions of a specified macro configuration.
+     */
+    public function getQueryResults(MacroConfiguration $macroConfiguration)
+    {
+        $conditions = $macroConfiguration->conditions_decode;
+        $table = Arr::get($conditions, 'table');
+        $operator = Arr::get($conditions, 'operator', 'and');
+        $conditionItems = Arr::get($conditions, 'conditions', []);
+
+        if (is_null($table)) {
+            return null;
+        }
+
+        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+            $relativeTables = Arr::get(
+                MacroConstant::LIST_RELATIVE_TABLE,
+                $table.'.'.MacroConstant::RELATIVE_TABLES
+            );
+
+            $columns = $this->getAllColumnOfTable($table)
+                ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                ->toArray();
+
+            $query = DB::table($table)->select('store_id', ...$columns);
+
+            foreach ($relativeTables as $tableName => $relativeTable) {
+                if (
+                    $relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY_TYPE]
+                    == MacroConstant::RELATIVE_TABLE_TYPE_OUTBOUND
+                ) {
+                    $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
+                        ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                        ->toArray();
+                    $query->leftJoin(
+                        $tableName,
+                        $tableName.'.id',
+                        '=',
+                        $table.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
+                    )->addSelect($columnsRelativeTable);
+                }
+            }
+
+            foreach ($conditionItems as $conditionItem) {
+                $params = $this->handleWhereParams($conditionItem);
+
+                if (empty($params)) {
+                    continue;
+                }
+
+                $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
+
+                if ($operator == 'or') {
+                    $method = str($method)->title()->prepend('or')->toString();
+                }
+
+                $query->{$method}(...$params);
+            }
+
+            return $query->get();
+        }
+
+
+        return collect();
+    }
+
+    /**
+     * Handle the parameters for the where clause.
+     */
+    private function handleWhereParams(array $condition): array
+    {
+        if (Arr::has($condition, 'date_condition')) {
+            return $this->handleConditionContainingDate($condition);
+        }
+
+        $operator = Arr::get($condition, 'operator');
+        $value = Arr::get($condition, 'value');
+        $value = match ($operator) {
+            'in' => explode(',', $value),
+            'like' => '%'.$value.'%',
+            default => $value
+        };
+
+        if ($operator == 'in') {
+            return [
+                Arr::get($condition, 'field'),
+                $value,
+            ];
+        }
+
+        return [
+            Arr::get($condition, 'field'),
+            Arr::get($condition, 'operator'),
+            $value,
+        ];
+    }
+
+    /**
+     * Handle the parameters for the where clause provided that the data is a date.
+     */
+    private function handleConditionContainingDate(array $condition): array
+    {
+        $value = Arr::get($condition, 'value');
+        $dateCondition = Arr::get($condition, 'date_condition');
+        $now = now()->toImmutable();
+        $newValue = $now;
+
+        if (in_array($value, array_keys(DateTimeConstant::TIMELINE))) {
+            $splitValue = explode('_', $value);
+            $carbonMethod = match ($splitValue[0]) {
+                'last', 'yesterday' => 'sub',
+                'this', 'today' => '',
+                'next', 'tomorrow' => 'add',
+            };
+
+            if (! empty($carbonMethod)) {
+                $carbonMethod .= count($splitValue) > 1 ? str($splitValue[1])->title()->toString() : 'Day';
+                $newValue = now()->{$carbonMethod}();
+            }
+
+            if (str($splitValue[1])->contains('week')) {
+                $newValue = $newValue->weekday($dateCondition['day']);
+            } elseif (str($splitValue[1])->contains('month')) {
+                $newValue = $newValue->day($dateCondition['day']);
+            }
+
+            return [
+                Arr::get($condition, 'field'),
+                Arr::get($condition, 'operator'),
+                $newValue,
+            ];
+        } elseif ($value == 'from_today') {
+            $newValue = match ($dateCondition['time_range']) {
+                'day' => now(),
+                'week' => now()->nextWeekendDay(),
+                'month' => now()->endOfMonth(),
+                'year' => now()->endOfYear(),
+            };
+
+            return [
+                Arr::get($condition, 'field'),
+                $dateCondition['direction'] == 'forward' ? '<=' : '>=',
+                $newValue,
+            ];
+        }
     }
 }

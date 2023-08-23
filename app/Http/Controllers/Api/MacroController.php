@@ -22,7 +22,7 @@ class MacroController extends Controller
     /**
      * Get list table by store Id.
      */
-    public function getListTableByStoreId(): JsonResponse
+    public function getListTable(): JsonResponse
     {
         $tables = $this->macroConfigurationRepository->getListTable();
 
@@ -90,10 +90,25 @@ class MacroController extends Controller
         ], Response::HTTP_BAD_REQUEST);
     }
 
+    /**
+     * Get options for select box.
+     */
     public function getOptions(Request $request): JsonResponse
     {
         $options = $this->macroConfigurationRepository->getOptions();
 
         return response()->json($options);
+    }
+
+    /**
+     * Get the query results obtained from the conditions of the macro configuration.
+     */
+    public function getQueryResults(MacroConfiguration $macroConfiguration): JsonResponse
+    {
+        $result = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
+
+        return response()->json([
+            'result' => $result,
+        ]);
     }
 }
