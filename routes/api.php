@@ -192,7 +192,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('macros.')
         ->controller(MacroController::class)
         ->group(function () {
-            Route::get('/list-table', 'getListTableByStoreId')->name('get-list-table');
+            Route::get('/list-table', 'getListTable')->name('get-list-table');
+            Route::get('/query-results/{macroConfiguration}', 'getQueryResults')->name('query-results');
 
             Route::prefix('macro-configuration')
                 ->group(function () {

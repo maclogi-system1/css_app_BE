@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ARGS=($@)
+
+dir=$(cd '.' && pwd)
+"${dir}/vendor/bin/php-cs-fixer" fix "${ARGS}"

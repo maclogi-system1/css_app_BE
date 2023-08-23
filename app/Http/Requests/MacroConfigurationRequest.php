@@ -22,9 +22,9 @@ class MacroConfigurationRequest extends FormRequest
      */
     public function rules(): array
     {
-        if ($this->route('macroConfiguration')) {
+        if ($id = $this->route('macroConfiguration')) {
             return [
-                'name' => ['nullable', 'string'],
+                'name' => ['nullable', 'string', Rule::unique('macro_configurations')->ignore($id)],
                 'conditions' => ['nullable'],
                 'time_conditions' => ['nullable'],
                 'macro_type' => ['nullable', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
@@ -32,7 +32,7 @@ class MacroConfigurationRequest extends FormRequest
         }
 
         return [
-            'name' => ['required', 'string'],
+            'name' => ['required', 'string', Rule::unique('macro_configurations')],
             'conditions' => ['required'],
             'time_conditions' => ['required'],
             'macro_type' => ['required', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],

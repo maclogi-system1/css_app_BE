@@ -4,7 +4,7 @@ export APP_SERVICE=${APP_SERVICE:-"web"}
 export WWWUSER=${WWWUSER:-$UID}
 export WWWGROUP=${WWWGROUP:-$(id -g)}
 
-ARG=()
+ARGS=()
 
 # Define Docker Compose command prefix...
 docker compose &> /dev/null

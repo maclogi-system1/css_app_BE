@@ -5,7 +5,7 @@ namespace App\Constants;
 class DateTimeConstant
 {
     public const DAYS_OF_WEEK = [
-        '日', '月', '火', '水', '木', '金', '土'
+        '日', '月', '火', '水', '木', '金', '土',
     ];
 
     public const TIMELINE = [
