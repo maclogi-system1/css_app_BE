@@ -74,9 +74,14 @@ interface PolicyRepository extends Repository
     public function deleteMultiple(array $policyIds): ?bool;
 
     /**
+     * Run multiple policy simulation.
+     */
+    public function runMultipleSimulation(array $data);
+
+    /**
      * Run policy simulation.
      */
-    public function runSimulation(array $data);
+    public function runSimulation($id);
 
     /**
      * Get list of work breakdown structure.
