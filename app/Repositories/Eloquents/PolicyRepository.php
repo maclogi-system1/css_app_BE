@@ -471,6 +471,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         return $this->handleSafely(function () use ($data, $policy) {
             $policyData = $data['policy'];
+            $policyData['processing_status'] = Policy::NEW_PROCESSING_STATUS;
+
             $policy->fill($policyData);
             $policy->save();
 
@@ -545,14 +547,30 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
+     * Run multiple policy simulation.
+     */
+    public function runMultipleSimulation(array $data)
+    {
+        if ($policyId = Arr::get($data, 'policy_id')) {
+            return $this->runSimulation($policyId);
+        }
+
+        $this->model()
+            ->where('processing_status', Policy::NEW_PROCESSING_STATUS)
+            ->where('category', Policy::SIMULATION_CATEGORY)
+            ->where('store_id', $data['store_id'])
+            ->get()
+            ->each(fn ($simulation) => $this->runSimulation($simulation->id));
+    }
+
+    /**
      * Run policy simulation.
      */
-    public function runSimulation(array $data)
+    public function runSimulation($id)
     {
-        $policy = $this->model()->find($data['policy_id']);
+        $policy = $this->model()->find($id);
         $policy->processing_status = Policy::RUNNING_PROCESSING_STATUS;
         $policy->save();
-
         RunPolicySimulation::dispatch($policy);
     }
 

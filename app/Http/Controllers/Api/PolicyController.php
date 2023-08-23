@@ -223,7 +223,7 @@ class PolicyController extends Controller
      */
     public function runSimulation(RunSimulationRequest $request): JsonResponse
     {
-        $this->policyRepository->runSimulation($request->validated());
+        $this->policyRepository->runMultipleSimulation($request->validated());
 
         return response()->json([
             'message' => 'Policy simulation is running...',

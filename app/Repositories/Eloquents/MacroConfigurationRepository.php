@@ -200,7 +200,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             'time_range' => $timeRange,
             'direction' => [
                 ['label' => '前', 'value' => 'forward'],
-                ['label' => '後', 'value' => 'back']
+                ['label' => '後', 'value' => 'back'],
             ],
         ];
     }
