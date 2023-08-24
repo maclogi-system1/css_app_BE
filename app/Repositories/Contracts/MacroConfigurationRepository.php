@@ -40,4 +40,9 @@ interface MacroConfigurationRepository extends Repository
      * Build query from conditions of a specified macro configuration.
      */
     public function getQueryResults(MacroConfiguration $macroConfiguration);
+
+    /**
+     * Updates the ready state for the specified macro to execute it on schedule.
+     */
+    public function executeMacro(MacroConfiguration $macroConfiguration): bool;
 }
