@@ -19,6 +19,16 @@ class MacroController extends Controller
     ) {
     }
 
+    public function index(Request $request): JsonResource
+    {
+        $macroConfigurations = MacroConfigurationResource::collection(
+            $this->macroConfigurationRepository->getList($request->query())
+        );
+        $macroConfigurations->wrap('macro_configurations');
+
+        return $macroConfigurations;
+    }
+
     /**
      * Get list table by store Id.
      */
@@ -109,6 +119,17 @@ class MacroController extends Controller
 
         return response()->json([
             'result' => $result,
+        ]);
+    }
+
+    public function run(MacroConfiguration $macroConfiguration): JsonResponse
+    {
+        $result = $this->macroConfigurationRepository->executeMacro($macroConfiguration);
+
+        return response()->json([
+            'message' => $result
+                ? 'The macro is ready for scheduled execution.'
+                : 'The macro executes immediately and is not scheduled.',
         ]);
     }
 }

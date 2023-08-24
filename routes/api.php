@@ -194,9 +194,11 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::get('/list-table', 'getListTable')->name('get-list-table');
             Route::get('/query-results/{macroConfiguration}', 'getQueryResults')->name('query-results');
+            Route::post('/run/{macroConfiguration}', 'run')->name('run');
 
             Route::prefix('macro-configuration')
                 ->group(function () {
+                    Route::get('/', 'index')->name('index');
                     Route::post('/', 'store')->name('configuration.store');
                     Route::get('/options', 'getOptions')->name('configuration.options');
                     Route::get('/{macroConfiguration}', 'show')->name('configuration.show');

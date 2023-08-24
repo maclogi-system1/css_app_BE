@@ -192,6 +192,9 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $timeRange = collect(DateTimeConstant::TIME_UNITS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
+        $timeConditions = collect(MacroConstant::MACRO_TIME_CONDITIONS)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
 
         return [
             'macro_types' => $macroTypes,
@@ -203,6 +206,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ['label' => '前', 'value' => 'forward'],
                 ['label' => '後', 'value' => 'back'],
             ],
+            'time_conditions' => $timeConditions,
         ];
     }
 
@@ -281,7 +285,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             return $query->get();
         }
-
 
         return collect();
     }
@@ -365,5 +368,20 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $newValue,
             ];
         }
+    }
+
+    /**
+     * Updates the ready state for the specified macro to execute it on schedule.
+     */
+    public function executeMacro(MacroConfiguration $macroConfiguration): bool
+    {
+        if (! in_array($macroConfiguration->macro_type, MacroConstant::MACRO_SCHEDULABLE_TYPES)) {
+            return false;
+        }
+
+        $macroConfiguration->status = MacroConstant::MACRO_STATUS_READY;
+        $macroConfiguration->save();
+
+        return true;
     }
 }
