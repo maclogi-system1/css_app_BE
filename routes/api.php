@@ -216,5 +216,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/chart-user-access-ads/{storeId}', 'chartUserAccessAds')->name('chart-user-access-ads');
             Route::get('/chart-access-source/{storeId}', 'chartAccessSource')->name('chart-access-source');
             Route::get('/table-access-source/{storeId}', 'tableAccessSource')->name('table-access-source');
+            Route::get('/chart-report-search/{storeId}', 'chartReportSearch')->name('chart-report-search');
+            Route::get('/table-report-search/{storeId}', 'tableReportSearch')->name('table-report-search');
+            Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
+                ->name('detail-report-by-product');
         });
 });
