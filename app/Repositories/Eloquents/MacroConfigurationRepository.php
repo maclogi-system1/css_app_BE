@@ -8,6 +8,7 @@ use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\MacroService;
+use App\WebServices\OSS\ShopService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\Schema;
 class MacroConfigurationRepository extends Repository implements MacroConfigurationRepositoryContract
 {
     public function __construct(
-        protected MacroService $macroService
+        protected MacroService $macroService,
+        protected ShopService $shopService
     ) {
     }
 
@@ -383,5 +385,40 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $macroConfiguration->save();
 
         return true;
+    }
+
+    /**
+     * Search LIKE macro name, store name, store id by keyword.
+     */
+    public function getKeywords(string $keyword): array
+    {
+        // Query macro name from DB
+        $listMacroName = $this->queryBuilder()
+            ->select('name')
+            ->when(! empty($keyword), function ($query) use ($keyword) {
+                $query->where('name', 'like', '%'.$keyword.'%');
+            })
+            ->get()
+            ->pluck('name');
+
+        // Get store from OSS service
+        $listShop = $this->shopService->getList([])->get('data')->get('shops');
+        $listShopName = collect($listShop)->filter(function ($item) use ($keyword) {
+            return false !== stristr($item['name'], $keyword);
+        })->pluck('name');
+        $listStoreId = collect($listShop)->filter(function ($item) use ($keyword) {
+            return false !== stristr($item['store_id'], $keyword);
+        })->pluck('store_id');
+
+        // Merge result from DB with OSS service
+        $result = new Collection();
+        $result = $result->merge($listMacroName);
+        $result = $result->merge($listShopName);
+        $result = $result->merge($listStoreId);
+        $result = $result->map(function ($item) {
+            return ['label' => $item, 'value' => $item];
+        });
+
+        return $result->toArray();
     }
 }

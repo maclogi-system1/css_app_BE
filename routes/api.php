@@ -205,6 +205,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::put('/{macroConfiguration}', 'update')->name('configuration.update');
                     Route::delete('/{macroConfiguration}', 'destroy')->name('configuration.destroy');
                 });
+
+            Route::get('/keywords', 'getKeywords')->name('get-keywords');
         });
 
     Route::prefix('kpi')

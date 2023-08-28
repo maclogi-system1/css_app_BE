@@ -45,4 +45,9 @@ interface MacroConfigurationRepository extends Repository
      * Updates the ready state for the specified macro to execute it on schedule.
      */
     public function executeMacro(MacroConfiguration $macroConfiguration): bool;
+
+    /**
+     * Get a list of the keywords for select.
+     */
+    public function getKeywords(string $keyword): array;
 }

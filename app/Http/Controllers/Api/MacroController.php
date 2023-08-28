@@ -132,4 +132,16 @@ class MacroController extends Controller
                 : 'The macro executes immediately and is not scheduled.',
         ]);
     }
+
+    /**
+     * Get detail data report search keywords by product from AI.
+     */
+    public function getKeywords(Request $request): JsonResponse
+    {
+        $keyword = $request->query('keyword', '');
+        $keyword = str_replace(['\'', '"'], '', $keyword);
+        $result = $this->macroConfigurationRepository->getKeywords($keyword);
+
+        return response()->json($result);
+    }
 }
