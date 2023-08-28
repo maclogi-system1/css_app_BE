@@ -24,7 +24,11 @@ class MacroConfigurationRequest extends FormRequest
     {
         if ($id = $this->route('macroConfiguration')) {
             return [
-                'name' => ['nullable', 'string', Rule::unique('macro_configurations')->ignore($id)],
+                'name' => [
+                    'nullable',
+                    'string',
+                    Rule::unique('macro_configurations')->ignore($id)->whereNull('deleted_at'),
+                ],
                 'conditions' => ['nullable'],
                 'time_conditions' => ['nullable'],
                 'macro_type' => ['nullable', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
@@ -32,7 +36,11 @@ class MacroConfigurationRequest extends FormRequest
         }
 
         return [
-            'name' => ['required', 'string', Rule::unique('macro_configurations')],
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('macro_configurations')->whereNull('deleted_at'),
+            ],
             'conditions' => ['required'],
             'time_conditions' => ['required'],
             'macro_type' => ['required', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
