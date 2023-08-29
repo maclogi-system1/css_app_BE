@@ -32,6 +32,7 @@ class MacroConfigurationRequest extends FormRequest
                 'conditions' => ['nullable'],
                 'time_conditions' => ['nullable'],
                 'macro_type' => ['nullable', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
+                'graph' => ['nullable'],
             ];
         }
 
@@ -44,6 +45,7 @@ class MacroConfigurationRequest extends FormRequest
             'conditions' => ['required'],
             'time_conditions' => ['required'],
             'macro_type' => ['required', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
+            'graph' => ['nullable'],
         ];
     }
 }

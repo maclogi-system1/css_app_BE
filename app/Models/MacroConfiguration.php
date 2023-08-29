@@ -6,6 +6,7 @@ use App\Constants\MacroConstant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
 
@@ -69,5 +70,10 @@ class MacroConfiguration extends Model
         $dayOfWeek = Arr::get($schedule, 'day_of_week', '*') ?? '*';
 
         return "{$minute} {$hour} {$day} {$month} {$dayOfWeek}";
+    }
+
+    public function graph(): HasOne
+    {
+        return $this->hasOne(MacroGraph::class);
     }
 }
