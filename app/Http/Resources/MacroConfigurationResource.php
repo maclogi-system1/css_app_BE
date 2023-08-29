@@ -31,6 +31,7 @@ class MacroConfigurationResource extends JsonResource
             'macro_type' => $this->macro_type,
             'macro_type_display' => $this->macro_type_for_human,
             'created_by' => $this->whenLoaded('user'),
+            'graph' => $this->whenLoaded('graph'),
         ];
     }
 }
