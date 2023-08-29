@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
 use App\Repositories\Contracts\UserAccessRepository;
@@ -17,7 +18,8 @@ class KpiController extends Controller
         protected MqKpiRepository $mqKpiRepository,
         protected UserTrendRepository $userTrendRepository,
         protected UserAccessRepository $userAccessRepository,
-        protected ReportSearchRepository $reportSearchRepository
+        protected ReportSearchRepository $reportSearchRepository,
+        protected AdsAnalysisRepository $adsAnalysisRepository
     ) {
     }
 
@@ -117,6 +119,49 @@ class KpiController extends Controller
     public function detailReportSearchByProduct(Request $request, string $storeId): JsonResponse
     {
         $result = $this->reportSearchRepository->getDataReportSearchByProduct($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get advertisement summary.
+     */
+    public function adsAnalysisSummary(Request $request, string $storeId): JsonResponse
+    {
+        $adsAnalysisSummary = $this->adsAnalysisRepository->getAdsAnalysisSummary($storeId, $request->query());
+
+        return response()->json(
+            $adsAnalysisSummary->get('data'),
+            $adsAnalysisSummary->get('status', Response::HTTP_OK)
+        );
+    }
+
+    /**
+     * Get data conversion of advertising effect from AI.
+     */
+    public function detailAdsConversion(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->adsAnalysisRepository->getListAdsConversion($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data conversion of advertising effect from AI.
+     */
+    public function getListProductByRoas(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->adsAnalysisRepository->getListProductByRoas($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /*
+     * Get detail data chart sales and access impact from AI.
+     */
+    public function chartSalesAndAccess(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->adsAnalysisRepository->getDataChartSalesAndAccess($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
