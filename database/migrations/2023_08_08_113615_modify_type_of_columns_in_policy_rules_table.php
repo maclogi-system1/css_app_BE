@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Database\TinyInteger;
+use Doctrine\DBAL\Types\Type;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,8 +14,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('policy_rules', function (Blueprint $table) {
-            $table->tinyInteger('class')->nullable()->change();
-            $table->tinyInteger('service')->nullable()->change();
+            $table->smallInteger('class')->nullable()->change();
+            $table->smallInteger('service')->nullable()->change();
             $table->integer('value')->nullable()->change();
         });
     }
