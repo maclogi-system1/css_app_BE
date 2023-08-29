@@ -6,6 +6,7 @@ use App\Constants\DateTimeConstant;
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
+use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Repository;
 use App\WebServices\MacroService;
 use App\WebServices\OSS\ShopService;
@@ -18,7 +19,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 {
     public function __construct(
         protected MacroService $macroService,
-        protected ShopService $shopService
+        protected ShopService $shopService,
+        protected MacroGraphRepository $macroGraphRepository,
     ) {
     }
 
@@ -129,6 +131,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
 
+            // Save graph configuration
+            if (Arr::has($data, 'graph')) {
+                $graphData = Arr::get($data, 'graph');
+                if (
+                    ! empty(Arr::get($graphData, 'axis_x'))
+                    && ! empty(Arr::get($graphData, 'axis_y'))
+                    && ! empty(Arr::get($graphData, 'graph_type'))
+                    && ! empty(Arr::get($graphData, 'position_display'))
+                ) {
+                    $this->saveMacroGraph($macroConfiguration->id, $graphData);
+                }
+            }
+
             return $macroConfiguration;
         }, 'Create macroConfiguration');
     }
@@ -143,6 +158,29 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['time_conditions'] = json_encode($data['time_conditions']);
             $macroConfiguration->fill($data);
             $macroConfiguration->save();
+
+            // Save graph configuration
+            $hasGraphConfig = false;
+            if (Arr::has($data, 'graph')) {
+                $graphData = Arr::get($data, 'graph');
+                if (
+                    ! empty(Arr::get($graphData, 'axis_x'))
+                    && ! empty(Arr::get($graphData, 'axis_y'))
+                    && ! empty(Arr::get($graphData, 'graph_type'))
+                    && ! empty(Arr::get($graphData, 'position_display'))
+                ) {
+                    $hasGraphConfig = true;
+                    $this->saveMacroGraph($macroConfiguration->id, $graphData);
+                }
+            }
+
+            // Delete existed macro graph if empty graph config
+            if (
+                $hasGraphConfig == false
+                && ! is_null($macroConfiguration->graph)
+            ) {
+                $this->macroGraphRepository->delete($macroConfiguration->graph);
+            }
 
             return $macroConfiguration->refresh();
         }, 'Update macroConfiguration');
@@ -420,5 +458,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         });
 
         return $result->toArray();
+    }
+
+    /**
+     * Save macro's graph configuration.
+     */
+    private function saveMacroGraph($macroConfigId, array $graphData)
+    {
+        $macroConfig = MacroConfiguration::with('graph')->findOrFail($macroConfigId);
+        if (is_null($macroConfig->graph)) {
+            $this->macroGraphRepository->create($macroConfigId, $graphData);
+        } else {
+            $this->macroGraphRepository->update($graphData, $macroConfig->graph);
+        }
     }
 }
