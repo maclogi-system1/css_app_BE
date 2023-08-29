@@ -153,7 +153,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function find($id, array $columns = ['*']): ?MacroConfiguration
     {
-        $macroConfiguration = $this->queryBuilder()->where('id', $id)->first($columns);
+        $macroConfiguration = $this->queryBuilder()->with('graph')->where('id', $id)->first($columns);
 
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
