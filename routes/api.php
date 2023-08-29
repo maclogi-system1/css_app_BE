@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
         Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
         Route::get('/search', 'search')->name('search');
+        Route::get('/options', 'getOptions')->name('options');
         Route::post('/{user}', 'update')->name('update');
     });
     Route::apiResource('users', UserController::class)->except(['update']);
