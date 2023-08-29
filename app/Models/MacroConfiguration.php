@@ -14,7 +14,7 @@ class MacroConfiguration extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
+        'store_ids', 'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
     ];
 
     public function isOneTime(): bool
@@ -26,7 +26,7 @@ class MacroConfiguration extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id', 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function getConditionsDecodeAttribute(): array

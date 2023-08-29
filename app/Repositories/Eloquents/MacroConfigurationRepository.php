@@ -31,6 +31,42 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     }
 
     /**
+     * Get the list of the macro configuration with pagination and handle filter.
+     */
+    public function getList(array $filters = [], array $columns = ['*'])
+    {
+        $perPage = Arr::get($filters, 'per_page', 10);
+        $macroConfigurations = parent::getList($filters, $columns);
+
+        $storeIds = collect($macroConfigurations->items())
+            ->pluck('store_ids')
+            ->join(',');
+        $shopResponse = $this->shopService->getList([
+            'per_page' => -1,
+            'filters' => ['shop_url' => $storeIds],
+        ]);
+
+        if ($shopResponse->get('success')) {
+            $shops = $shopResponse->get('data')->get('shops');
+            $items = $perPage < 0 ? $macroConfigurations : $macroConfigurations->items();
+
+            foreach ($items as $item) {
+                $shopMatches = array_filter(
+                    $shops,
+                    function ($shop) use ($item) {
+                        $storeIds = explode(',', $item->store_ids);
+
+                        return in_array(Arr::get($shop, 'store_id'), $storeIds);
+                    },
+                );
+                $item->stores = $shopMatches;
+            }
+        }
+
+        return $macroConfigurations;
+    }
+
+    /**
      * Get list table.
      */
     public function getListTable(): array
@@ -115,7 +151,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function find($id, array $columns = ['*']): ?MacroConfiguration
     {
-        return $this->queryBuilder()->where('id', $id)->first($columns);
+        $macroConfiguration = $this->queryBuilder()->where('id', $id)->first($columns);
+
+        $shopResponse = $this->shopService->getList([
+            'per_page' => -1,
+            'filters' => ['shop_url' => $macroConfiguration->store_ids],
+        ]);
+
+        if ($shopResponse->get('success')) {
+            $shops = $shopResponse->get('data')->get('shops');
+            $macroConfiguration->stores = $shops;
+        }
+
+        return $macroConfiguration;
     }
 
     /**
@@ -124,6 +172,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function create(array $data): ?MacroConfiguration
     {
         return $this->handleSafely(function () use ($data) {
+            $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
+            $data['conditions']['conditions'][] = [
+                'field' => 'store_id',
+                'operator' => 'in',
+                'value' => $storeIds,
+            ];
+            $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
             $macroConfiguration = $this->model()->fill($data);
@@ -139,6 +194,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function update(array $data, MacroConfiguration $macroConfiguration): ?MacroConfiguration
     {
         return $this->handleSafely(function () use ($data, $macroConfiguration) {
+            $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
+            $data['conditions']['conditions'][] = [
+                'field' => 'store_id',
+                'operator' => 'in',
+                'value' => $storeIds,
+            ];
+            $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
             $macroConfiguration->fill($data);
@@ -253,20 +315,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $query = DB::table($table)->select('store_id', ...$columns);
 
             foreach ($relativeTables as $tableName => $relativeTable) {
-                if (
-                    $relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY_TYPE]
-                    == MacroConstant::RELATIVE_TABLE_TYPE_OUTBOUND
-                ) {
-                    $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
+                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
                         ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                         ->toArray();
-                    $query->leftJoin(
-                        $tableName,
-                        $tableName.'.id',
-                        '=',
-                        $table.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
-                    )->addSelect($columnsRelativeTable);
-                }
+                $query->join(
+                    $tableName,
+                    $tableName.'.id',
+                    '=',
+                    $table.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
+                )->addSelect($columnsRelativeTable);
             }
 
             foreach ($conditionItems as $conditionItem) {
