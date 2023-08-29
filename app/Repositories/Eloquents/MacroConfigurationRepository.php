@@ -218,6 +218,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
+            unset($macroConfiguration->stores);
             $macroConfiguration->fill($data);
             $macroConfiguration->save();
 
@@ -254,6 +255,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function delete(MacroConfiguration $macroConfiguration): ?MacroConfiguration
     {
         $macroConfiguration->deleted_by = auth()->id();
+        unset($macroConfiguration->stores);
         $macroConfiguration->save();
         $macroConfiguration->delete();
 
