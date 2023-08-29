@@ -224,5 +224,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/table-report-search/{storeId}', 'tableReportSearch')->name('table-report-search');
             Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
                 ->name('detail-report-by-product');
+
+            Route::prefix('ads-analysis')
+            ->name('ads-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'adsAnalysisSummary')->name('summary');
+                Route::get('/detail-ads-conversion/{storeId}', 'detailAdsConversion')->name('detail-ads-conversion');
+                Route::get('/list-product-by-roas/{storeId}', 'getListProductByRoas')->name('list-product-by-roas');
+                Route::get('/chart-sales-and-access/{storeId}', 'chartSalesAndAccess')->name('chart-sales-and-access');
+            });
         });
 });
