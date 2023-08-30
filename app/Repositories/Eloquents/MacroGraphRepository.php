@@ -18,6 +18,10 @@ class MacroGraphRepository extends Repository implements MacroGraphRepositoryCon
 
     /**
      * Handle create a new macro configuration.
+     *
+     * @param  int  $macroConfigId
+     * @param  array  $data
+     * @return \App\Models\MacroGraph|null
      */
     public function create($macroConfigId, array $data): ?MacroGraph
     {
