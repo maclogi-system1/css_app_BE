@@ -38,6 +38,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function getList(array $filters = [], array $columns = ['*'])
     {
         $perPage = Arr::get($filters, 'per_page', 10);
+
+        $owner = Arr::get($filters, 'owner', '');
+        if (! empty($owner)) {
+            $filters['filters'] = ['created_by' => $owner];
+        }
+
         $macroConfigurations = parent::getList($filters, $columns);
 
         $storeIds = collect($macroConfigurations->items())
@@ -63,6 +69,21 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 );
                 $item->stores = $shopMatches;
             }
+        }
+
+        $filterConditions = [];
+        $keyword = Arr::get($filters, 'keyword', '');
+        if (! empty($keyword)) {
+            $filterConditions += ['keyword' => $keyword];
+        }
+
+        $shopName = Arr::get($filters, 'shop_name', '');
+        if (! empty($shopName)) {
+            $filterConditions += ['shop_name' => $shopName];
+        }
+
+        if (count($filterConditions) > 0) {
+            $macroConfigurations = $this->filterMacroConfig($macroConfigurations, $shopResponse, $filterConditions);
         }
 
         return $macroConfigurations;
@@ -186,7 +207,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
 
-            // Save graph configuration
             if (Arr::has($data, 'graph')) {
                 $graphData = Arr::get($data, 'graph');
                 if (
@@ -237,7 +257,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 }
             }
 
-            // Delete existed macro graph if empty graph config
             if (
                 $hasGraphConfig == false
                 && ! is_null($macroConfiguration->graph)
@@ -489,7 +508,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function getKeywords(string $keyword): array
     {
-        // Query macro name from DB
         $listMacroName = $this->queryBuilder()
             ->select('name')
             ->when(! empty($keyword), function ($query) use ($keyword) {
@@ -498,7 +516,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ->get()
             ->pluck('name');
 
-        // Get store from OSS service
         $listShop = $this->shopService->getList([])->get('data')->get('shops');
         $listShopName = collect($listShop)->filter(function ($item) use ($keyword) {
             return false !== stristr($item['name'], $keyword);
@@ -507,7 +524,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             return false !== stristr($item['store_id'], $keyword);
         })->pluck('store_id');
 
-        // Merge result from DB with OSS service
         $result = new Collection();
         $result = $result->merge($listMacroName);
         $result = $result->merge($listShopName);
@@ -521,6 +537,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
     /**
      * Save macro's graph configuration.
+     *
+     * @param int $macroConfigId
+     * @param array $graphData
+     * @return void
      */
     private function saveMacroGraph($macroConfigId, array $graphData)
     {
@@ -530,5 +550,60 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         } else {
             $this->macroGraphRepository->update($graphData, $macroConfig->graph);
         }
+    }
+
+    /**
+     * Filter MacroConfigurations by conditions.
+     *
+     * @param  \Illuminate\Support\Collection  $macroConfigurations
+     * @param  \Illuminate\Support\Collection  $shopResponse
+     * @param  array  $filterConditions
+     * @return \Illuminate\Support\Collection
+     */
+    private function filterMacroConfig($macroConfigurations, Collection $shopResponse, array $filterConditions)
+    {
+        $keyword = Arr::get($filterConditions, 'keyword', '');
+        $shopName = Arr::get($filterConditions, 'shop_name', '');
+        $result = $macroConfigurations;
+
+        if (! empty($keyword)) {
+            $filteredShopStoreIds = [];
+            if ($shopResponse->get('success')) {
+                $shops = $shopResponse->get('data')->get('shops');
+                $filteredShopStoreIds = collect($shops)->filter(function ($item) use ($keyword) {
+                    return false !== stristr($item['store_id'], $keyword)
+                            || false !== stristr($item['name'], $keyword);
+                })->pluck('store_id')->toArray();
+            }
+
+            $result = $macroConfigurations->filter(function ($item) use ($filteredShopStoreIds, $keyword) {
+                if (count($filteredShopStoreIds) > 0) {
+                    $storeIds = explode(',', $item->store_ids);
+
+                    return ! empty(array_intersect($filteredShopStoreIds, $storeIds))
+                            || false !== stristr($item->name, $keyword);
+                }
+
+                return false !== stristr($item->name, $keyword);
+            });
+        }
+
+        if (! empty($shopName)) {
+            $filteredShopStoreIds = [];
+            if ($shopResponse->get('success')) {
+                $shops = $shopResponse->get('data')->get('shops');
+                $filteredShopStoreIds = collect($shops)->filter(function ($item) use ($shopName) {
+                    return false !== stristr($item['name'], $shopName);
+                })->pluck('store_id')->toArray();
+            }
+
+            $result = $macroConfigurations->filter(function ($item) use ($filteredShopStoreIds) {
+                $storeIds = explode(',', $item->store_ids);
+
+                return ! empty(array_intersect($filteredShopStoreIds, $storeIds));
+            });
+        }
+
+        return $result;
     }
 }
