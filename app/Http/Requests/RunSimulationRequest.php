@@ -23,9 +23,10 @@ class RunSimulationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'policy_id' => ['required', 'string', 'size:36', Rule::exists('policies', 'id')->where(function ($query) {
+            'policy_id' => ['nullable', 'string', 'size:36', Rule::exists('policies', 'id')->where(function ($query) {
                 $query->where('category', Policy::SIMULATION_CATEGORY);
             })],
+            'store_id' => [Rule::requiredIf(fn () => empty($this->policy_id)), 'string'],
         ];
     }
 }

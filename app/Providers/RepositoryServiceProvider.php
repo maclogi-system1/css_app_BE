@@ -30,6 +30,10 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MqCostRepository::class => \App\Repositories\Eloquents\MqCostRepository::class,
         \App\Repositories\Contracts\MacroConfigurationRepository::class => \App\Repositories\Eloquents\MacroConfigurationRepository::class,
         \App\Repositories\Contracts\UserTrendRepository::class => \App\Repositories\APIs\UserTrendRepository::class,
+        \App\Repositories\Contracts\UserAccessRepository::class => \App\Repositories\APIs\UserAccessRepository::class,
+        \App\Repositories\Contracts\ReportSearchRepository::class => \App\Repositories\APIs\ReportSearchRepository::class,
+        \App\Repositories\Contracts\MacroGraphRepository::class => \App\Repositories\Eloquents\MacroGraphRepository::class,
+        \App\Repositories\Contracts\AdsAnalysisRepository::class => \App\Repositories\APIs\AdsAnalysisRepository::class,
     ];
 
     /**

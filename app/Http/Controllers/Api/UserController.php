@@ -140,4 +140,19 @@ class UserController extends Controller
                 'message' => __('The users have been deleted successfully.'),
             ]);
     }
+
+    /**
+     * Get a list of users as select box options.
+     */
+    public function getOptions(): JsonResponse
+    {
+        $users = $this->userRepository->getList(['per_page' => -1])->map(fn ($user) => [
+            'value' => $user->id,
+            'label' => $user->name,
+        ]);
+
+        return response()->json([
+            'users' => $users,
+        ]);
+    }
 }

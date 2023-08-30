@@ -22,24 +22,33 @@ class MacroConfigurationRequest extends FormRequest
      */
     public function rules(): array
     {
-        if ($this->id) {
-            return [
-                'name' => ['nullable', 'string'],
-                'conditions' => ['nullable'],
-                'time_conditions' => ['nullable'],
-                'macro_type' => ['nullable', Rule::in(MacroConstant::MACRO_ARRAY)],
-                'id' => [
-                    'required',
-                    'exists:macro_configurations,id', // Check if 'id' exists in the 'macroConfiguration' table
-                ],
+        $rules = [
+            'store_ids' => ['required', 'string'],
+            'conditions' => ['required', 'array'],
+            'conditions.table' => ['required', 'string'],
+            'conditions.operator' => ['required', 'string'],
+            'conditions.conditions' => ['required', 'array'],
+            'time_conditions' => ['required'],
+            'time_conditions.applicable_date' => ['required'],
+            'time_conditions.schedule' => [Rule::requiredIf(fn () => empty($this->input('time_conditions.designation')))],
+            'macro_type' => ['required', Rule::in(array_keys(MacroConstant::MACRO_TYPES))],
+            'graph' => ['nullable'],
+        ];
+
+        if ($id = $this->route('macroConfiguration')) {
+            $rules['name'] = [
+                'required',
+                'string',
+                Rule::unique('macro_configurations')->ignore($id)->whereNull('deleted_at'),
+            ];
+        } else {
+            $rules['name'] = [
+                'required',
+                'string',
+                Rule::unique('macro_configurations')->whereNull('deleted_at'),
             ];
         }
 
-        return [
-            'name' => ['required', 'string'],
-            'conditions' => ['required'],
-            'time_conditions' => ['required'],
-            'macro_type' => ['required', Rule::in(MacroConstant::MACRO_ARRAY)],
-        ];
+        return $rules;
     }
 }

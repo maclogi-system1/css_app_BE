@@ -20,13 +20,28 @@ class MacroConstant
     public const COLUMN_TYPE_DATETIME = 'datetime';
     public const REMOVE_COLUMNS = 'remove_columns';
 
-    public const MACRO_TYPE_AI = 0;
-    public const MACRO_TYPE_CSV = 1;
-    public const MACRO_TYPE_DB = 2;
-    public const MACRO_ARRAY = [
-        self::MACRO_TYPE_AI,
-        self::MACRO_TYPE_CSV,
-        self::MACRO_TYPE_DB
+    public const MACRO_TYPE_AI_SALES_FORECAST = 0;
+    public const MACRO_TYPE_AI_POLICY_RECOMMENDATION = 1;
+    public const MACRO_TYPE_POLICY_REGISTRATION = 2;
+    public const MACRO_TYPE_TASK_ISSUE = 3;
+    public const MACRO_TYPE_ALERT_DISPLAY = 4;
+    public const MACRO_TYPE_EXPORT_CSV = 5;
+    public const MACRO_TYPE_GRAPH_DISPLAY = 6;
+    public const MACRO_TYPES = [
+        self::MACRO_TYPE_AI_SALES_FORECAST => 'AI売上予測',
+        self::MACRO_TYPE_AI_POLICY_RECOMMENDATION => 'AI施策レコメンド',
+        self::MACRO_TYPE_POLICY_REGISTRATION => '施策登録',
+        self::MACRO_TYPE_TASK_ISSUE => 'タスク発行',
+        self::MACRO_TYPE_ALERT_DISPLAY => 'アラート表示',
+        self::MACRO_TYPE_EXPORT_CSV => 'csv出力',
+        self::MACRO_TYPE_GRAPH_DISPLAY => 'グラフ表示',
+    ];
+    public const MACRO_SCHEDULABLE_TYPES = [
+        self::MACRO_TYPE_AI_SALES_FORECAST,
+        self::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
+        self::MACRO_TYPE_POLICY_REGISTRATION,
+        self::MACRO_TYPE_TASK_ISSUE,
+        self::MACRO_TYPE_ALERT_DISPLAY,
     ];
 
     public const DESCRIPTION_TABLES = [
@@ -394,5 +409,36 @@ class MacroConstant
                 ],
             ],
         ],
+    ];
+
+    public const MACRO_OPERATORS = [
+        '=', '!=', '<', '>', '<=', '>=', 'like', 'not_like',
+    ];
+
+    public const MACRO_OPERATOR_LABELS = [
+        '=：等しい ', '≠：等しくない', '≺：より小さい', '≻：より大きい', '≦：以下', '≧：以上',
+        '次のいずれかを含む', '次のいずれも含まない',
+    ];
+
+    public const MACRO_OPERATORS_OF_TYPES = [
+        'string' => ['like', 'not_like'],
+        'number' => ['=', '!=', '<', '>', '<=', '>='],
+        'date' => ['=', '!=', '<', '>', '<=', '>='],
+    ];
+
+    public const MACRO_TIME_CONDITION_DESIGNATION = 'designation';
+    public const MACRO_TIME_CONDITION_SCHEDULE = 'schedule';
+    public const MACRO_TIME_CONDITIONS = [
+        self::MACRO_TIME_CONDITION_DESIGNATION => '曰付在指定',
+        self::MACRO_TIME_CONDITION_SCHEDULE => 'Schedule',
+    ];
+
+    public const MACRO_STATUS_NOT_READY = 0;
+    public const MACRO_STATUS_READY = 1;
+    public const MACRO_STATUS_FINISH = 2;
+    public const MACRO_STATES = [
+        self::MACRO_STATUS_NOT_READY => 'Not ready',
+        self::MACRO_STATUS_READY => 'Ready',
+        self::MACRO_STATUS_FINISH => 'Finish',
     ];
 }

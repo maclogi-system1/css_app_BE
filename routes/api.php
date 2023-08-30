@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
         Route::delete('/delete-multiple', 'deleteMultiple')->name('delete-multiple');
         Route::get('/search', 'search')->name('search');
+        Route::get('/options', 'getOptions')->name('options');
         Route::post('/{user}', 'update')->name('update');
     });
     Route::apiResource('users', UserController::class)->except(['update']);
@@ -192,11 +193,21 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('macros.')
         ->controller(MacroController::class)
         ->group(function () {
-            Route::get('/list-table/{storeId}', 'getListTableByStoreId')->name('get-list-table');
-            Route::get('/macro-configuration/{macroConfigurationId}', 'findMacroConfiguration')->name('find-configuration');
-            Route::post('/macro-configuration', 'storeMacroConfiguration')->name('store-configuration');
-            Route::post('/macro-configuration/update', 'updateMacroConfiguration')->name('update-configuration');
-            Route::delete('/macro-configuration/{macroConfigurationId}', 'deleteMacroConfiguration')->name('delete-configuration');
+            Route::get('/list-table', 'getListTable')->name('get-list-table');
+            Route::get('/query-results/{macroConfiguration}', 'getQueryResults')->name('query-results');
+            Route::post('/run/{macroConfiguration}', 'run')->name('run');
+
+            Route::prefix('macro-configuration')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::post('/', 'store')->name('configuration.store');
+                    Route::get('/options', 'getOptions')->name('configuration.options');
+                    Route::get('/{macroConfiguration}', 'show')->name('configuration.show');
+                    Route::put('/{macroConfiguration}', 'update')->name('configuration.update');
+                    Route::delete('/{macroConfiguration}', 'destroy')->name('configuration.destroy');
+                });
+
+            Route::get('/keywords', 'getKeywords')->name('get-keywords');
         });
 
     Route::prefix('kpi')
@@ -205,5 +216,23 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::get('/summary/{storeId}', 'summary')->name('summary');
             Route::get('/chart-user-trends/{storeId}', 'chartUserTrends')->name('chart-user-trends');
+            Route::get('/total-user-access/{storeId}', 'totalUserAccess')->name('total-user-access');
+            Route::get('/chart-user-access/{storeId}', 'chartUserAccess')->name('chart-user-access');
+            Route::get('/chart-user-access-ads/{storeId}', 'chartUserAccessAds')->name('chart-user-access-ads');
+            Route::get('/chart-access-source/{storeId}', 'chartAccessSource')->name('chart-access-source');
+            Route::get('/table-access-source/{storeId}', 'tableAccessSource')->name('table-access-source');
+            Route::get('/chart-report-search/{storeId}', 'chartReportSearch')->name('chart-report-search');
+            Route::get('/table-report-search/{storeId}', 'tableReportSearch')->name('table-report-search');
+            Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
+                ->name('detail-report-by-product');
+
+            Route::prefix('ads-analysis')
+            ->name('ads-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'adsAnalysisSummary')->name('summary');
+                Route::get('/detail-ads-conversion/{storeId}', 'detailAdsConversion')->name('detail-ads-conversion');
+                Route::get('/list-product-by-roas/{storeId}', 'getListProductByRoas')->name('list-product-by-roas');
+                Route::get('/chart-sales-and-access/{storeId}', 'chartSalesAndAccess')->name('chart-sales-and-access');
+            });
         });
 });

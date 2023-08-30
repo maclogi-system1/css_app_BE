@@ -45,6 +45,9 @@ class RunPolicySimulation implements ShouldQueue
 
             $policySimulationHistoryRepository->create([
                 'policy_id' => $this->policy->id,
+                'manager' => Arr::get($result, 'manager'),
+                'title' =>  Arr::get($result, 'policy_name'),
+                'job_title' => Arr::get($result, 'job_title'),
                 'execution_time' => Arr::get($result, 'start_date'),
                 'undo_time' => Arr::get($result, 'end_date'),
                 'creation_date' => Arr::get($result, 'creation_date'),
@@ -73,6 +76,7 @@ class RunPolicySimulation implements ShouldQueue
             'start_date' => '2023-07-01 20:00:00',
             'end_date' => '2023-07-01 23:59:00',
             'sale_effect' => 20,
+            'job_title' => 'Job title',
         ];
     }
 }
