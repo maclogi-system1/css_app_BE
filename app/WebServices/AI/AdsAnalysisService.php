@@ -74,130 +74,130 @@ class AdsAnalysisService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
-            'high_roas_products' => [
-                '1' => [
+            'high_roas_products' => collect([
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '2' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '3' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '4' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '5' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '6' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '7' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '8' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '9' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-                '10' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(5000, 50000),
                     'rpp_sales_num_720h' => rand(5000, 50000),
                     'rpp_roas' => rand(5000, 50000),
                 ],
-            ],
-            'low_roas_products' => [
-                '1' => [
+            ]),
+            'low_roas_products' => collect([
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '2' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '3' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '4' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '5' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '6' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '7' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '8' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '9' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-                '10' => [
+                [
                     'product_control_number' => 1,
                     'rpp_sales_amnt_720h' => rand(500, 5000),
                     'rpp_sales_num_720h' => rand(500, 5000),
                     'rpp_roas' => rand(500, 5000),
                 ],
-            ],
+            ]),
         ]);
 
         return collect([
@@ -233,13 +233,13 @@ class AdsAnalysisService extends Service
                 'store_id' => $storeId,
                 'date' => $date,
                 'sales_amnt' => [
-                    'ad_tda' => rand(60000, 100000),
+                    'whole' => rand(60000, 100000),
                     'rpp_ad' => rand(10000, 20000),
                     'coupon_advice_ad' =>rand(10000, 20000),
                     'rgroup_ad' => rand(10000, 20000),
                 ],
                 'click_num' => [
-                    'ad_tda' => rand(50, 100),
+                    'whole' => rand(50, 100),
                     'rpp_ad' => rand(10, 30),
                     'coupon_advice_ad' =>rand(10, 30),
                     'rgroup_ad' => rand(10, 30),
