@@ -309,6 +309,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $timeConditions = collect(MacroConstant::MACRO_TIME_CONDITIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
+        $graphTypes = collect(MacroConstant::MACRO_GRAPH_TYPES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $positionDisplay = collect(MacroConstant::MACRO_POSITION_DISPLAY)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
 
         return [
             'macro_types' => $macroTypes,
@@ -321,6 +327,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ['label' => '後', 'value' => 'back'],
             ],
             'time_conditions' => $timeConditions,
+            'graph_types' => $graphTypes,
+            'position_display' => $positionDisplay,
         ];
     }
 
