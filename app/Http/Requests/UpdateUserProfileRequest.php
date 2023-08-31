@@ -24,7 +24,7 @@ class UpdateUserProfileRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($this->user()->id)],
-            'chatwork_account_id' => ['nullable', 'max:8'],
+            'chatwork_account_id' => ['nullable', 'max:10'],
             'team_id' => ['nullable'],
         ];
     }
