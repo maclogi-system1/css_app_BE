@@ -35,6 +35,24 @@ class UserTrendRepository extends Repository implements UserTrendRepositoryContr
             $filters['to_date'] = now()->format('Y-m');
         }
 
-        return $this->userTrendService->getListByStore($storeId, $filters);
+        $data = collect($this->userTrendService->getListByStore($storeId, $filters));
+
+        // Get compared data user trends
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m');
+            }
+
+            $data = $data->merge($this->userTrendService->getListByStore($storeId, $filters));
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => ['chart_user_trends' => $data],
+        ]);
     }
 }

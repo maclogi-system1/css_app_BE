@@ -79,106 +79,152 @@ class AccessSourceService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
-            'rakuten_search' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'store_item_page' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'exp_rakuten_service'  => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'rakuten_market' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'rakuten_gold'  => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'rakuten_event'  => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'faivorite' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'basket' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'review' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'view_history' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'purchase_history' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'in_store_search' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'store_category_page' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'store_top' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'discount' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'room' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'ranking_market' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'instagram' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'google' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'yahoo' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'line' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'twitter' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
-            'facebook' => [
-                'value' => rand(5000, 50000),
-                'rate' => rand(0, 20),
-            ],
+            'chart_access_source' => collect([
+                [
+                    'display_name' => '楽天サーチ',
+                    'name' => 'rakuten_search',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '店舗商品ページ',
+                    'name' => 'store_item_page',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '楽天その他サービス',
+                    'name' => 'exp_rakuten_service',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '楽天市場トップ',
+                    'name' => 'rakuten_market',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '楽天Gold',
+                    'name' => 'rakuten_gold',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '楽天イベントページ',
+                    'name' => 'rakuten_event',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'お気に入り',
+                    'name' => 'faivorite',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '買い物かご',
+                    'name' => 'basket',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'みんなのレビュー',
+                    'name' => 'review',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '閲覧履歴',
+                    'name' => 'view_history',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '購入履歴',
+                    'name' => 'purchase_history',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '店舗内サーチ',
+                    'name' => 'in_store_search',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '店舗カテゴリページ',
+                    'name' => 'store_category_page',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => '店舗トップ',
+                    'name' => 'store_top',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'クーポン',
+                    'name' => 'discount',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'ROOM',
+                    'name' => 'room',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'ランキング市場',
+                    'name' => 'ranking_market',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Instagram',
+                    'name' => 'instagram',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Google',
+                    'name' => 'google',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Yahoo',
+                    'name' => 'yahoo',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Line',
+                    'name' => 'line',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Twitter',
+                    'name' => 'twitter',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+                [
+                    'display_name' => 'Facebook',
+                    'name' => 'facebook',
+                    'value' => rand(5000, 50000),
+                    'rate' => rand(0, 20),
+                ],
+            ]),
         ]);
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_access_source' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 }
