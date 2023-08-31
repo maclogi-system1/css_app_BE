@@ -10,6 +10,7 @@ use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Repository;
 use App\WebServices\MacroService;
 use App\WebServices\OSS\ShopService;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -196,11 +197,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         return $this->handleSafely(function () use ($data) {
             $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
-            $data['conditions']['conditions'][] = [
-                'field' => 'store_id',
-                'operator' => 'in',
-                'value' => $storeIds,
-            ];
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
@@ -230,11 +226,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         return $this->handleSafely(function () use ($data, $macroConfiguration) {
             $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
-            $data['conditions']['conditions'][] = [
-                'field' => 'store_id',
-                'operator' => 'in',
-                'value' => $storeIds,
-            ];
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
@@ -371,18 +362,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                 ->toArray();
 
-            $query = DB::table($table)->select('store_id', ...$columns);
+            $storeIds = explode(',', $macroConfiguration->store_ids);
+            $query = DB::table($table)
+                ->select('store_id', ...$columns)
+                ->whereIn('store_id', $storeIds);
 
             foreach ($relativeTables as $tableName => $relativeTable) {
                 $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
                         ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                         ->toArray();
-                $query->join(
-                    $tableName,
-                    $tableName.'.id',
-                    '=',
-                    $table.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
-                )->addSelect($columnsRelativeTable);
+
+                $this->handleJoinRelation($query, $table, $relativeTable);
+
+                $query->addSelect($columnsRelativeTable);
             }
 
             foreach ($conditionItems as $conditionItem) {
@@ -405,6 +397,30 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return collect();
+    }
+
+    /**
+     * Handles joining relational tables.
+     */
+    private function handleJoinRelation(Builder $query, string $tableName, array $relativeTable): void
+    {
+        if (
+            $relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY_TYPE] == MacroConstant::RELATIVE_TABLE_TYPE_OUTBOUND
+        ) {
+            $query->join(
+                $relativeTable[MacroConstant::TABLE_NAME],
+                $relativeTable[MacroConstant::TABLE_NAME].'.id',
+                '=',
+                $tableName.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
+            );
+        } else {
+            $query->leftJoin(
+                $relativeTable[MacroConstant::TABLE_NAME],
+                $relativeTable[MacroConstant::TABLE_NAME].'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY],
+                '=',
+                $tableName.'.id'
+            );
+        }
     }
 
     /**

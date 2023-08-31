@@ -308,11 +308,11 @@ class MacroConstant
         'policies' => [
             self::TABLE_NAME => 'policies',
             self::RELATIVE_TABLES => [
-                'policy_attachments' => [
-                    self::TABLE_NAME => 'policy_attachments',
-                    self::RELATIVE_TABLE_FOREIGN_KEY => 'policy_id',
-                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_INBOUND,
-                ],
+                // 'policy_attachments' => [
+                //     self::TABLE_NAME => 'policy_attachments',
+                //     self::RELATIVE_TABLE_FOREIGN_KEY => 'policy_id',
+                //     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_INBOUND,
+                // ],
                 'policy_rules' => [
                     self::TABLE_NAME => 'policy_rules',
                     self::RELATIVE_TABLE_FOREIGN_KEY => 'policy_id',
