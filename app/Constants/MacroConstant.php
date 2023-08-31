@@ -441,4 +441,28 @@ class MacroConstant
         self::MACRO_STATUS_READY => 'Ready',
         self::MACRO_STATUS_FINISH => 'Finish',
     ];
+
+    public const MACRO_GRAPH_TYPE_LINE_CHART = 'line_chart';
+    public const MACRO_GRAPH_TYPE_BAR_CHART = 'bar_chart';
+    public const MACRO_GRAPH_TYPE_PIE_CHART = 'pie_chart';
+    public const MACRO_GRAPH_TYPE_SCATTER_PLOT_CHART = 'scatter_plot_chart';
+    public const MACRO_GRAPH_TYPE_STACKED_BAR_CHART = 'stacked_bar_chart';
+    public const MACRO_GRAPH_TYPES = [
+        self::MACRO_GRAPH_TYPE_LINE_CHART => '折れ線グラフ',
+        self::MACRO_GRAPH_TYPE_BAR_CHART => '棒グラフ',
+        self::MACRO_GRAPH_TYPE_PIE_CHART => '円グラフ',
+        self::MACRO_GRAPH_TYPE_SCATTER_PLOT_CHART => '散布図',
+        self::MACRO_GRAPH_TYPE_STACKED_BAR_CHART => '積み上げ棒グラフ',
+    ];
+
+    public const MACRO_POSITION_DISPLAY_1 = 'macrograph_1';
+    public const MACRO_POSITION_DISPLAY_2 = 'macrograph_2';
+    public const MACRO_POSITION_DISPLAY_3 = 'macrograph_3';
+    public const MACRO_POSITION_DISPLAY_4 = 'macrograph_4';
+    public const MACRO_POSITION_DISPLAY = [
+        self::MACRO_POSITION_DISPLAY_1 => 'マクログラフ1',
+        self::MACRO_POSITION_DISPLAY_2 => 'マクログラフ2',
+        self::MACRO_POSITION_DISPLAY_3 => 'マクログラフ3',
+        self::MACRO_POSITION_DISPLAY_4 => 'マクログラフ4',
+    ];
 }
