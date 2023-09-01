@@ -9,16 +9,26 @@ class UserSetting extends Model
 {
     use HasFactory;
 
-    public const ONESIGNAL_USER_ID_KEY = 'onesignal_user_id'; // This field is the player_id of the notification receiving device registered in onesignal.
-    public const RECEIVATION_KEY = 'receivation'; // enable, disable, specific
+    public const MACRO_DISPLAY_MACROGRAPH_1 = 'macro_display_macrograph_1';
+    public const MACRO_DISPLAY_MACROGRAPH_2 = 'macro_display_macrograph_2';
+    public const MACRO_DISPLAY_MACROGRAPH_3 = 'macro_display_macrograph_3';
+    public const MACRO_DISPLAY_MACROGRAPH_4 = 'macro_display_macrograph_4';
 
-    public const DISABLE_RECEIVATION = 0;
-    public const ENABLE_RECEIVATION = 1;
-    public const SPECIFIC_RECEIVATION = 2;
+    public const VALIDATION_RULES = [
+        self::MACRO_DISPLAY_MACROGRAPH_1 => ['nullable', 'in:1,0'],
+        self::MACRO_DISPLAY_MACROGRAPH_2 => ['nullable', 'in:1,0'],
+        self::MACRO_DISPLAY_MACROGRAPH_3 => ['nullable', 'in:1,0'],
+        self::MACRO_DISPLAY_MACROGRAPH_4 => ['nullable', 'in:1,0'],
+    ];
 
-    public const RECEIVING_STATES = [
-        self::DISABLE_RECEIVATION => 'disable',
-        self::ENABLE_RECEIVATION => 'enable',
-        self::SPECIFIC_RECEIVATION => 'specific',
+    public const DEFAULT_SETTINGS = [
+        self::MACRO_DISPLAY_MACROGRAPH_1 => 1,
+        self::MACRO_DISPLAY_MACROGRAPH_2 => 1,
+        self::MACRO_DISPLAY_MACROGRAPH_3 => 1,
+        self::MACRO_DISPLAY_MACROGRAPH_4 => 1,
+    ];
+
+    protected $fillable = [
+        'user_id', 'key', 'value', 'created_at', 'updated_at',
     ];
 }
