@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Constants\MacroConstant;
+use App\Support\CronExpression;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -59,17 +60,11 @@ class MacroConfiguration extends Model
         return Arr::get($timeCondition, 'schedule', []);
     }
 
-    public function getCronExpressionAttribute(): string
+    public function getCronExpressionAttribute(): CronExpression
     {
-        $schedule = $this->getTimeConditionScheduleAttribute();
+        $cronExpression = CronExpression::make($this->getTimeConditionScheduleAttribute());
 
-        $minute = Arr::get($schedule, 'minute', '*') ?? '*';
-        $hour = Arr::get($schedule, 'hour', '*') ?? '*';
-        $day = Arr::get($schedule, 'day', '*') ?? '*';
-        $month = Arr::get($schedule, 'month', '*') ?? '*';
-        $dayOfWeek = Arr::get($schedule, 'day_of_week', '*') ?? '*';
-
-        return "{$minute} {$hour} {$day} {$month} {$dayOfWeek}";
+        return $cronExpression;
     }
 
     public function graph(): HasOne
