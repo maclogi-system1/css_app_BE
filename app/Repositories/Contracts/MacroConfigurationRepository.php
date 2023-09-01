@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\MacroConfiguration;
+use Illuminate\Support\Collection;
 
 interface MacroConfigurationRepository extends Repository
 {
@@ -50,4 +51,9 @@ interface MacroConfigurationRepository extends Repository
      * Get a list of the keywords for select.
      */
     public function getKeywords(string $keyword): array;
+
+    /**
+     * Get chart data to display macro graph on kpi screen.
+     */
+    public function getDataChartMacroGraph(string $storeId): Collection;
 }
