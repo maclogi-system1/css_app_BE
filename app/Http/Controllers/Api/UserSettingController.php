@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserSettingRequest;
-use App\Http\Resources\UserSettingResource;
 use App\Repositories\Contracts\UserSettingRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -19,18 +19,19 @@ class UserSettingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        return UserSettingResource::collection($this->userSettingRepository->getSettings($request->user()))
-            ->mapWithKeys(function ($item) {
-                return [$item->key => $item->value];
-            });
+        $userSettings = $this->userSettingRepository->getSettings($request->user());
+
+        return response()->json([
+            'user_settings' => $userSettings,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserSettingRequest $request)
+    public function update(UpdateUserSettingRequest $request): JsonResponse
     {
         $userSettings = $this->userSettingRepository->updateSettings($request->user(), $request->validated());
 
