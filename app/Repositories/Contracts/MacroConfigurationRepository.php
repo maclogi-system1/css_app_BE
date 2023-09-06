@@ -56,4 +56,9 @@ interface MacroConfigurationRepository extends Repository
      * Get chart data to display macro graph on kpi screen.
      */
     public function getDataChartMacroGraph(string $storeId): Collection;
+
+    /**
+     * Build query from conditions of a specified json conditions.
+     */
+    public function getQueryConditionsResults(array $conditions);
 }

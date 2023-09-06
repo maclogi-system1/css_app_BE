@@ -60,9 +60,16 @@ class MacroController extends Controller
         ];
 
         $macroConfiguration = $this->macroConfigurationRepository->create($data);
+        if ($macroConfiguration) {
+            $queryResult = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
+            $jsonResponse = new MacroConfigurationResource($macroConfiguration);
+            $jsonResponse->additional([
+                'query_results' => $queryResult->toArray(),
+            ]);
+        }
 
         return $macroConfiguration
-            ? new MacroConfigurationResource($macroConfiguration)
+            ? $jsonResponse
             : response()->json([
                 'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
@@ -141,6 +148,17 @@ class MacroController extends Controller
         $keyword = $request->query('keyword', '');
         $keyword = str_replace(['\'', '"'], '', $keyword);
         $result = $this->macroConfigurationRepository->getKeywords($keyword);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get the query results obtained from the json conditions.
+     */
+    public function getQueryConditionsResults(Request $request)
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions);
 
         return response()->json($result);
     }
