@@ -225,6 +225,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/table-report-search/{storeId}', 'tableReportSearch')->name('table-report-search');
             Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
                 ->name('detail-report-by-product');
+            Route::get('/chart-macro-graph/{storeId}', 'chartMacroGraph')->name('chart-macro-graph');
 
             Route::prefix('ads-analysis')
             ->name('ads-analysis.')

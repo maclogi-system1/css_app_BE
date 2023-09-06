@@ -374,6 +374,9 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $query = DB::table($table)
                 ->select('store_id', ...$columns)
                 ->whereIn('store_id', $storeIds);
+            if ($table == 'mq_accounting') {
+                $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
+            }
 
             foreach ($relativeTables as $tableName => $relativeTable) {
                 $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
@@ -629,5 +632,88 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return $result;
+    }
+
+    /**
+     * Get chart data to display macro graph on kpi screen.
+     */
+    public function getDataChartMacroGraph(string $storeId): Collection
+    {
+        $positionDisplay = collect(MacroConstant::MACRO_POSITION_DISPLAY)->keys();
+
+        $macroGraphData = $this->model()
+                        ->join('macro_graphs as mg', 'macro_configurations.id', '=', 'mg.macro_configuration_id')
+                        ->where('macro_configurations.store_ids', 'LIKE', '%'.$storeId.'%')
+                        ->where('macro_configurations.macro_type', MacroConstant::MACRO_TYPE_GRAPH_DISPLAY)
+                        ->orderBy('macro_configurations.updated_at', 'desc')
+                        ->get();
+
+        $result = [];
+        foreach ($positionDisplay as $positionItem) {
+            $macroGraphItem = $macroGraphData->filter(function ($item) use ($positionItem) {
+                return $item->position_display == $positionItem;
+            })->first();
+
+            if (! is_null($macroGraphItem)) {
+                $axisX = $macroGraphItem->axis_x;
+                $axisY = $macroGraphItem->axis_y;
+                $axisXCol = explode('.', $axisX)[1];
+                $axisYCol = explode('.', $axisY)[1];
+
+                $macroConfiguration = $this->queryBuilder()->where('id', $macroGraphItem->macro_configuration_id)->first();
+                $dataResult = $this->getQueryResults($macroConfiguration);
+                $graphData = [];
+                foreach ($dataResult as $item) {
+                    $itemAttributes = get_object_vars($item);
+                    $dataX = array_filter(
+                        $itemAttributes,
+                        fn ($key) => $key === $axisXCol,
+                        ARRAY_FILTER_USE_KEY
+                    );
+                    $dataY = array_filter(
+                        $itemAttributes,
+                        fn ($key) => $key === $axisYCol,
+                        ARRAY_FILTER_USE_KEY
+                    );
+                    $graphData[] = [
+                        'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
+                        'axis_y' => Arr::get($dataY, $axisYCol, ''),
+                    ];
+                }
+
+                $result[$positionItem] = [
+                    'title' => $macroGraphItem->title,
+                    'graph_type' => $macroGraphItem->graph_type,
+                    'axis_x' => [
+                        'field' => $axisX,
+                        'type' => $this->getChartDataType($axisX),
+                    ],
+                    'axis_y' => [
+                        'field' => $axisY,
+                        'type' => $this->getChartDataType($axisY),
+                    ],
+                    'data' => $graphData,
+                ];
+            } else {
+                $result[$positionItem] = [];
+            }
+        }
+
+        return collect($result);
+    }
+
+    /**
+     * Get column data type from input string 'table.column'.
+     * Return empty when exception table not found has been thrown.
+     */
+    private function getChartDataType(string $tableColumnStr): string
+    {
+        try {
+            $columnType = Schema::getColumnType(explode('.', $tableColumnStr)[0], explode('.', $tableColumnStr)[1]);
+
+            return $this->convertColumnType($columnType);
+        } catch(\Exception $e) {
+            return '';
+        }
     }
 }
