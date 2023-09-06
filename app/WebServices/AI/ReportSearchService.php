@@ -234,4 +234,84 @@ class ReportSearchService extends Service
             ]),
         ]);
     }
+
+    public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $dateTimeRange = $this->getDateTimeRange(
+            $dateRangeFilter['from_date'],
+            $dateRangeFilter['to_date'],
+            [
+                'format' => 'Y/m/d',
+                'step' => '1 day',
+            ]
+        );
+
+        $dataFake = collect();
+
+        foreach ($dateTimeRange as $date) {
+            $dataFake->add([
+                'store_id' => $storeId,
+                'date' => $date,
+                'keyword_1' => rand(1000, 5000),
+                'keyword_2' => rand(1000, 5000),
+                'keyword_3' => rand(1000, 5000),
+                'keyword_4' => rand(1000, 5000),
+                'keyword_5' => rand(1000, 5000),
+                'keyword_6' => rand(1000, 5000),
+                'keyword_7' => rand(1000, 5000),
+                'keyword_8' => rand(1000, 5000),
+                'keyword_9' => rand(1000, 5000),
+                'keyword_10' => rand(1000, 5000),
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_organic_inflows' => $dataFake,
+            ]),
+        ]);
+    }
+
+    public function getDataChartInflowsViaSpecificWords(string $storeId, array $filters = []): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $dateTimeRange = $this->getDateTimeRange(
+            $dateRangeFilter['from_date'],
+            $dateRangeFilter['to_date'],
+            [
+                'format' => 'Y/m/d',
+                'step' => '1 day',
+            ]
+        );
+
+        $dataFake = collect();
+
+        foreach ($dateTimeRange as $date) {
+            $dataFake->add([
+                'store_id' => $storeId,
+                'date' => $date,
+                'keyword_1' => rand(1000, 5000),
+                'keyword_2' => rand(1000, 5000),
+                'keyword_3' => rand(1000, 5000),
+                'keyword_4' => rand(1000, 5000),
+                'keyword_5' => rand(1000, 5000),
+                'keyword_6' => rand(1000, 5000),
+                'keyword_7' => rand(1000, 5000),
+                'keyword_8' => rand(1000, 5000),
+                'keyword_9' => rand(1000, 5000),
+                'keyword_10' => rand(1000, 5000),
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_inflows_via_specific_words' => $dataFake,
+            ]),
+        ]);
+    }
 }

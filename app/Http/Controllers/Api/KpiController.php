@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
+use App\Repositories\Contracts\StoreChartRepository;
 use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +23,9 @@ class KpiController extends Controller
         protected UserAccessRepository $userAccessRepository,
         protected ReportSearchRepository $reportSearchRepository,
         protected AdsAnalysisRepository $adsAnalysisRepository,
-        protected MacroConfigurationRepository $macroConfigurationRepository
+        protected MacroConfigurationRepository $macroConfigurationRepository,
+        protected AccessAnalysisRepository $accessAnalysisRepository,
+        protected StoreChartRepository $storeChartRepository
     ) {
     }
 
@@ -126,6 +130,26 @@ class KpiController extends Controller
     }
 
     /**
+     * Get chart data organic inflows report search keywords from AI.
+     */
+    public function chartOrganicInflows(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reportSearchRepository->getDataChartOrganicInflows($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart data inflows via specific words report search from AI.
+     */
+    public function chartInflowsViaSpecificWords(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reportSearchRepository->getDataChartInflowsViaSpecificWords($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
      * Get advertisement summary.
      */
     public function adsAnalysisSummary(Request $request, string $storeId): JsonResponse
@@ -158,7 +182,7 @@ class KpiController extends Controller
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
-    /*
+    /**
      * Get detail data chart sales and access impact from AI.
      */
     public function chartSalesAndAccess(Request $request, string $storeId): JsonResponse
@@ -176,5 +200,65 @@ class KpiController extends Controller
         $result = $this->macroConfigurationRepository->getDataChartMacroGraph($storeId);
 
         return response()->json($result);
+    }
+
+    /**
+     * Get detail data table for access analysis screen from AI.
+     */
+    public function tableAccessAnalysis(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->accessAnalysisRepository->getDataTableAccessAnalysis($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart data new user access for access analysis screen from AI.
+     */
+    public function chartNewUserAccess(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->accessAnalysisRepository->getDataChartNewUserAccess($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart data exist user access for access analysis screen from AI.
+     */
+    public function chartExistUserAccess(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->accessAnalysisRepository->getDataChartExistUserAccess($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data chart comparison conversion rate from AI.
+     */
+    public function chartComparisonConversionRate(Request $request): JsonResponse
+    {
+        $result = $this->storeChartRepository->getDataChartComparisonConversionRate($request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data table conversion rate analysis from AI.
+     */
+    public function tableConversionRateAnalysis(Request $request): JsonResponse
+    {
+        $result = $this->storeChartRepository->getDataTableConversionRateAnalysis($request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data relation between number of PV and conversion rate from AI.
+     */
+    public function chartRelationPVAndConversionRate(Request $request): JsonResponse
+    {
+        $result = $this->storeChartRepository->getDataChartRelationPVAndConversionRate($request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 }
