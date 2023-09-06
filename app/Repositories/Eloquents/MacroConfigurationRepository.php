@@ -352,62 +352,9 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function getQueryResults(MacroConfiguration $macroConfiguration)
     {
         $conditions = $macroConfiguration->conditions_decode;
-        $table = Arr::get($conditions, 'table');
-        $operator = Arr::get($conditions, 'operator', 'and');
-        $conditionItems = Arr::get($conditions, 'conditions', []);
+        $storeIds = explode(',', $macroConfiguration->store_ids);
 
-        if (is_null($table)) {
-            return null;
-        }
-
-        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
-            $relativeTables = Arr::get(
-                MacroConstant::LIST_RELATIVE_TABLE,
-                $table.'.'.MacroConstant::RELATIVE_TABLES
-            );
-
-            $columns = $this->getAllColumnOfTable($table)
-                ->map(fn ($item) => "{$item['table']}.{$item['column']}")
-                ->toArray();
-
-            $storeIds = explode(',', $macroConfiguration->store_ids);
-            $query = DB::table($table)
-                ->select('store_id', ...$columns)
-                ->whereIn('store_id', $storeIds);
-            if ($table == 'mq_accounting') {
-                $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
-            }
-
-            foreach ($relativeTables as $tableName => $relativeTable) {
-                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
-                        ->map(fn ($item) => "{$item['table']}.{$item['column']}")
-                        ->toArray();
-
-                $this->handleJoinRelation($query, $table, $relativeTable);
-
-                $query->addSelect($columnsRelativeTable);
-            }
-
-            foreach ($conditionItems as $conditionItem) {
-                $params = $this->handleWhereParams($conditionItem);
-
-                if (empty($params)) {
-                    continue;
-                }
-
-                $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
-
-                if ($operator == 'or') {
-                    $method = str($method)->title()->prepend('or')->toString();
-                }
-
-                $query->{$method}(...$params);
-            }
-
-            return $query->get();
-        }
-
-        return collect();
+        return $this->buildQueryAndExecute($conditions, $storeIds);
     }
 
     /**
@@ -715,5 +662,81 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         } catch(\Exception $e) {
             return '';
         }
+    }
+
+    /**
+     * Build query from conditions of a specified json conditions.
+     */
+    public function getQueryConditionsResults(array $conditions)
+    {
+        $conditionItems = Arr::get($conditions, 'conditions', []);
+        $storeIdCondtionItem = collect($conditionItems)->filter(function ($item) {
+            return Arr::get($item, 'field', '') === 'store_id';
+        })->first();
+        $storeIds = explode(',', Arr::get($storeIdCondtionItem, 'value', ''));
+
+        return $this->buildQueryAndExecute($conditions, $storeIds);
+    }
+
+    /**
+     * Build and execute macro conditions query.
+     */
+    private function buildQueryAndExecute(array $conditions, array $storeIds): Collection
+    {
+        $table = Arr::get($conditions, 'table');
+        $operator = Arr::get($conditions, 'operator', 'and');
+        $conditionItems = Arr::get($conditions, 'conditions', []);
+
+        if (is_null($table)) {
+            return null;
+        }
+
+        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+            $relativeTables = Arr::get(
+                MacroConstant::LIST_RELATIVE_TABLE,
+                $table.'.'.MacroConstant::RELATIVE_TABLES
+            );
+
+            $columns = $this->getAllColumnOfTable($table)
+                ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                ->toArray();
+
+            $query = DB::table($table)
+                ->select('store_id', ...$columns)
+                ->whereIn('store_id', $storeIds);
+            if ($table == 'mq_accounting') {
+                $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
+            }
+
+            foreach ($relativeTables as $tableName => $relativeTable) {
+                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
+                        ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                        ->toArray();
+
+                $this->handleJoinRelation($query, $table, $relativeTable);
+
+                $query->addSelect($columnsRelativeTable);
+            }
+
+            foreach ($conditionItems as $conditionItem) {
+                $params = $this->handleWhereParams($conditionItem);
+
+                if (empty($params)) {
+                    continue;
+                }
+
+                $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
+
+                if ($operator == 'or') {
+                    $method = str($method)->title()->prepend('or')->toString();
+                }
+
+                $query->{$method}(...$params);
+            }
+
+            return $query->get();
+        }
+
+        return collect();
     }
 }

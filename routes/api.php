@@ -196,6 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/list-table', 'getListTable')->name('get-list-table');
             Route::get('/query-results/{macroConfiguration}', 'getQueryResults')->name('query-results');
             Route::post('/run/{macroConfiguration}', 'run')->name('run');
+            Route::post('/query-conditions-results', 'getQueryConditionsResults')->name('query-conditions-results');
 
             Route::prefix('macro-configuration')
                 ->group(function () {
