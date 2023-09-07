@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Constants\MacroConstant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,6 +31,8 @@ class MacroConfigurationResource extends JsonResource
             'time_conditions' => $this->time_conditions_decode,
             'macro_type' => $this->macro_type,
             'macro_type_display' => $this->macro_type_for_human,
+            'status' => $this->status,
+            'status_display' => MacroConstant::MACRO_STATES[$this->status],
             'created_by' => $this->whenLoaded('user'),
             'graph' => $this->whenLoaded('graph'),
         ];
