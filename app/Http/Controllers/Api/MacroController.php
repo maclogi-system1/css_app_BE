@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MacroConfigurationRequest;
 use App\Http\Resources\MacroConfigurationResource;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository;
+use App\Repositories\Contracts\PolicyRepository;
+use App\Repositories\Contracts\TaskRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 
 class MacroController extends Controller
 {
     public function __construct(
         protected MacroConfigurationRepository $macroConfigurationRepository,
+        protected PolicyRepository $policyRepository,
+        protected TaskRepository $taskRepository,
     ) {
     }
 
@@ -58,8 +64,14 @@ class MacroController extends Controller
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
+        $errors = $this->validationMultipleData($data);
+
+        if (! empty($errors)) {
+            return response()->json($errors, Response::HTTP_BAD_REQUEST);
+        }
 
         $macroConfiguration = $this->macroConfigurationRepository->create($data);
+
         if ($macroConfiguration) {
             $queryResult = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
             $jsonResponse = new MacroConfigurationResource($macroConfiguration);
@@ -85,6 +97,11 @@ class MacroController extends Controller
         $data = $request->validated() + [
             'updated_by' => $request->user()->id,
         ];
+        $errors = $this->validationMultipleData($data + ['macro_type' => $macroConfiguration->macro_type]);
+
+        if (! empty($errors)) {
+            return response()->json($errors, Response::HTTP_BAD_REQUEST);
+        }
 
         $macroConfiguration = $this->macroConfigurationRepository->update($data, $macroConfiguration);
 
@@ -93,6 +110,54 @@ class MacroController extends Controller
             : response()->json([
                 'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Handle multi-data validation by type.
+     */
+    private function validationMultipleData(array $data): array
+    {
+        $errors = [];
+        $numberFailures = 0;
+
+        $macroType = Arr::get($data, 'macro_type');
+
+        if ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
+            $policies = Arr::get($data, 'policies', []);
+
+            foreach ($policies as $index => $policy) {
+                $validated = $this->policyRepository->handleValidation(
+                    $policy + ['store_id' => Arr::get($data, 'store_ids')],
+                    $index
+                );
+
+                if (isset($validated['error'])) {
+                    $errors[] = $validated['error'];
+                    $numberFailures++;
+                }
+            }
+        } elseif ($macroType == MacroConstant::MACRO_TYPE_TASK_ISSUE) {
+            $tasks = Arr::get($data, 'tasks', []);
+
+            foreach ($tasks as $index => $task) {
+                $validated = $this->taskRepository->handleValidation($task, $index);
+
+                if (isset($validated['error'])) {
+                    $errors[] = $validated['error'];
+                    $numberFailures++;
+                }
+            }
+        }
+
+        if ($numberFailures) {
+            return [
+                'message' => 'There are a few failures.',
+                'number_of_failures' => $numberFailures,
+                'errors' => $errors,
+            ];
+        }
+
+        return [];
     }
 
     /**

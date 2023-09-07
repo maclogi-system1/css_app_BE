@@ -34,6 +34,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\ReportSearchRepository::class => \App\Repositories\APIs\ReportSearchRepository::class,
         \App\Repositories\Contracts\MacroGraphRepository::class => \App\Repositories\Eloquents\MacroGraphRepository::class,
         \App\Repositories\Contracts\AdsAnalysisRepository::class => \App\Repositories\APIs\AdsAnalysisRepository::class,
+        \App\Repositories\Contracts\MacroTemplateRepository::class => \App\Repositories\Eloquents\MacroTemplateRepository::class,
     ];
 
     /**

@@ -7,6 +7,7 @@ use App\Support\CronExpression;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
@@ -17,6 +18,7 @@ class MacroConfiguration extends Model
 
     protected $fillable = [
         'store_ids', 'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
+        'status',
     ];
 
     public function isOneTime(): bool
@@ -33,7 +35,14 @@ class MacroConfiguration extends Model
 
     public function getConditionsDecodeAttribute(): array
     {
-        return json_decode($this->conditions, true);
+        $condition = json_decode($this->conditions, true);
+        $conditions = collect(Arr::get($condition, 'conditions', []))
+            ->filter(fn ($item) => $item['field'] != 'store_id')
+            ->values()
+            ->toArray();
+        $condition['conditions'] = $conditions;
+
+        return $condition;
     }
 
     public function getTimeConditionsDecodeAttribute(): array
@@ -70,5 +79,10 @@ class MacroConfiguration extends Model
     public function graph(): HasOne
     {
         return $this->hasOne(MacroGraph::class);
+    }
+
+    public function templates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class);
     }
 }

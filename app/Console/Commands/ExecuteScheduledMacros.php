@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use Illuminate\Console\Command;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 
 class ExecuteScheduledMacros extends Command

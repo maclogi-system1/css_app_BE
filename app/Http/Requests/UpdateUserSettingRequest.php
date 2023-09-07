@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Models\UserSetting;
-use Illuminate\Validation\Rule;
 
 class UpdateUserSettingRequest extends FormRequest
 {
