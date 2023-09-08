@@ -104,6 +104,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $tableName,
                 Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
             );
+            if ($tableName === 'mq_accounting') {
+                $tables[$tableName]->push([
+                    'table' => 'mq_accounting',
+                    'column' => 'year_month',
+                    'type' => 'string'
+                ]);
+            }
         }
 
         return $tables;
