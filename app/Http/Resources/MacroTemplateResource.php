@@ -16,13 +16,6 @@ class MacroTemplateResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->resource->id,
-            'payload' => $this->resource->payload_decode,
-            'type' => $this->resource->type,
-            'type_display' => MacroConstant::MACRO_TYPES[$this->resource->type],
-            'status' => $this->resource->status,
-            'status_display' => MacroTemplate::STATES[$this->resource->status],
-        ];
+        return $this->resource->payload_decode;
     }
 }
