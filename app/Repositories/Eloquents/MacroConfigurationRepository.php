@@ -7,6 +7,7 @@ use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Contracts\MacroGraphRepository;
+use App\Repositories\Contracts\MacroTemplateRepository;
 use App\Repositories\Repository;
 use App\WebServices\MacroService;
 use App\WebServices\OSS\ShopService;
@@ -22,6 +23,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         protected MacroService $macroService,
         protected ShopService $shopService,
         protected MacroGraphRepository $macroGraphRepository,
+        protected MacroTemplateRepository $macroTemplateRepository,
     ) {
     }
 
@@ -100,7 +102,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
             $tables[$tableName] = $this->getAllColumnOfTableAndRelativeTable(
                 $tableName,
-                Arr::get($relativeTable, 'relative_tables')
+                Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
             );
         }
 
@@ -175,7 +177,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function find($id, array $columns = ['*']): ?MacroConfiguration
     {
-        $macroConfiguration = $this->queryBuilder()->with('graph')->where('id', $id)->first($columns);
+        $macroConfiguration = $this->queryBuilder()->with(['graph', 'templates'])->where('id', $id)->first($columns);
 
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
@@ -203,7 +205,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
 
-            if (Arr::has($data, 'graph')) {
+            if (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY
+                && Arr::has($data, 'graph')
+            ) {
                 $graphData = Arr::get($data, 'graph');
                 if (
                     ! empty(Arr::get($graphData, 'axis_x'))
@@ -213,6 +218,24 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ) {
                     $this->saveMacroGraph($macroConfiguration->id, $graphData);
                 }
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION
+                && Arr::has($data, 'simulation')
+            ) {
+                $this->macroTemplateRepository->create($macroConfiguration->id, [
+                    'type' => MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
+                    'payload' => Arr::get($data, 'simulation'),
+                ]);
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION
+                && Arr::has($data, 'policies')
+            ) {
+                $this->createPolicyTemplates($macroConfiguration->id, Arr::get($data, 'policies', []));
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_TASK_ISSUE
+                && Arr::has($data, 'tasks')
+            ) {
+                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
             }
 
             return $macroConfiguration;
@@ -230,12 +253,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
             unset($macroConfiguration->stores);
-            $macroConfiguration->fill($data);
+            $macroConfiguration->fill(Arr::except($data, 'macro_type'));
             $macroConfiguration->save();
 
             // Save graph configuration
             $hasGraphConfig = false;
-            if (Arr::has($data, 'graph')) {
+            if (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY
+                && Arr::has($data, 'graph')
+            ) {
                 $graphData = Arr::get($data, 'graph');
                 if (
                     ! empty(Arr::get($graphData, 'axis_x'))
@@ -246,6 +272,28 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $hasGraphConfig = true;
                     $this->saveMacroGraph($macroConfiguration->id, $graphData);
                 }
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION
+                && Arr::has($data, 'simulation')
+            ) {
+                $this->macroTemplateRepository->updateOrCreate([
+                    'macro_configuration_id' => $macroConfiguration->id,
+                ], [
+                    'type' => MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
+                    'payload' => Arr::get($data, 'simulation'),
+                ]);
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION
+                && Arr::has($data, 'policies')
+            ) {
+                $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
+                $this->createPolicyTemplates($macroConfiguration->id, Arr::get($data, 'policies', []));
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_TASK_ISSUE
+                && Arr::has($data, 'tasks')
+            ) {
+                $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
+                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
             }
 
             if (
@@ -257,6 +305,32 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             return $macroConfiguration->refresh();
         }, 'Update macroConfiguration');
+    }
+
+    /**
+     * Create a new list of policy templates for macro configuration.
+     */
+    public function createPolicyTemplates(int $macroConfigurationId, array $policies): void
+    {
+        foreach ($policies as $policy) {
+            $this->macroTemplateRepository->create($macroConfigurationId, [
+                'type' => MacroConstant::MACRO_TYPE_POLICY_REGISTRATION,
+                'payload' => $policy,
+            ]);
+        }
+    }
+
+    /**
+     * Create a new list of task templates for macro configuration.
+     */
+    public function createTaskTemplates(int $macroConfigurationId, array $tasks): void
+    {
+        foreach ($tasks as $task) {
+            $this->macroTemplateRepository->create($macroConfigurationId, [
+                'type' => MacroConstant::MACRO_TYPE_TASK_ISSUE,
+                'payload' => $task,
+            ]);
+        }
     }
 
     /**
@@ -391,23 +465,25 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         $operator = Arr::get($condition, 'operator');
+        $field = Arr::get($condition, 'field');
         $value = Arr::get($condition, 'value');
         $value = match ($operator) {
             'in' => explode(',', $value),
             'like' => '%'.$value.'%',
+            'not_like' => '%'.$value.'%',
             default => $value
         };
 
         if ($operator == 'in') {
             return [
-                Arr::get($condition, 'field'),
+                $field,
                 $value,
             ];
         }
 
         return [
-            Arr::get($condition, 'field'),
-            Arr::get($condition, 'operator'),
+            $field,
+            str_replace('_', ' ', $operator),
             $value,
         ];
     }
@@ -447,16 +523,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $newValue,
             ];
         } elseif ($value == 'from_today') {
+            $direction = $dateCondition['direction'] == 'forward' ? '<=' : '>=';
+
             $newValue = match ($dateCondition['time_range']) {
                 'day' => now(),
-                'week' => now()->nextWeekendDay(),
-                'month' => now()->endOfMonth(),
-                'year' => now()->endOfYear(),
+                'week' => $direction == '<=' ? now()->startOfWeek() : now()->endOfWeek(),
+                'month' => $direction == '<=' ? now()->startOfMonth() : now()->endOfMonth(),
+                'year' => $direction == '<=' ? now()->startOfYear() : now()->endOfYear(),
             };
 
             return [
                 Arr::get($condition, 'field'),
-                $dateCondition['direction'] == 'forward' ? '<=' : '>=',
+                $direction,
                 $newValue,
             ];
         }
@@ -684,7 +762,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     private function buildQueryAndExecute(array $conditions, array $storeIds): Collection
     {
         $table = Arr::get($conditions, 'table');
-        $operator = Arr::get($conditions, 'operator', 'and');
+        $boolean = Arr::get($conditions, 'operator', 'and');
         $conditionItems = Arr::get($conditions, 'conditions', []);
 
         if (is_null($table)) {
@@ -726,10 +804,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 }
 
                 $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
-
-                if ($operator == 'or') {
-                    $method = str($method)->title()->prepend('or')->toString();
-                }
+                $params[] = $boolean; // and|or
 
                 $query->{$method}(...$params);
             }
