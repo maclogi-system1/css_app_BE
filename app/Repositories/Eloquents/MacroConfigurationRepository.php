@@ -202,6 +202,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
+            $data['status'] = MacroConstant::MACRO_STATUS_NOT_READY;
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
 
@@ -238,7 +239,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
             }
 
-            return $macroConfiguration;
+            return $macroConfiguration->refresh();
         }, 'Create macroConfiguration');
     }
 

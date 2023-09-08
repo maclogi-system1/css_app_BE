@@ -73,16 +73,8 @@ class MacroController extends Controller
 
         $macroConfiguration = $this->macroConfigurationRepository->create($data);
 
-        if ($macroConfiguration) {
-            $queryResult = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
-            $jsonResponse = new MacroConfigurationResource($macroConfiguration);
-            $jsonResponse->additional([
-                'query_results' => $queryResult->toArray(),
-            ]);
-        }
-
         return $macroConfiguration
-            ? $jsonResponse
+            ? new MacroConfigurationResource($macroConfiguration)
             : response()->json([
                 'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
