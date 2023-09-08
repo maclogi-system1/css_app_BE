@@ -186,7 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('get-list-by-store');
         });
 
-    Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
+    Route::get('/shop-users/options/{storeId?}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
 
     // Implement for macros
     Route::prefix('macros')

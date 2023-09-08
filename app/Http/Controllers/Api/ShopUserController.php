@@ -17,7 +17,7 @@ class ShopUserController extends Controller
     /**
      * Get a list of the user by store id.
      */
-    public function getOptions(string $storeId): JsonResponse
+    public function getOptions(?string $storeId = null): JsonResponse
     {
         $result = $this->userService->getShopUsers(['store_id' => $storeId]);
         $data = $result->get('data');
