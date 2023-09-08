@@ -62,7 +62,7 @@ return [
                 'schedule' => '/single-jobs/schedule',
             ],
             'users' => [
-                'shop_users' => '/users/shop-users',
+                'shop_users' => '/users/oss',
             ],
             'schema' => [
                 'get_columns' => '/schema/column',
