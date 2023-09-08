@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
+use App\Repositories\Contracts\PolicyRepository;
+use App\Repositories\Contracts\TaskRepository;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -59,7 +61,7 @@ class ExecuteScheduledMacros extends Command
     {
         MacroConfiguration::where('status', MacroConstant::MACRO_STATUS_NOT_READY)
             ->whereIn('macro_type', MacroConstant::MACRO_SCHEDULABLE_TYPES)
-            ->whereRaw("JSON_EXTRACT(time_conditions, '$.applicable_date') >= '".now()->format('Y-m-d')."'")
+            ->whereRaw("JSON_EXTRACT(time_conditions, '$.applicable_date') <= '".now()->format('Y-m-d')."'")
             ->update([
                 'status' => MacroConstant::MACRO_STATUS_READY,
             ]);
@@ -104,18 +106,66 @@ class ExecuteScheduledMacros extends Command
             case MacroConstant::MACRO_TYPE_POLICY_REGISTRATION:
                 $this->createPolicy($macro);
                 break;
+            case MacroConstant::MACRO_TYPE_TASK_ISSUE:
+                $this->createTask($macro);
+                break;
         }
 
         $this->info($macro->name.' is executed.');
     }
 
-    private function createSimulationPolicy(MacroConfiguration $macro)
+    private function createSimulationPolicy(MacroConfiguration $macro): void
     {
-        //
+        $templates = $macro->simulationTemplates;
+        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
+
+        foreach ($templates as $template) {
+            $data = $template->payload_decode;
+
+            foreach ($storeIds as $storeId) {
+                $this->policyRepository()->createSimulation($data, $storeId);
+            }
+        }
     }
 
-    private function createPolicy(MacroConfiguration $macro)
+    private function createPolicy(MacroConfiguration $macro): void
     {
-        //
+        $templates = $macro->policyTemplates;
+        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
+
+        foreach ($templates as $template) {
+            $data = $template->payload_decode;
+
+            foreach ($storeIds as $index => $storeId) {
+                $this->policyRepository()->create(
+                    $this->policyRepository()->handleValidation($data + ['store_id' => $storeId], $index),
+                    $storeId
+                );
+            }
+        }
+    }
+
+    private function createTask(MacroConfiguration $macro): void
+    {
+        $templates = $macro->taskTemplates;
+        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
+
+        foreach ($templates as $template) {
+            $data = $template->payload_decode;
+
+            foreach ($storeIds as $storeId) {
+                $this->taskRepository()->create($data, $storeId);
+            }
+        }
+    }
+
+    private function policyRepository(): PolicyRepository
+    {
+        return app(PolicyRepository::class);
+    }
+
+    private function taskRepository(): TaskRepository
+    {
+        return app(TaskRepository::class);
     }
 }

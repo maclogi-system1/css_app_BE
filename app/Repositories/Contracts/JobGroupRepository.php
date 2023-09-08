@@ -20,4 +20,24 @@ interface JobGroupRepository extends Repository
      * Handle update start time and end time for a list of the job group.
      */
     public function updateTime(array $jobGroupData): Collection;
+
+    /**
+     * Handle create a new job group and single job.
+     */
+    public function create(array $data);
+
+    /**
+     * Handle update a specified job group and single job by job group code.
+     */
+    public function updateByCode(array $data, string $code);
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateCreate(array $data): array;
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateUpdate(array $data): array;
 }

@@ -88,4 +88,9 @@ class TaskRepository extends Repository implements TaskRepositoryContract
 
         return $rules;
     }
+
+    public function create(array $data)
+    {
+        # code...
+    }
 }

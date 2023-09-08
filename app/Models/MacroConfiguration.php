@@ -85,4 +85,19 @@ class MacroConfiguration extends Model
     {
         return $this->hasMany(MacroTemplate::class);
     }
+
+    public function simulationTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION);
+    }
+
+    public function policyTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_POLICY_REGISTRATION);
+    }
+
+    public function taskTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_TASK_ISSUE);
+    }
 }
