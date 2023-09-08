@@ -667,13 +667,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Build query from conditions of a specified json conditions.
      */
-    public function getQueryConditionsResults(array $conditions)
+    public function getQueryConditionsResults(array $requestConditions)
     {
-        $conditionItems = Arr::get($conditions, 'conditions', []);
-        $storeIdCondtionItem = collect($conditionItems)->filter(function ($item) {
-            return Arr::get($item, 'field', '') === 'store_id';
-        })->first();
-        $storeIds = explode(',', Arr::get($storeIdCondtionItem, 'value', ''));
+        $conditions = Arr::get($requestConditions, 'conditions');
+        $storeIdsStr = Arr::get($requestConditions, 'store_ids', '');
+        $storeIds = explode(',', $storeIdsStr);
 
         return $this->buildQueryAndExecute($conditions, $storeIds);
     }
