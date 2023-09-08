@@ -757,7 +757,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Build and execute macro conditions query.
      */
-    private function buildQueryAndExecute(array $conditions, array $storeIds): Collection
+    private function buildQueryAndExecute(array $conditions, array $storeIds): ?Collection
     {
         $table = Arr::get($conditions, 'table');
         $boolean = Arr::get($conditions, 'operator', 'and');

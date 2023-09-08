@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetQueryConditionsResultsRequest;
 use App\Http\Requests\MacroConfigurationRequest;
 use App\Http\Resources\MacroConfigurationResource;
 use App\Models\MacroConfiguration;
@@ -220,7 +221,7 @@ class MacroController extends Controller
     /**
      * Get the query results obtained from the json conditions.
      */
-    public function getQueryConditionsResults(Request $request)
+    public function getQueryConditionsResults(GetQueryConditionsResultsRequest $request)
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions);
