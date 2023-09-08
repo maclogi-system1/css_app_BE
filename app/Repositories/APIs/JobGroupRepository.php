@@ -5,6 +5,7 @@ namespace App\Repositories\APIs;
 use App\Repositories\Contracts\JobGroupRepository as JobGroupRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\OSS\JobGroupService;
+use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -82,5 +83,61 @@ class JobGroupRepository extends Repository implements JobGroupRepositoryContrac
         return $this->jobGroupService->updateTime([
             'job_groups' => $data,
         ]);
+    }
+
+    /**
+     * Handle create a new job group and single job.
+     */
+    public function create(array $data)
+    {
+        $result = $this->jobGroupService->create($data);
+
+        if (! $result->get('success')) {
+            throw new Exception('Insert job_group failed. '.$result->get('data')->get('message'));
+        }
+
+        $singleJobs = $result->get('data')->get('single_jobs');
+        $jobGroupId = Arr::get(Arr::first($singleJobs), 'job_group_id');
+
+        return [
+            'job_group_id' => $jobGroupId,
+            'single_jobs' => $singleJobs,
+        ];
+    }
+
+    /**
+     * Handle update a specified job group and single job by job group code.
+     */
+    public function updateByCode(array $data, string $code)
+    {
+        $result = $this->jobGroupService->update($data, $code);
+
+        if (! $result->get('success')) {
+            throw new Exception('Update job_group failed. '.$result->get('data')->get('message'));
+        }
+
+        return $result->get('data');
+    }
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateCreate(array $data): array
+    {
+        $validation = $this->jobGroupService->validateCreate($data);
+        $errorMessages = Arr::get($validation, 'data.errors.messages', []);
+
+        return $errorMessages;
+    }
+
+    /**
+     * Handle validation form request.
+     */
+    public function validateUpdate(array $data): array
+    {
+        $validation = $this->jobGroupService->validateUpdate($data);
+        $errorMessages = Arr::get($validation, 'data.errors.messages', []);
+
+        return $errorMessages;
     }
 }

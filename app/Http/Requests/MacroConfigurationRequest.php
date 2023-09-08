@@ -82,11 +82,11 @@ class MacroConfigurationRequest extends FormRequest
 
         $rules['simulation'] = ['nullable', 'array'];
         $rules['simulation.name'] = [$simulationRequireIf, 'max:100', 'string'];
-        $rules['simulation.simulation_start_date'] = [$simulationRequireIf, 'date_format:Y/m/d', new DateValid()];
+        $rules['simulation.simulation_start_date'] = [$simulationRequireIf, 'date_format:Y-m-d', new DateValid()];
         $rules['simulation.simulation_start_time'] = [$simulationRequireIf, 'date_format:H:i'];
         $rules['simulation.simulation_end_date'] = [
             $simulationRequireIf,
-            'date_format:Y/m/d',
+            'date_format:Y-m-d',
             new DateValid(),
             new CompareDateValid($simulationEndDateTime, 'gt', $simulationStartDateTime),
         ];
