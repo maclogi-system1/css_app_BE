@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Constants\MacroConstant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 
 class MacroConfigurationResource extends JsonResource
 {
@@ -54,7 +55,7 @@ class MacroConfigurationResource extends JsonResource
             'macro_type' => $this->macro_type,
             'macro_type_display' => $this->macro_type_for_human,
             'status' => $this->status,
-            'status_display' => MacroConstant::MACRO_STATES[$this->status],
+            'status_display' => Arr::get(MacroConstant::MACRO_STATES, $this->status),
             'created_by' => $this->whenLoaded('user'),
         ] + $additionalField;
     }
