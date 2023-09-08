@@ -5,11 +5,13 @@ namespace App\Repositories\APIs;
 use App\Repositories\Contracts\ShopRepository as ShopRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\OSS\ShopService;
+use App\WebServices\OSS\UserService;
 
 class ShopRepository extends Repository implements ShopRepositoryContract
 {
     public function __construct(
-        private ShopService $shopService
+        private ShopService $shopService,
+        private UserService $userService
     ) {
     }
 
@@ -44,5 +46,17 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     public function find($storeId)
     {
         return $this->shopService->find($storeId);
+    }
+
+    /**
+     * Get a list of the user in a shop.
+     */
+    public function getUsers(array $filters = [])
+    {
+        $result = $this->userService->getShopUsers($filters);
+        $data = $result->get('data');
+        $data['users'] = array_map(fn ($user) => ['label' => $user['name'], 'value' => $user['id']], $data['users']);
+
+        return $data;
     }
 }
