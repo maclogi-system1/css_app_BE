@@ -682,9 +682,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             if (! is_null($macroGraphItem)) {
                 $axisX = $macroGraphItem->axis_x;
-                $axisY = $macroGraphItem->axis_y;
                 $axisXCol = explode('.', $axisX)[1];
-                $axisYCol = explode('.', $axisY)[1];
+
+                $axisYArr = explode(',', $macroGraphItem->axis_y);
+                $axisY = collect($axisYArr)->map(function ($item) {
+                    return [
+                        'field' => $item,
+                        'type' => $this->getChartDataType($item),
+                    ];
+                });
 
                 $macroConfiguration = $this->queryBuilder()->where('id', $macroGraphItem->macro_configuration_id)->first();
                 $dataResult = $this->getQueryResults($macroConfiguration);
@@ -696,14 +702,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                         fn ($key) => $key === $axisXCol,
                         ARRAY_FILTER_USE_KEY
                     );
-                    $dataY = array_filter(
-                        $itemAttributes,
-                        fn ($key) => $key === $axisYCol,
-                        ARRAY_FILTER_USE_KEY
-                    );
+                    $dataY = [];
+                    foreach ($axisY as $axisYItem) {
+                        $axisYItemCol = explode('.', Arr::get($axisYItem, 'field'))[1];
+                        $dataY[] = array_filter(
+                            $itemAttributes,
+                            fn ($key) => $key === $axisYItemCol,
+                            ARRAY_FILTER_USE_KEY
+                        );
+                    }
                     $graphData[] = [
                         'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
-                        'axis_y' => Arr::get($dataY, $axisYCol, ''),
+                        'axis_y' => $dataY,
                     ];
                 }
 
@@ -714,10 +724,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                         'field' => $axisX,
                         'type' => $this->getChartDataType($axisX),
                     ],
-                    'axis_y' => [
-                        'field' => $axisY,
-                        'type' => $this->getChartDataType($axisY),
-                    ],
+                    'axis_y' => $axisY,
                     'data' => $graphData,
                 ];
             } else {
