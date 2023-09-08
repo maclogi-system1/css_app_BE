@@ -27,19 +27,22 @@ class MacroConfigurationResource extends JsonResource
         if ($this->resource->macro_type == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY) {
             $additionalField['graph'] = $this->whenLoaded('graph');
         } elseif (in_array($this->resource->macro_type, [
-            MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
             MacroConstant::MACRO_TYPE_POLICY_REGISTRATION,
             MacroConstant::MACRO_TYPE_TASK_ISSUE,
         ])) {
             $templateKey = match ($this->resource->macro_type) {
-                MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION => 'simulation',
                 MacroConstant::MACRO_TYPE_POLICY_REGISTRATION => 'policies',
                 MacroConstant::MACRO_TYPE_TASK_ISSUE => 'tasks',
             };
             $additionalField[$templateKey] = $this->whenLoaded(
                 'templates',
+                fn () => MacroTemplateResource::collection($this->resource->templates),
+            );
+        } elseif ($this->resource->macro_type == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION) {
+            $additionalField['simulation'] = $this->whenLoaded(
+                'templates',
                 function () {
-                    return MacroTemplateResource::collection($this->resource->templates);
+                    return new MacroTemplateResource($this->resource->templates->first());
                 }
             );
         }
