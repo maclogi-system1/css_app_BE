@@ -216,7 +216,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return $this->singleJobRepository->getOptions()->get('data')->merge([
+        return $this->singleJobRepository->getOptions()->merge([
             'control_actions' => $controlActions,
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
