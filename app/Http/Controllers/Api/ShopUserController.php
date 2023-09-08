@@ -3,29 +3,29 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\WebServices\OSS\UserService;
+use App\Repositories\Contracts\ShopRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 
 class ShopUserController extends Controller
 {
     public function __construct(
-        protected UserService $userService,
+        protected ShopRepository $shopRepository,
     ) {
     }
 
     /**
      * Get a list of the user by store id.
      */
-    public function getOptions(?string $storeId = null): JsonResponse
+    public function getOptions(Request $request, ?string $storeId = null): JsonResponse
     {
-        $result = $this->userService->getShopUsers(['store_id' => $storeId]);
-        $data = $result->get('data');
-        $data['users'] = array_map(fn ($user) => ['label' => $user['name'], 'value' => $user['id']], $data['users']);
+        $storeId ??= Arr::get($request->query('filters'), 'store_id');
 
         return response()->json(
-            $data,
-            $result->get('status', Response::HTTP_OK)
+            $this->shopRepository->getUsers(['store_id' => $storeId, 'per_page' => -1]),
+            Response::HTTP_OK
         );
     }
 }
