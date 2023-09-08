@@ -712,11 +712,14 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $dataY = [];
                     foreach ($axisY as $axisYItem) {
                         $axisYItemCol = explode('.', Arr::get($axisYItem, 'field'))[1];
-                        $dataY[] = array_filter(
+                        $dataYVal = array_filter(
                             $itemAttributes,
                             fn ($key) => $key === $axisYItemCol,
                             ARRAY_FILTER_USE_KEY
                         );
+                        $dataY[] = [
+                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol)
+                        ];
                     }
                     $graphData[] = [
                         'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
