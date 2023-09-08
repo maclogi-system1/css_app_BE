@@ -59,7 +59,13 @@ class SingleJobRepository extends Repository implements SingleJobRepositoryContr
      */
     public function getOptions(): ?Collection
     {
-        return $this->singleJobService->getOptions()->get('data');
+        $result = $this->singleJobService->getOptions();
+
+        if ($result->get('success')) {
+            return $this->singleJobService->getOptions()->get('data');
+        }
+
+        return collect();
     }
 
     /**
