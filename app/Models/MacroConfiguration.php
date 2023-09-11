@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Constants\MacroConstant;
 use App\Support\CronExpression;
+use App\Support\Traits\ColumnTypeHandler;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Support\Arr;
 
 class MacroConfiguration extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, ColumnTypeHandler;
 
     protected $fillable = [
         'store_ids', 'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
@@ -38,7 +39,12 @@ class MacroConfiguration extends Model
         $condition = json_decode($this->conditions, true);
         $conditions = collect(Arr::get($condition, 'conditions', []))
             ->filter(fn ($item) => $item['field'] != 'store_id')
-            ->values()
+            ->map(function ($item) {
+                $item['type'] = $this->getColumnDataType(Arr::get($item, 'field'));
+                $item['label'] = trans(Arr::get($item, 'field'));
+
+                return $item;
+            })->values()
             ->toArray();
         $condition['conditions'] = $conditions;
 
