@@ -20,4 +20,14 @@ interface ReportSearchRepository extends Repository
      * Get detail keywords data report search  by product from AI.
      */
     public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection;
+
+    /**
+     * Get chart data organic inflows report search keywords from AI.
+     */
+    public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection;
+
+    /**
+     * Get chart data inflows via specific words report search from AI.
+     */
+    public function getDataChartInflowsViaSpecificWords(string $storeId, array $filters = []): Collection;
 }

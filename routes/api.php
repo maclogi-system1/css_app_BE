@@ -227,6 +227,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
                 ->name('detail-report-by-product');
             Route::get('/chart-macro-graph/{storeId}', 'chartMacroGraph')->name('chart-macro-graph');
+            Route::get('/chart-organic-inflows/{storeId}', 'chartOrganicInflows')->name('chart-organic-inflows');
+            Route::get('/chart-inflows-via-specific-words/{storeId}', 'chartInflowsViaSpecificWords')
+                ->name('chart-inflows-via-specific-words');
 
             Route::prefix('ads-analysis')
             ->name('ads-analysis.')
@@ -235,6 +238,24 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/detail-ads-conversion/{storeId}', 'detailAdsConversion')->name('detail-ads-conversion');
                 Route::get('/list-product-by-roas/{storeId}', 'getListProductByRoas')->name('list-product-by-roas');
                 Route::get('/chart-sales-and-access/{storeId}', 'chartSalesAndAccess')->name('chart-sales-and-access');
+            });
+
+            Route::prefix('access-analysis')
+            ->name('access-analysis.')
+            ->group(function () {
+                Route::get('/summary-table/{storeId}', 'tableAccessAnalysis')->name('summary-table');
+                Route::get('/chart-new-user-access/{storeId}', 'chartNewUserAccess')->name('chart-new-user-access');
+                Route::get('/chart-exist-user-access/{storeId}', 'chartExistUserAccess')
+                    ->name('chart-exist-user-access');
+            });
+
+            Route::prefix('conversion-rate-analysis')
+            ->name('conversion-rate-analysis.')
+            ->group(function () {
+                Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
+                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('chart-comparison');
+                Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
+                    ->name('chart-relation-PV-and-conversion-rate');
             });
         });
 });

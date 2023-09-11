@@ -28,12 +28,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartReportSearch(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
 
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
@@ -47,12 +41,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataTableReportSearch(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
 
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
@@ -66,17 +54,36 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
 
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
 
         return $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters);
+    }
+
+    /**
+     * Get chart data organic inflows report search keywords from AI.
+     */
+    public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection
+    {
+
+        if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+
+        return $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters);
+    }
+
+    /**
+     * Get chart data inflows via specific words report search from AI.
+     */
+    public function getDataChartInflowsViaSpecificWords(string $storeId, array $filters = []): Collection
+    {
+        if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+
+        return $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters);
     }
 }
