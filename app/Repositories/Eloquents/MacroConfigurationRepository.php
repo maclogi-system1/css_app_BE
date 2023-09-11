@@ -696,6 +696,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     return [
                         'field' => $item,
                         'type' => $this->getChartDataType($item),
+                        'label' => trans($item)
                     ];
                 });
 
@@ -733,6 +734,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'axis_x' => [
                         'field' => $axisX,
                         'type' => $this->getChartDataType($axisX),
+                        'label' => trans($axisX)
                     ],
                     'axis_y' => $axisY,
                     'data' => $graphData,

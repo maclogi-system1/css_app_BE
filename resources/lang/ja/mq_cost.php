@@ -1,0 +1,28 @@
+<?php
+  
+return [
+    'coupon_points_cost' => '販促費(クーポン・ポイント・アフィリエイト）',
+    'coupon_points_cost_rate' => '販促費率',
+    'ad_cost' => '広告費合計',
+    'ad_cpc_cost' => '運用型広告',
+    'ad_season_cost' => 'シーズナル広告',
+    'ad_event_cost' => 'イベント広告',
+    'ad_tda_cost' => 'TDA広告',
+    'ad_cost_rate' => '広告費率',
+    'cost_price' => '原価',
+    'cost_price_rate' => '原価率',
+    'postage' => '送料',
+    'postage_rate' => '送料費率',
+    'commision' => '手数料',
+    'commision_rate' => '手数料率',
+    'variable_cost_sum' => '変動費合計',
+    'gross_profit' => '粗利益額',
+    'gross_profit_rate' => '粗利益率',
+    'management_agency_fee' => '運営代行費',
+    'reserve1' => '予備１',
+    'reserve2' => '予備２',
+    'management_agency_fee_rate' => '比率',
+    'cost_sum' => '合計',
+    'profit' => '損益',
+    'sum_profit' => '損益累計',
+];
