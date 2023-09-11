@@ -37,4 +37,11 @@ class MacroService extends Service
             ['table_name' => $tableName]
         ));
     }
+
+    public function getListTableOSS()
+    {
+        return $this->toResponse(Http::oss()->get(
+            OSSService::getApiUri('schema.get_list_table')
+        ));
+    }
 }
