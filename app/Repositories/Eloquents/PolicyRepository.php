@@ -6,14 +6,13 @@ use App\Jobs\RunPolicySimulation;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
+use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
+use App\Repositories\Contracts\SingleJobRepository;
 use App\Repositories\Repository;
 use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
-use App\WebServices\OSS\JobGroupService;
-use App\WebServices\OSS\SingleJobService;
-use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
@@ -27,8 +26,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 {
     public function __construct(
         protected PolicyR2Service $policyR2Service,
-        protected JobGroupService $jobGroupService,
-        protected SingleJobService $singleJobService,
+        protected SingleJobRepository $singleJobRepository,
+        protected JobGroupRepository $jobGroupRepository,
     ) {
     }
 
@@ -64,8 +63,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         }
 
-        $singleJobs = $this->singleJobService->getList([
-            'store_id' => $storeId,
+        $singleJobs = $this->singleJobRepository->getListByStore($storeId, [
             'filters' => [
                 'single_jobs.id' => implode(',', $singleJobIds),
             ],
@@ -117,7 +115,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
     {
-        $result = $this->singleJobService->getList($filters + ['store_id' => $storeId, 'per_page' => -1]);
+        $result = $this->singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
         if ($result->get('success')) {
@@ -180,10 +178,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         if (! is_null($policy->single_job_id)) {
-            $singleJob = $this->singleJobService->find($policy->single_job_id, ['store_id' => $policy->store_id]);
+            $singleJob = $this->singleJobRepository->find(
+                id: $policy->single_job_id,
+                filters: ['store_id' => $policy->store_id]
+            );
 
-            if ($singleJob->get('success')) {
-                $policy->single_job = $singleJob->get('data')->get('data');
+            if ($singleJob) {
+                $policy->single_job = $singleJob;
             }
         }
 
@@ -215,7 +216,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return $this->singleJobService->getOptions()->get('data')->merge([
+        return $this->singleJobRepository->getOptions()->merge([
             'control_actions' => $controlActions,
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
@@ -236,7 +237,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
 
             if (! is_null($policy->single_job_id)) {
-                $this->singleJobService->delete($policy->single_job_id);
+                $this->singleJobRepository->delete($policy->single_job_id);
             }
 
             $policy->delete();
@@ -273,12 +274,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $validator = Validator::make($data, $this->getValidationRules($data));
 
         if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION) {
-            $ossValidation = $this->jobGroupService->validateUpdate($this->getDataForJobGroup($data));
+            $ossErrorMessages = $this->jobGroupRepository->validateUpdate($this->getDataForJobGroup($data));
         } else {
-            $ossValidation = $this->jobGroupService->validateCreate($this->getDataForJobGroup($data));
+            $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
         }
-
-        $ossErrorMessages = Arr::get($ossValidation, 'data.errors.messages', []);
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -409,15 +408,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     ->update(['policy_id' => $policy->id]);
             }
 
-            $result = $this->jobGroupService->create($data['job_group']);
-
-            if (! $result->get('success')) {
-                throw new Exception('Insert job_group failed. '.$result->get('data')->get('message'));
-            }
-
-            $singleJobs = $result->get('data')->get('single_jobs');
-            $singleJob = reset($singleJobs);
-            $jobGroupId = $singleJob['job_group_id'];
+            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
+            $singleJobs = Arr::get($jobGroup, 'single_jobs');
+            $singleJob = Arr::first($singleJobs);
+            $jobGroupId = Arr::get($jobGroup, 'job_group_id');
 
             $policy->job_group_id = $jobGroupId;
             $policy->single_job_id = $singleJob['id'];
@@ -477,11 +471,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $policy->save();
 
             $jobGroupData = $data['job_group'];
-            $result = $this->jobGroupService->update($jobGroupData, $jobGroupData['job_group_code']);
-
-            if (! $result->get('success')) {
-                throw new Exception('Update job_group failed. '.$result->get('data')->get('message'));
-            }
+            $this->jobGroupRepository->updateByCode($jobGroupData, $jobGroupData['job_group_code']);
 
             return true;
         }, 'Update policy');
@@ -598,7 +588,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             }
         }
 
-        $result = $this->singleJobService->getSchedule($filters + [
+        $result = $this->singleJobRepository->getSchedule($filters + [
             'store_id' => $storeId,
             'job_group_ids' => $jobGroupIds,
         ]);

@@ -186,7 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('get-list-by-store');
         });
 
-    Route::get('/shop-users/options/{storeId}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
+    Route::get('/shop-users/options/{storeId?}', [ShopUserController::class, 'getOptions'])->name('shop-users.options');
 
     // Implement for macros
     Route::prefix('macros')
@@ -196,6 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/list-table', 'getListTable')->name('get-list-table');
             Route::get('/query-results/{macroConfiguration}', 'getQueryResults')->name('query-results');
             Route::post('/run/{macroConfiguration}', 'run')->name('run');
+            Route::post('/query-conditions-results', 'getQueryConditionsResults')->name('query-conditions-results');
 
             Route::prefix('macro-configuration')
                 ->group(function () {
@@ -225,6 +226,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/table-report-search/{storeId}', 'tableReportSearch')->name('table-report-search');
             Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
                 ->name('detail-report-by-product');
+            Route::get('/chart-macro-graph/{storeId}', 'chartMacroGraph')->name('chart-macro-graph');
 
             Route::prefix('ads-analysis')
             ->name('ads-analysis.')

@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Constants\MacroConstant;
+use App\Models\MacroTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserSettingResource extends JsonResource
+class MacroTemplateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,6 +16,6 @@ class UserSettingResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return $this->resource->payload_decode;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\AdsAnalysisRepository;
+use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
 use App\Repositories\Contracts\UserAccessRepository;
@@ -19,7 +20,8 @@ class KpiController extends Controller
         protected UserTrendRepository $userTrendRepository,
         protected UserAccessRepository $userAccessRepository,
         protected ReportSearchRepository $reportSearchRepository,
-        protected AdsAnalysisRepository $adsAnalysisRepository
+        protected AdsAnalysisRepository $adsAnalysisRepository,
+        protected MacroConfigurationRepository $macroConfigurationRepository
     ) {
     }
 
@@ -164,5 +166,15 @@ class KpiController extends Controller
         $result = $this->adsAnalysisRepository->getDataChartSalesAndAccess($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /*
+     * Get detail data chart sales and access impact from AI.
+     */
+    public function chartMacroGraph(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->macroConfigurationRepository->getDataChartMacroGraph($storeId);
+
+        return response()->json($result);
     }
 }

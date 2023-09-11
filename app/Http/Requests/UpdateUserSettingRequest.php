@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Models\UserSetting;
-use Illuminate\Validation\Rule;
 
 class UpdateUserSettingRequest extends FormRequest
 {
@@ -22,9 +21,6 @@ class UpdateUserSettingRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            UserSetting::RECEIVATION_KEY => ['nullable', Rule::in(array_keys(UserSetting::RECEIVING_STATES))],
-            UserSetting::ONESIGNAL_USER_ID_KEY => ['nullable'],
-        ];
+        return UserSetting::VALIDATION_RULES;
     }
 }

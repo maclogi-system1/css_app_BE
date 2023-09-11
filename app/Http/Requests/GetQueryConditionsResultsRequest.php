@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
-
-class UpdateUserProfileRequest extends FormRequest
+class GetQueryConditionsResultsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +20,11 @@ class UpdateUserProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($this->user()->id)],
-            'chatwork_account_id' => ['nullable', 'max:10'],
-            'team_id' => ['nullable'],
+            'store_ids' => ['required', 'string'],
+            'conditions' => ['required', 'array'],
+            'conditions.table' => ['required', 'string'],
+            'conditions.operator' => ['required', 'string'],
+            'conditions.conditions' => ['required', 'array'],
         ];
     }
 }

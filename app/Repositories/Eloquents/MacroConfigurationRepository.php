@@ -7,9 +7,11 @@ use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Contracts\MacroGraphRepository;
+use App\Repositories\Contracts\MacroTemplateRepository;
 use App\Repositories\Repository;
 use App\WebServices\MacroService;
 use App\WebServices\OSS\ShopService;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         protected MacroService $macroService,
         protected ShopService $shopService,
         protected MacroGraphRepository $macroGraphRepository,
+        protected MacroTemplateRepository $macroTemplateRepository,
     ) {
     }
 
@@ -99,8 +102,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
             $tables[$tableName] = $this->getAllColumnOfTableAndRelativeTable(
                 $tableName,
-                Arr::get($relativeTable, 'relative_tables')
+                Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
             );
+            if ($tableName === 'mq_accounting') {
+                $tables[$tableName]->push([
+                    'table' => 'mq_accounting',
+                    'column' => 'year_month',
+                    'type' => 'string'
+                ]);
+            }
         }
 
         return $tables;
@@ -174,7 +184,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function find($id, array $columns = ['*']): ?MacroConfiguration
     {
-        $macroConfiguration = $this->queryBuilder()->with('graph')->where('id', $id)->first($columns);
+        $macroConfiguration = $this->queryBuilder()->with(['graph', 'templates'])->where('id', $id)->first($columns);
 
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
@@ -196,18 +206,17 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         return $this->handleSafely(function () use ($data) {
             $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
-            $data['conditions']['conditions'][] = [
-                'field' => 'store_id',
-                'operator' => 'in',
-                'value' => $storeIds,
-            ];
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
+            $data['status'] = MacroConstant::MACRO_STATUS_NOT_READY;
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
 
-            if (Arr::has($data, 'graph')) {
+            if (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY
+                && Arr::has($data, 'graph')
+            ) {
                 $graphData = Arr::get($data, 'graph');
                 if (
                     ! empty(Arr::get($graphData, 'axis_x'))
@@ -217,9 +226,27 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ) {
                     $this->saveMacroGraph($macroConfiguration->id, $graphData);
                 }
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION
+                && Arr::has($data, 'simulation')
+            ) {
+                $this->macroTemplateRepository->create($macroConfiguration->id, [
+                    'type' => MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
+                    'payload' => Arr::get($data, 'simulation'),
+                ]);
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION
+                && Arr::has($data, 'policies')
+            ) {
+                $this->createPolicyTemplates($macroConfiguration->id, Arr::get($data, 'policies', []));
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_TASK_ISSUE
+                && Arr::has($data, 'tasks')
+            ) {
+                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
             }
 
-            return $macroConfiguration;
+            return $macroConfiguration->refresh();
         }, 'Create macroConfiguration');
     }
 
@@ -230,21 +257,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         return $this->handleSafely(function () use ($data, $macroConfiguration) {
             $storeIds = preg_replace('/ *\, */', ',', Arr::get($data, 'store_ids'));
-            $data['conditions']['conditions'][] = [
-                'field' => 'store_id',
-                'operator' => 'in',
-                'value' => $storeIds,
-            ];
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
             unset($macroConfiguration->stores);
-            $macroConfiguration->fill($data);
+            $macroConfiguration->fill(Arr::except($data, 'macro_type'));
             $macroConfiguration->save();
 
             // Save graph configuration
             $hasGraphConfig = false;
-            if (Arr::has($data, 'graph')) {
+            if (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY
+                && Arr::has($data, 'graph')
+            ) {
                 $graphData = Arr::get($data, 'graph');
                 if (
                     ! empty(Arr::get($graphData, 'axis_x'))
@@ -255,6 +280,28 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $hasGraphConfig = true;
                     $this->saveMacroGraph($macroConfiguration->id, $graphData);
                 }
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION
+                && Arr::has($data, 'simulation')
+            ) {
+                $this->macroTemplateRepository->updateOrCreate([
+                    'macro_configuration_id' => $macroConfiguration->id,
+                ], [
+                    'type' => MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION,
+                    'payload' => Arr::get($data, 'simulation'),
+                ]);
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION
+                && Arr::has($data, 'policies')
+            ) {
+                $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
+                $this->createPolicyTemplates($macroConfiguration->id, Arr::get($data, 'policies', []));
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_TASK_ISSUE
+                && Arr::has($data, 'tasks')
+            ) {
+                $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
+                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
             }
 
             if (
@@ -266,6 +313,32 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             return $macroConfiguration->refresh();
         }, 'Update macroConfiguration');
+    }
+
+    /**
+     * Create a new list of policy templates for macro configuration.
+     */
+    public function createPolicyTemplates(int $macroConfigurationId, array $policies): void
+    {
+        foreach ($policies as $policy) {
+            $this->macroTemplateRepository->create($macroConfigurationId, [
+                'type' => MacroConstant::MACRO_TYPE_POLICY_REGISTRATION,
+                'payload' => $policy,
+            ]);
+        }
+    }
+
+    /**
+     * Create a new list of task templates for macro configuration.
+     */
+    public function createTaskTemplates(int $macroConfigurationId, array $tasks): void
+    {
+        foreach ($tasks as $task) {
+            $this->macroTemplateRepository->create($macroConfigurationId, [
+                'type' => MacroConstant::MACRO_TYPE_TASK_ISSUE,
+                'payload' => $task,
+            ]);
+        }
     }
 
     /**
@@ -318,6 +391,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $timeConditions = collect(MacroConstant::MACRO_TIME_CONDITIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
+        $graphTypes = collect(MacroConstant::MACRO_GRAPH_TYPES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $positionDisplay = collect(MacroConstant::MACRO_POSITION_DISPLAY)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
 
         return [
             'macro_types' => $macroTypes,
@@ -330,6 +409,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ['label' => '後', 'value' => 'back'],
             ],
             'time_conditions' => $timeConditions,
+            'graph_types' => $graphTypes,
+            'position_display' => $positionDisplay,
         ];
     }
 
@@ -353,58 +434,33 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function getQueryResults(MacroConfiguration $macroConfiguration)
     {
         $conditions = $macroConfiguration->conditions_decode;
-        $table = Arr::get($conditions, 'table');
-        $operator = Arr::get($conditions, 'operator', 'and');
-        $conditionItems = Arr::get($conditions, 'conditions', []);
+        $storeIds = explode(',', $macroConfiguration->store_ids);
 
-        if (is_null($table)) {
-            return null;
-        }
+        return $this->buildQueryAndExecute($conditions, $storeIds);
+    }
 
-        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
-            $relativeTables = Arr::get(
-                MacroConstant::LIST_RELATIVE_TABLE,
-                $table.'.'.MacroConstant::RELATIVE_TABLES
+    /**
+     * Handles joining relational tables.
+     */
+    private function handleJoinRelation(Builder $query, string $tableName, array $relativeTable): void
+    {
+        if (
+            $relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY_TYPE] == MacroConstant::RELATIVE_TABLE_TYPE_OUTBOUND
+        ) {
+            $query->join(
+                $relativeTable[MacroConstant::TABLE_NAME],
+                $relativeTable[MacroConstant::TABLE_NAME].'.id',
+                '=',
+                $tableName.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
             );
-
-            $columns = $this->getAllColumnOfTable($table)
-                ->map(fn ($item) => "{$item['table']}.{$item['column']}")
-                ->toArray();
-
-            $query = DB::table($table)->select('store_id', ...$columns);
-
-            foreach ($relativeTables as $tableName => $relativeTable) {
-                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
-                        ->map(fn ($item) => "{$item['table']}.{$item['column']}")
-                        ->toArray();
-                $query->join(
-                    $tableName,
-                    $tableName.'.id',
-                    '=',
-                    $table.'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY]
-                )->addSelect($columnsRelativeTable);
-            }
-
-            foreach ($conditionItems as $conditionItem) {
-                $params = $this->handleWhereParams($conditionItem);
-
-                if (empty($params)) {
-                    continue;
-                }
-
-                $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
-
-                if ($operator == 'or') {
-                    $method = str($method)->title()->prepend('or')->toString();
-                }
-
-                $query->{$method}(...$params);
-            }
-
-            return $query->get();
+        } else {
+            $query->leftJoin(
+                $relativeTable[MacroConstant::TABLE_NAME],
+                $relativeTable[MacroConstant::TABLE_NAME].'.'.$relativeTable[MacroConstant::RELATIVE_TABLE_FOREIGN_KEY],
+                '=',
+                $tableName.'.id'
+            );
         }
-
-        return collect();
     }
 
     /**
@@ -417,23 +473,25 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         $operator = Arr::get($condition, 'operator');
+        $field = Arr::get($condition, 'field');
         $value = Arr::get($condition, 'value');
         $value = match ($operator) {
             'in' => explode(',', $value),
             'like' => '%'.$value.'%',
+            'not_like' => '%'.$value.'%',
             default => $value
         };
 
         if ($operator == 'in') {
             return [
-                Arr::get($condition, 'field'),
+                $field,
                 $value,
             ];
         }
 
         return [
-            Arr::get($condition, 'field'),
-            Arr::get($condition, 'operator'),
+            $field,
+            str_replace('_', ' ', $operator),
             $value,
         ];
     }
@@ -473,16 +531,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $newValue,
             ];
         } elseif ($value == 'from_today') {
+            $direction = $dateCondition['direction'] == 'forward' ? '<=' : '>=';
+
             $newValue = match ($dateCondition['time_range']) {
                 'day' => now(),
-                'week' => now()->nextWeekendDay(),
-                'month' => now()->endOfMonth(),
-                'year' => now()->endOfYear(),
+                'week' => $direction == '<=' ? now()->startOfWeek() : now()->endOfWeek(),
+                'month' => $direction == '<=' ? now()->startOfMonth() : now()->endOfMonth(),
+                'year' => $direction == '<=' ? now()->startOfYear() : now()->endOfYear(),
             };
 
             return [
                 Arr::get($condition, 'field'),
-                $dateCondition['direction'] == 'forward' ? '<=' : '>=',
+                $direction,
                 $newValue,
             ];
         }
@@ -605,5 +665,169 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return $result;
+    }
+
+    /**
+     * Get chart data to display macro graph on kpi screen.
+     */
+    public function getDataChartMacroGraph(string $storeId): Collection
+    {
+        $positionDisplay = collect(MacroConstant::MACRO_POSITION_DISPLAY)->keys();
+
+        $macroGraphData = $this->model()
+                        ->join('macro_graphs as mg', 'macro_configurations.id', '=', 'mg.macro_configuration_id')
+                        ->where('macro_configurations.store_ids', 'LIKE', '%'.$storeId.'%')
+                        ->where('macro_configurations.macro_type', MacroConstant::MACRO_TYPE_GRAPH_DISPLAY)
+                        ->orderBy('macro_configurations.updated_at', 'desc')
+                        ->get();
+
+        $result = [];
+        foreach ($positionDisplay as $positionItem) {
+            $macroGraphItem = $macroGraphData->filter(function ($item) use ($positionItem) {
+                return $item->position_display == $positionItem;
+            })->first();
+
+            if (! is_null($macroGraphItem)) {
+                $axisX = $macroGraphItem->axis_x;
+                $axisXCol = explode('.', $axisX)[1];
+
+                $axisYArr = explode(',', $macroGraphItem->axis_y);
+                $axisY = collect($axisYArr)->map(function ($item) {
+                    return [
+                        'field' => $item,
+                        'type' => $this->getChartDataType($item),
+                    ];
+                });
+
+                $macroConfiguration = $this->queryBuilder()->where('id', $macroGraphItem->macro_configuration_id)->first();
+                $dataResult = $this->getQueryResults($macroConfiguration);
+                $graphData = [];
+                foreach ($dataResult as $item) {
+                    $itemAttributes = get_object_vars($item);
+                    $dataX = array_filter(
+                        $itemAttributes,
+                        fn ($key) => $key === $axisXCol,
+                        ARRAY_FILTER_USE_KEY
+                    );
+                    $dataY = [];
+                    foreach ($axisY as $axisYItem) {
+                        $axisYItemCol = explode('.', Arr::get($axisYItem, 'field'))[1];
+                        $dataYVal = array_filter(
+                            $itemAttributes,
+                            fn ($key) => $key === $axisYItemCol,
+                            ARRAY_FILTER_USE_KEY
+                        );
+                        $dataY[] = [
+                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol)
+                        ];
+                    }
+                    $graphData[] = [
+                        'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
+                        'axis_y' => $dataY,
+                    ];
+                }
+
+                $result[$positionItem] = [
+                    'title' => $macroGraphItem->title,
+                    'graph_type' => $macroGraphItem->graph_type,
+                    'axis_x' => [
+                        'field' => $axisX,
+                        'type' => $this->getChartDataType($axisX),
+                    ],
+                    'axis_y' => $axisY,
+                    'data' => $graphData,
+                ];
+            } else {
+                $result[$positionItem] = [];
+            }
+        }
+
+        return collect($result);
+    }
+
+    /**
+     * Get column data type from input string 'table.column'.
+     * Return empty when exception table not found has been thrown.
+     */
+    private function getChartDataType(string $tableColumnStr): string
+    {
+        try {
+            $columnType = Schema::getColumnType(explode('.', $tableColumnStr)[0], explode('.', $tableColumnStr)[1]);
+
+            return $this->convertColumnType($columnType);
+        } catch(\Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Build query from conditions of a specified json conditions.
+     */
+    public function getQueryConditionsResults(array $requestConditions)
+    {
+        $conditions = Arr::get($requestConditions, 'conditions');
+        $storeIdsStr = Arr::get($requestConditions, 'store_ids', '');
+        $storeIds = explode(',', $storeIdsStr);
+
+        return $this->buildQueryAndExecute($conditions, $storeIds);
+    }
+
+    /**
+     * Build and execute macro conditions query.
+     */
+    private function buildQueryAndExecute(array $conditions, array $storeIds): ?Collection
+    {
+        $table = Arr::get($conditions, 'table');
+        $boolean = Arr::get($conditions, 'operator', 'and');
+        $conditionItems = Arr::get($conditions, 'conditions', []);
+
+        if (is_null($table)) {
+            return null;
+        }
+
+        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+            $relativeTables = Arr::get(
+                MacroConstant::LIST_RELATIVE_TABLE,
+                $table.'.'.MacroConstant::RELATIVE_TABLES
+            );
+
+            $columns = $this->getAllColumnOfTable($table)
+                ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                ->toArray();
+
+            $query = DB::table($table)
+                ->select('store_id', ...$columns)
+                ->whereIn('store_id', $storeIds);
+            if ($table == 'mq_accounting') {
+                $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
+            }
+
+            foreach ($relativeTables as $tableName => $relativeTable) {
+                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
+                        ->map(fn ($item) => "{$item['table']}.{$item['column']}")
+                        ->toArray();
+
+                $this->handleJoinRelation($query, $table, $relativeTable);
+
+                $query->addSelect($columnsRelativeTable);
+            }
+
+            foreach ($conditionItems as $conditionItem) {
+                $params = $this->handleWhereParams($conditionItem);
+
+                if (empty($params)) {
+                    continue;
+                }
+
+                $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
+                $params[] = $boolean; // and|or
+
+                $query->{$method}(...$params);
+            }
+
+            return $query->get();
+        }
+
+        return collect();
     }
 }

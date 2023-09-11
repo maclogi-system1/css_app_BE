@@ -36,12 +36,6 @@ class UserTrendService extends Service
             ]);
         }
 
-        return collect([
-            'success' => true,
-            'status' => 200,
-            'data' => collect([
-                'chart_user_trend' => $dataFake,
-            ]),
-        ]);
+        return $dataFake;
     }
 }

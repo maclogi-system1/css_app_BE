@@ -29,7 +29,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
             'company_id' => ['nullable', 'integer'],
             'roles' => ['required', 'array'],
-            'chatwork_account_id' => ['nullable', 'max:8'],
+            'chatwork_account_id' => ['nullable', 'max:10'],
             'teams' => ['required', 'array'],
             'profile_photo_path' => [
                 'nullable',

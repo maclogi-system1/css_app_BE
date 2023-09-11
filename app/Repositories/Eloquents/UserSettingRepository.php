@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\UserSetting;
 use App\Repositories\Contracts\UserSettingRepository as UserSettingRepositoryContract;
 use App\Repositories\Repository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class UserSettingRepository extends Repository implements UserSettingRepositoryContract
 {
@@ -20,14 +20,23 @@ class UserSettingRepository extends Repository implements UserSettingRepositoryC
 
     public function getSettings(User $user)
     {
-        return $user->settings;
+        $settings = $user->settings->mapWithKeys(function ($item) {
+            return [$item->key => $item->value];
+        });
+        $defaultSettings = UserSetting::DEFAULT_SETTINGS;
+
+        foreach ($settings as $key => $value) {
+            Arr::set($defaultSettings, $key, $value);
+        }
+
+        return $defaultSettings;
     }
 
     public function updateSettings(User $user, array $settings)
     {
         return $this->handleSafely(function () use ($user, $settings) {
             foreach ($settings as $key => $value) {
-                DB::table('user_settings')->updateOrInsert([
+                $this->model()->updateOrCreate([
                     'key' => $key,
                     'user_id' => $user->id,
                 ], [

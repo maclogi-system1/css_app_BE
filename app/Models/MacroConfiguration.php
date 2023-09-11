@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Constants\MacroConstant;
+use App\Support\CronExpression;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
@@ -16,6 +18,7 @@ class MacroConfiguration extends Model
 
     protected $fillable = [
         'store_ids', 'name', 'conditions', 'time_conditions', 'macro_type', 'created_by', 'updated_by', 'deleted_by',
+        'status',
     ];
 
     public function isOneTime(): bool
@@ -32,7 +35,14 @@ class MacroConfiguration extends Model
 
     public function getConditionsDecodeAttribute(): array
     {
-        return json_decode($this->conditions, true);
+        $condition = json_decode($this->conditions, true);
+        $conditions = collect(Arr::get($condition, 'conditions', []))
+            ->filter(fn ($item) => $item['field'] != 'store_id')
+            ->values()
+            ->toArray();
+        $condition['conditions'] = $conditions;
+
+        return $condition;
     }
 
     public function getTimeConditionsDecodeAttribute(): array
@@ -59,21 +69,35 @@ class MacroConfiguration extends Model
         return Arr::get($timeCondition, 'schedule', []);
     }
 
-    public function getCronExpressionAttribute(): string
+    public function getCronExpressionAttribute(): CronExpression
     {
-        $schedule = $this->getTimeConditionScheduleAttribute();
+        $cronExpression = CronExpression::make($this->getTimeConditionScheduleAttribute());
 
-        $minute = Arr::get($schedule, 'minute', '*') ?? '*';
-        $hour = Arr::get($schedule, 'hour', '*') ?? '*';
-        $day = Arr::get($schedule, 'day', '*') ?? '*';
-        $month = Arr::get($schedule, 'month', '*') ?? '*';
-        $dayOfWeek = Arr::get($schedule, 'day_of_week', '*') ?? '*';
-
-        return "{$minute} {$hour} {$day} {$month} {$dayOfWeek}";
+        return $cronExpression;
     }
 
     public function graph(): HasOne
     {
         return $this->hasOne(MacroGraph::class);
+    }
+
+    public function templates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class);
+    }
+
+    public function simulationTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION);
+    }
+
+    public function policyTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_POLICY_REGISTRATION);
+    }
+
+    public function taskTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_TASK_ISSUE);
     }
 }
