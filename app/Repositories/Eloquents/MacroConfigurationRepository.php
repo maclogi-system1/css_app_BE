@@ -103,6 +103,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $tables = [];
 
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+            if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
+                continue;
+            }
+
             $tables[$tableName] = $this->getAllColumnOfTableAndRelativeTable(
                 $tableName,
                 Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
@@ -114,6 +118,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'type' => 'string',
                 ]);
             }
+        }
+
+        $ossColumns = $this->macroService->getListTableOSS();
+        if ($ossColumns->get('success')) {
+            $tables = $ossColumns->get('data')->merge($tables)->toArray();
         }
 
         return $tables;
@@ -138,10 +147,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     private function getAllColumnOfTable($tableName): Collection
     {
-        if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
-            return $this->getAllColumnOfTableOSS($tableName);
-        }
-
         $columns = collect(Schema::getColumnListing($tableName));
         $hiddenColumns = Arr::get(MacroConstant::DESCRIPTION_TABLES, $tableName.'.'.MacroConstant::REMOVE_COLUMNS);
         $convertColumnType = fn ($type) => $this->convertColumnType($type);
@@ -153,6 +158,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'table' => $tableName,
                 'column' => $columnName,
                 'type' => $convertColumnType(Schema::getColumnType($tableName, $columnName)),
+                'label' => trans("macro-labels.$tableName.$columnName")
             ];
         })->values();
     }
@@ -685,7 +691,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     return [
                         'field' => $item,
                         'type' => $this->getColumnDataType($item),
-                        'label' => trans($item),
+                        'label' => trans("macro-labels.$item"),
                     ];
                 });
 
@@ -723,7 +729,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'axis_x' => [
                         'field' => $axisX,
                         'type' => $this->getColumnDataType($axisX),
-                        'label' => trans($axisX),
+                        'label' => trans("macro-labels.$axisX"),
                     ],
                     'axis_y' => $axisY,
                     'data' => $graphData,
