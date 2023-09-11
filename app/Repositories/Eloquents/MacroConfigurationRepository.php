@@ -9,6 +9,7 @@ use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfiguratio
 use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Contracts\MacroTemplateRepository;
 use App\Repositories\Repository;
+use App\Support\Traits\ColumnTypeHandler;
 use App\WebServices\MacroService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Database\Query\Builder;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Schema;
 
 class MacroConfigurationRepository extends Repository implements MacroConfigurationRepositoryContract
 {
+    use ColumnTypeHandler;
+
     public function __construct(
         protected MacroService $macroService,
         protected ShopService $shopService,
@@ -108,7 +111,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $tables[$tableName]->push([
                     'table' => 'mq_accounting',
                     'column' => 'year_month',
-                    'type' => 'string'
+                    'type' => 'string',
                 ]);
             }
         }
@@ -415,20 +418,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     }
 
     /**
-     * Convert the type of the column in the database to the typescript.
-     */
-    private function convertColumnType($type): string
-    {
-        if (in_array($type, ['integer', 'bigint', 'smallint', 'decimal', 'boolean'])) {
-            return 'number';
-        } elseif (in_array($type, ['datetime', 'date'])) {
-            return 'date';
-        }
-
-        return 'string';
-    }
-
-    /**
      * Build query from conditions of a specified macro configuration.
      */
     public function getQueryResults(MacroConfiguration $macroConfiguration)
@@ -695,8 +684,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $axisY = collect($axisYArr)->map(function ($item) {
                     return [
                         'field' => $item,
-                        'type' => $this->getChartDataType($item),
-                        'label' => trans($item)
+                        'type' => $this->getColumnDataType($item),
+                        'label' => trans($item),
                     ];
                 });
 
@@ -719,7 +708,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                             ARRAY_FILTER_USE_KEY
                         );
                         $dataY[] = [
-                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol)
+                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol),
                         ];
                     }
                     $graphData[] = [
@@ -733,8 +722,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'graph_type' => $macroGraphItem->graph_type,
                     'axis_x' => [
                         'field' => $axisX,
-                        'type' => $this->getChartDataType($axisX),
-                        'label' => trans($axisX)
+                        'type' => $this->getColumnDataType($axisX),
+                        'label' => trans($axisX),
                     ],
                     'axis_y' => $axisY,
                     'data' => $graphData,
@@ -745,21 +734,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return collect($result);
-    }
-
-    /**
-     * Get column data type from input string 'table.column'.
-     * Return empty when exception table not found has been thrown.
-     */
-    private function getChartDataType(string $tableColumnStr): string
-    {
-        try {
-            $columnType = Schema::getColumnType(explode('.', $tableColumnStr)[0], explode('.', $tableColumnStr)[1]);
-
-            return $this->convertColumnType($columnType);
-        } catch(\Exception $e) {
-            return '';
-        }
     }
 
     /**
