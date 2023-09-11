@@ -41,7 +41,7 @@ class MacroConfiguration extends Model
             ->filter(fn ($item) => $item['field'] != 'store_id')
             ->map(function ($item) {
                 $item['type'] = $this->getColumnDataType(Arr::get($item, 'field'));
-                $item['label'] = trans(Arr::get($item, 'field'));
+                $item['label'] = trans('macro-labels.'.Arr::get($item, 'field'));
 
                 return $item;
             })->values()
