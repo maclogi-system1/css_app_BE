@@ -43,7 +43,7 @@ class MacroConfigurationRequest extends FormRequest
         $this->setRuleForPolicies($rules);
         $this->setRuleForTasks($rules);
 
-        if ($id = $this->route('macroConfiguration')) {
+        if ($id = $this->route('macroConfiguration') ?? $this->input('macroConfiguration')) {
             $rules['name'] = [
                 'required',
                 'string',

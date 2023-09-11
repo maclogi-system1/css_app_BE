@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
 
 class MacroController extends Controller
 {
@@ -59,17 +60,18 @@ class MacroController extends Controller
     /**
      * Store macro configuration.
      */
-    public function store(MacroConfigurationRequest $request): JsonResource|JsonResponse
+    public function store(Request $request): JsonResource|JsonResponse
     {
-        $data = $request->validated() + [
+        $validation = $this->validationMultipleData($request, $request->all());
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = Arr::get($validation, 'validated', []) + [
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
-        $errors = $this->validationMultipleData($data);
-
-        if (! empty($errors)) {
-            return response()->json($errors, Response::HTTP_BAD_REQUEST);
-        }
 
         $macroConfiguration = $this->macroConfigurationRepository->create($data);
 
@@ -84,17 +86,21 @@ class MacroController extends Controller
      * Update macro configuration.
      */
     public function update(
-        MacroConfigurationRequest $request,
+        Request $request,
         MacroConfiguration $macroConfiguration
     ): JsonResource|JsonResponse {
-        $data = $request->validated() + [
+        $validation = $this->validationMultipleData($request, $request->all() + [
+            'macro_type' => $macroConfiguration->macro_type,
+            'macroConfiguration' => $macroConfiguration,
+        ]);
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = Arr::get($validation, 'validated', []) + [
             'updated_by' => $request->user()->id,
         ];
-        $errors = $this->validationMultipleData($data + ['macro_type' => $macroConfiguration->macro_type]);
-
-        if (! empty($errors)) {
-            return response()->json($errors, Response::HTTP_BAD_REQUEST);
-        }
 
         $macroConfiguration = $this->macroConfigurationRepository->update($data, $macroConfiguration);
 
@@ -108,15 +114,29 @@ class MacroController extends Controller
     /**
      * Handle multi-data validation by type.
      */
-    private function validationMultipleData(array $data): array
+    private function validationMultipleData(Request $request, array $data): array
     {
+        $requestRule = MacroConfigurationRequest::create('');
+        $requestRule->initialize(query: $data, request: $data);
+        $validator = Validator::make($data, $requestRule->rules());
+        $bagErrors = [
+            'message' => 'There are a few failures.',
+        ];
+
+        if ($validator->fails()) {
+            $bagErrors = array_merge($bagErrors, [
+                'errors' => $validator->errors()->toArray(),
+            ]);
+        }
+
         $errors = [];
-        $numberFailures = 0;
+        $key = 'errors';
 
         $macroType = Arr::get($data, 'macro_type');
 
         if ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
             $policies = Arr::get($data, 'policies', []);
+            $key = 'policies';
 
             foreach ($policies as $index => $policy) {
                 $validated = $this->policyRepository->handleValidation(
@@ -126,31 +146,30 @@ class MacroController extends Controller
 
                 if (isset($validated['error'])) {
                     $errors[] = $validated['error'];
-                    $numberFailures++;
                 }
             }
         } elseif ($macroType == MacroConstant::MACRO_TYPE_TASK_ISSUE) {
             $tasks = Arr::get($data, 'tasks', []);
+            $key = 'tasks';
 
             foreach ($tasks as $index => $task) {
                 $validated = $this->taskRepository->handleValidation($task, $index);
 
                 if (isset($validated['error'])) {
                     $errors[] = $validated['error'];
-                    $numberFailures++;
                 }
             }
         }
 
-        if ($numberFailures) {
-            return [
-                'message' => 'There are a few failures.',
-                'number_of_failures' => $numberFailures,
-                'errors' => $errors,
-            ];
+        if (! empty($errors)) {
+            $bagErrors['errors'] = array_merge(Arr::get($bagErrors, 'errors', []), [$key => $errors]);
         }
 
-        return [];
+        return ! Arr::has($bagErrors, 'errors') ? [
+            'validated' => $validator->validated(),
+        ] : [
+            'errors' => $bagErrors,
+        ];
     }
 
     /**
