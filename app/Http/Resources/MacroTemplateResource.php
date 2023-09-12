@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Constants\MacroConstant;
-use App\Models\MacroTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

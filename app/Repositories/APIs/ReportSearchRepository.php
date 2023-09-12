@@ -28,7 +28,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartReportSearch(string $storeId, array $filters = []): Collection
     {
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
@@ -41,7 +40,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataTableReportSearch(string $storeId, array $filters = []): Collection
     {
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
@@ -54,7 +52,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection
     {
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
@@ -67,7 +64,6 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection
     {
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
