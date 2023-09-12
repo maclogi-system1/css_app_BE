@@ -200,9 +200,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->only([Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY])
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
-        $controlActions = collect(Policy::CONTROL_ACTIONS)
-            ->map(fn ($label, $value) => compact('value', 'label'))
-            ->values();
         $textInputConditions = collect(PolicyRule::TEXT_INPUT_CONDITIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
@@ -217,7 +214,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->values();
 
         return $this->singleJobRepository->getOptions()->merge([
-            'control_actions' => $controlActions,
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
             'policy_rule_services' => $policyRuleServices,
@@ -273,11 +269,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
-        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION) {
-            $ossErrorMessages = $this->jobGroupRepository->validateUpdate($this->getDataForJobGroup($data));
-        } else {
-            $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
-        }
+        $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -304,11 +296,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getValidationRules(array $data): array
     {
         $rules = [
-            'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
-            'policy_id' => [
-                Rule::requiredIf(Arr::get($data, 'control_actions', Policy::CREATE_ACTION) == Policy::EDIT_ACTION),
-                Rule::exists('policies', 'id'),
-            ],
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
@@ -323,19 +310,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
-        $policy = null;
-
-        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION && ($policyId = Arr::get($data, 'policy_id'))) {
-            $policy = $this->model()->find($policyId);
-        }
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
             'job_group_explanation' => Arr::get($data, 'job_group_explanation'),
-            'job_group_start_date' => Arr::get($data, 'execution_date'),
+            'job_group_start_date' => str_replace('-', '/', Arr::get($data, 'execution_date')),
             'job_group_start_time' => Arr::get($data, 'execution_time'),
-            'job_group_end_date' => Arr::get($data, 'undo_date'),
+            'job_group_end_date' => str_replace('-', '/', Arr::get($data, 'undo_date')),
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
             'managers' => Arr::get($data, 'managers', []),
@@ -343,14 +325,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
-                    'id' => $policy ? $policy->single_job_id : null,
-                    'uuid' => $policy ? null : (string) str()->uuid(),
+                    'uuid' => (string) str()->uuid(),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
-                    'execution_date' => Arr::get($data, 'execution_date'),
+                    'execution_date' => str_replace('-', '/', Arr::get($data, 'execution_date')),
                     'execution_time' => Arr::get($data, 'execution_time'),
-                    'undo_date' => Arr::get($data, 'undo_date'),
+                    'undo_date' => str_replace('-', '/', Arr::get($data, 'undo_date')),
                     'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
@@ -363,9 +344,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'item_name_text' => Arr::get($data, 'item_name_text'),
                     'item_name_text_error' => Arr::get($data, 'item_name_text_error'),
                     'point_magnification' => Arr::get($data, 'point_magnification'),
-                    'point_start_date' => Arr::get($data, 'point_start_date'),
+                    'point_start_date' => str_replace('-', '/', Arr::get($data, 'point_start_date')),
                     'point_start_time' => Arr::get($data, 'point_start_time'),
-                    'point_end_date' => Arr::get($data, 'point_end_date'),
+                    'point_end_date' => str_replace('-', '/', Arr::get($data, 'point_end_date')),
                     'point_end_time' => Arr::get($data, 'point_end_time'),
                     'point_error' => Arr::get($data, 'point_error'),
                     'point_operational' => Arr::get($data, 'point_operational'),
@@ -378,9 +359,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'double_price_text' => Arr::get($data, 'double_price_text'),
                     'shipping_fee' => Arr::get($data, 'shipping_fee'),
                     'stock_specify' => Arr::get($data, 'stock_specify'),
-                    'time_sale_start_date' => Arr::get($data, 'time_sale_start_date'),
+                    'time_sale_start_date' => str_replace('-', '/', Arr::get($data, 'time_sale_start_date')),
                     'time_sale_start_time' => Arr::get($data, 'time_sale_start_time'),
-                    'time_sale_end_date' => Arr::get($data, 'time_sale_end_date'),
+                    'time_sale_end_date' => str_replace('-', '/', Arr::get($data, 'time_sale_end_date')),
                     'time_sale_end_time' => Arr::get($data, 'time_sale_end_time'),
                     'is_unavailable_for_search' => Arr::get($data, 'is_unavailable_for_search'),
                     'description_for_pc' => Arr::get($data, 'description_for_pc'),
