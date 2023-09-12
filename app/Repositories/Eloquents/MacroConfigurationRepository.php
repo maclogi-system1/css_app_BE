@@ -158,7 +158,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'table' => $tableName,
                 'column' => $columnName,
                 'type' => $convertColumnType(Schema::getColumnType($tableName, $columnName)),
-                'label' => trans("macro-labels.$tableName.$columnName")
+                'label' => trans("macro-labels.$tableName.$columnName"),
             ];
         })->values();
     }

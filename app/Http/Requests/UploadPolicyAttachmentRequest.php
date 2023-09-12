@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\TxtAndCsvFile;
+
 class UploadPolicyAttachmentRequest extends FormRequest
 {
     /**
@@ -26,6 +28,7 @@ class UploadPolicyAttachmentRequest extends FormRequest
                 'file',
                 'mimes:jpg,jpeg,png,bmp,gif,svg,webp,csv,txt',
                 'max:1024',
+                new TxtAndCsvFile(),
             ],
         ];
     }
