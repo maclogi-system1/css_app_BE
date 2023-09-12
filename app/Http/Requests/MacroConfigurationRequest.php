@@ -34,7 +34,7 @@ class MacroConfigurationRequest extends FormRequest
             'conditions.operator' => ['required', 'string'],
             'conditions.conditions' => ['required', 'array'],
             'time_conditions' => ['required'],
-            'time_conditions.applicable_date' => ['required'],
+            'time_conditions.applicable_date' => ['required', 'after:'.now()->format('Y-m-d')],
             'time_conditions.schedule' => [Rule::requiredIf(fn () => empty($this->input('time_conditions.designation')))],
             'graph' => ['nullable'],
         ];
