@@ -31,7 +31,7 @@ class CompareDateValid implements ValidationRule
                     || $this->compare->diffInHours($this->compareWith) <= 24;
                 $message = __('validation.after', [
                     'attribute' => $attribute,
-                    'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
+                    'date' => $this->compareWith->addHour(24)->format('Y-m-d H:i'),
                 ]);
 
                 break;
@@ -40,7 +40,7 @@ class CompareDateValid implements ValidationRule
                     || $this->compare->diffInHours($this->compareWith) < 24;
                 $message = __('validation.after_or_equal', [
                     'attribute' => $attribute,
-                    'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
+                    'date' => $this->compareWith->addHour(24)->format('Y-m-d H:i'),
                 ]);
 
                 break;
@@ -49,7 +49,7 @@ class CompareDateValid implements ValidationRule
                     || $this->compare->diffInHours($this->compareWith) >= 24;
                 $message = __('validation.before', [
                     'attribute' => $attribute,
-                    'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
+                    'date' => $this->compareWith->addHour(24)->format('Y-m-d H:i'),
                 ]);
 
                 break;
@@ -58,7 +58,7 @@ class CompareDateValid implements ValidationRule
                     || $this->compare->diffInHours($this->compareWith) > 24;
                 $message = __('validation.before_or_equal', [
                     'attribute' => $attribute,
-                    'date' => $this->compareWith->addHour(24)->format('Y/m/d H:i'),
+                    'date' => $this->compareWith->addHour(24)->format('Y-m-d H:i'),
                 ]);
 
                 break;

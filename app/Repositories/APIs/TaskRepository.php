@@ -74,11 +74,11 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             'job_group_code' => ['required', 'regex:/^jg\-[\d]{5}$/'],
             'status' => ['nullable'],
             'assignees' => ['nullable', 'array'],
-            'start_date' => ['nullable', 'date_format:Y/m/d'],
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'due_date' => [
                 'nullable',
-                'date_format:Y/m/d',
+                'date_format:Y-m-d',
                 new DateValid(),
                 new CompareDateValid($dueDateTime, 'gt', $startDateTime),
             ],

@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Policy;
 use App\Repositories\Contracts\PolicyRepository;
 use Closure;
 use Illuminate\Support\Arr;
@@ -11,7 +10,6 @@ use Illuminate\Support\Carbon;
 class PolicyCsv
 {
     public const HEADING = [
-        'control_actions' => 'コントロールカラム',
         'single_job.job_group.status_id' => 'ステータス',
         'category' => '施策種別',
         'single_job.job_group.code' => 'ジョブグループコード',
@@ -59,7 +57,6 @@ class PolicyCsv
         'single_job.description_for_pc' => '商品ページ修正：PC用商品説明文',
         'single_job.description_for_smart_phone' => '商品ページ修正：SP用商品説明文',
         'single_job.description_by_sales_method' => '商品ページ修正：PC用販売説明文',
-        'id' => 'policy_id',
     ];
 
     public function __construct(
@@ -84,11 +81,6 @@ class PolicyCsv
             foreach ($policies->toArray() as $policy) {
                 $row = [];
                 foreach (static::HEADING as $field => $heading) {
-                    if ($field == 'control_actions') {
-                        $row[] = Policy::EDIT_ACTION;
-                        continue;
-                    }
-
                     if ($field == 'single_job.job_group.managers') {
                         $managers = Arr::pluck(Arr::get($policy, $field, []), 'id');
                         $row[] = implode(', ', $managers);
@@ -97,7 +89,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.execution_date') {
                         $executionTime = Arr::get($policy, 'single_job.execution_time');
-                        $row[] = Carbon::create($executionTime)->format('Y/m/d');
+                        $row[] = Carbon::create($executionTime)->format('Y-m-d');
                         continue;
                     }
 
@@ -109,7 +101,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.undo_date') {
                         $undoTime = Arr::get($policy, 'single_job.undo_time');
-                        $row[] = Carbon::create($undoTime)->format('Y/m/d');
+                        $row[] = Carbon::create($undoTime)->format('Y-m-d');
                         continue;
                     }
 
@@ -121,7 +113,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.point_start_date') {
                         $pointStart = Arr::get($policy, 'single_job.point_start');
-                        $row[] = Carbon::create($pointStart)->format('Y/m/d');
+                        $row[] = Carbon::create($pointStart)->format('Y-m-d');
                         continue;
                     }
 
@@ -133,7 +125,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.point_end_date') {
                         $pointEnd = Arr::get($policy, 'single_job.point_end');
-                        $row[] = Carbon::create($pointEnd)->format('Y/m/d');
+                        $row[] = Carbon::create($pointEnd)->format('Y-m-d');
                         continue;
                     }
 
@@ -145,7 +137,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.time_sale_start_date') {
                         $saleStartDateTime = Arr::get($policy, 'single_job.time_sale_start_date_time');
-                        $row[] = Carbon::create($saleStartDateTime)->format('Y/m/d');
+                        $row[] = Carbon::create($saleStartDateTime)->format('Y-m-d');
                         continue;
                     }
 
@@ -157,7 +149,7 @@ class PolicyCsv
 
                     if ($field == 'single_job.time_sale_end_date') {
                         $saleEndDateTime = Arr::get($policy, 'single_job.time_sale_end_date_time');
-                        $row[] = Carbon::create($saleEndDateTime)->format('Y/m/d');
+                        $row[] = Carbon::create($saleEndDateTime)->format('Y-m-d');
                         continue;
                     }
 

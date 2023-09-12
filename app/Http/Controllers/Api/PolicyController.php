@@ -93,12 +93,6 @@ class PolicyController extends Controller
         $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
-            if (Arr::get($data, 'control_actions') == Policy::REMOVE_ACTION) {
-                $result = $this->policyRepository->delete($this->policyRepository->find(Arr::get($data, 'policy_id')));
-
-                continue;
-            }
-
             $validated = $this->policyRepository->handleValidation($data + ['store_id' => $storeId], $index);
 
             if (isset($validated['error'])) {
@@ -111,42 +105,24 @@ class PolicyController extends Controller
                 continue;
             }
 
-            if (Arr::get($validated, 'policy.control_actions') == Policy::CREATE_ACTION) {
-                $result = $this->policyRepository->create($validated, $storeId);
+            $result = $this->policyRepository->create($validated, $storeId);
 
-                if (is_null($result)) {
-                    $errors[] = [
-                        'index' => $index,
-                        'row' => $index + 1,
-                        'messages' => [
-                            'record' => "Something went wrong! Can't create policy.",
-                        ],
-                    ];
-                    $status = Response::HTTP_BAD_REQUEST;
-                    $numberFailures++;
-                } else {
-                    $this->jobGroupRepository->handleStartEndTime(
-                        Arr::get($result, 'job_group_id'),
-                        $data,
-                        $jobGroups
-                    );
-                }
-            }
-
-            if (Arr::get($validated, 'policy.control_actions') == Policy::EDIT_ACTION) {
-                $result = $this->policyRepository->update($validated, Policy::find(Arr::get($validated, 'policy.policy_id')));
-
-                if (is_null($result)) {
-                    $errors[] = [
-                        'index' => $index,
-                        'row' => $index + 1,
-                        'messages' => [
-                            'record' => "Something went wrong! Can't create policy.",
-                        ],
-                    ];
-                    $status = Response::HTTP_BAD_REQUEST;
-                    $numberFailures++;
-                }
+            if (is_null($result)) {
+                $errors[] = [
+                    'index' => $index,
+                    'row' => $index + 1,
+                    'messages' => [
+                        'record' => "Something went wrong! Can't create policy.",
+                    ],
+                ];
+                $status = Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+            } else {
+                $this->jobGroupRepository->handleStartEndTime(
+                    Arr::get($result, 'job_group_id'),
+                    $data,
+                    $jobGroups
+                );
             }
         }
 
