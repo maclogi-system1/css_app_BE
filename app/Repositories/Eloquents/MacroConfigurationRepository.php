@@ -11,6 +11,7 @@ use App\Repositories\Contracts\MacroTemplateRepository;
 use App\Repositories\Repository;
 use App\Support\Traits\ColumnTypeHandler;
 use App\WebServices\MacroService;
+use App\WebServices\OSS\SchemaService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
@@ -27,6 +28,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         protected ShopService $shopService,
         protected MacroGraphRepository $macroGraphRepository,
         protected MacroTemplateRepository $macroTemplateRepository,
+        protected SchemaService $schemaService,
     ) {
     }
 
@@ -808,6 +810,27 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             }
 
             return $query->get();
+        } else {
+            $conditions['conditions'] = array_map(function ($conditionItem) {
+                if (Arr::has($conditionItem, 'date_condition')) {
+                    $newDateCondition = $this->handleConditionContainingDate($conditionItem);
+                    $conditionItem['field'] = $newDateCondition[0];
+                    $conditionItem['operator'] = $newDateCondition[1];
+                    $conditionItem['value'] = $newDateCondition[2]->format('Y/m/d');
+                }
+
+                return $conditionItem;
+            }, $conditionItems);
+            array_push($conditions['conditions'], [
+                'field' => 'store_id',
+                'operator' => 'in',
+                'value' => implode(',', $storeIds),
+            ]);
+
+            $result = $this->schemaService->getQueryConditionsResult($conditions);
+            $data = $result->get('data');
+
+            return $data;
         }
 
         return collect();
