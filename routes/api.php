@@ -269,5 +269,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
                     ->name('chart-relation-PV-and-conversion-rate');
             });
+
+            Route::prefix('sales-amnt-per-user')
+            ->name('sales-amnt-per-user.')
+            ->group(function () {
+                Route::get('/summary-graph/{storeId}', 'chartSummarySaleAmountPerUser')->name('summary');
+                Route::get('/table-comparison/{storeId}', 'tableSaleAmountPerUserComparison')->name('table-comparison');
+                Route::get('/chart-pv-and-sales/{storeId}', 'chartPVSaleAmountPerUser')->name('chart-pv-and-sales');
+            });
         });
 });

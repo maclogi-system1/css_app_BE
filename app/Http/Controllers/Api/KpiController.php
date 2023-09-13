@@ -8,6 +8,7 @@ use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
+use App\Repositories\Contracts\SalesAmntPerUserAnalysisRepository;
 use App\Repositories\Contracts\StoreChartRepository;
 use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
@@ -25,7 +26,8 @@ class KpiController extends Controller
         protected AdsAnalysisRepository $adsAnalysisRepository,
         protected MacroConfigurationRepository $macroConfigurationRepository,
         protected AccessAnalysisRepository $accessAnalysisRepository,
-        protected StoreChartRepository $storeChartRepository
+        protected StoreChartRepository $storeChartRepository,
+        protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository
     ) {
     }
 
@@ -260,5 +262,35 @@ class KpiController extends Controller
         $result = $this->storeChartRepository->getDataChartRelationPVAndConversionRate($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data chart summary sale amount per user from AI.
+     */
+    public function chartSummarySaleAmountPerUser(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->salesAmntPerUserAnalysisRepository->getChartSummarySalesAmntPerUser($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get data table compare sales amount per user with last year data.
+     */
+    public function tableSaleAmountPerUserComparison(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->salesAmntPerUserAnalysisRepository->getTableSalesAmntPerUserComparison($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get data chart PV sale amount per user from AI.
+     */
+    public function chartPVSaleAmountPerUser(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->salesAmntPerUserAnalysisRepository->getChartPVSalesAmntPerUser($storeId, $request->query());
+
+        return response()->json($result);
     }
 }
