@@ -11,6 +11,7 @@ return [
         'display_num' => 'ディスプレイアクセス',
     ],
     'mq_accounting' => [
+        'table_label' => 'MQ会計',
         'store_id' => '店舗ID',
         'year' => '年次',
         'month' => '月次',
@@ -78,6 +79,7 @@ return [
         're_price_per_user' => '客単価',
     ],
     'policies' => [
+        'table_label' => '施策',
         'store_id' => '店舗ID',
         'job_group_id' => 'IDジョブグループ',
         'single_job_id' => 'IDジョブ',
@@ -117,5 +119,14 @@ return [
         'keyword_1' => 'キーワード1',
         'keyword_2' => 'キーワード2',
         'keyword_3' => 'キーワード3',
-    ]
+    ],
+    'job_groups' => [
+        'table_label' => 'ジョブ',
+    ],
+    'tasks' => [
+        'table_label' => 'タスク',
+    ],
+    'alerts' => [
+        'table_label' => 'アラート',
+    ],
 ];
