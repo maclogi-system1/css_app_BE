@@ -44,6 +44,8 @@ return [
             ],
             'tasks' => [
                 'list' => '/tasks',
+                'create' => '/tasks',
+                'options' => '/tasks/options',
             ],
             'job_groups' => [
                 'list' => '/job-groups',
