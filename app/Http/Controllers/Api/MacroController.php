@@ -43,9 +43,11 @@ class MacroController extends Controller
     public function getListTable(): JsonResponse
     {
         $tables = $this->macroConfigurationRepository->getListTable();
+        $tableLabels = $this->macroConfigurationRepository->getTableLabels();
 
         return response()->json([
             'tables' => $tables,
+            'table_labels' => $tableLabels,
         ], Response::HTTP_OK);
     }
 

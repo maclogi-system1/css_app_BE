@@ -131,6 +131,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     }
 
     /**
+     * @return array
+     */
+    public function getTableLabels(): array
+    {
+        $tableLabels = [];
+        foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+            $tableLabels[$tableName] = trans("macro-labels.$tableName.table_label");
+        }
+
+        return $tableLabels;
+    }
+
+    /**
      * Get all the columns of a table and of the tables that are related to it.
      */
     private function getAllColumnOfTableAndRelativeTable($tableName, $relativeTables): Collection
