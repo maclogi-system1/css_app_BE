@@ -24,4 +24,50 @@ class TaskController extends Controller
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
+
+    /**
+     * Stores many newly created tasks in storage.
+     */
+    public function storeMultiple(Request $request, string $storeId)
+    {
+        $errors = [];
+        $status = Response::HTTP_OK;
+
+        foreach ($request->post() as $index => $data) {
+            if (! is_array($data)) {
+                continue;
+            }
+
+            $result = $this->taskRepository->create($data, $storeId);
+
+            if ($result->has('errors')) {
+                $status = $result->get('status');
+                $errors[] = [
+                    'index' => $index,
+                    'row' => $index + 1,
+                    'messages' => $result->get('errors'),
+                ];
+            }
+        }
+
+        if (! empty($errors)) {
+            return response()->json($errors, $status);
+        }
+
+        return $result
+            ? response()->json($result->get('data'), $status)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ]);
+    }
+
+    /**
+     * Get a list of options for select.
+     */
+    public function getOptions()
+    {
+        $options = $this->taskRepository->getOptions();
+
+        return response()->json($options);
+    }
 }

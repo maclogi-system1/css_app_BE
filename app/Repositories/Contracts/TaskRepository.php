@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Contracts;
 
+use Illuminate\Support\Collection;
+
 interface TaskRepository extends Repository
 {
     /**
@@ -15,7 +17,12 @@ interface TaskRepository extends Repository
     public function handleValidation(array $data, int $index): array;
 
     /**
-     * Get the task input validation rules.
+     * Handle create a new task.
      */
-    public function getValidationRules(array $data): array;
+    public function create(array $data, string $storeId): ?Collection;
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array;
 }

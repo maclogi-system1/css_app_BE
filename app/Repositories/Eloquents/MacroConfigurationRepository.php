@@ -197,9 +197,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         $macroConfiguration = $this->queryBuilder()->with(['graph', 'templates'])->where('id', $id)->first($columns);
 
+        if (is_null($macroConfiguration)) {
+            return null;
+        }
+
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
-            'filters' => ['shop_url' => $macroConfiguration->store_ids],
+            'filters' => ['shop_url' => $macroConfiguration?->store_ids],
         ]);
 
         if ($shopResponse->get('success')) {

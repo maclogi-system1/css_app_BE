@@ -4,12 +4,11 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\TaskRepository as TaskRepositoryContract;
 use App\Repositories\Repository;
-use App\Rules\CompareDateValid;
-use App\Rules\DateValid;
 use App\WebServices\OSS\TaskService;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Collection;
 
 class TaskRepository extends Repository implements TaskRepositoryContract
 {
@@ -39,58 +38,77 @@ class TaskRepository extends Repository implements TaskRepositoryContract
      */
     public function handleValidation(array $data, int $index): array
     {
-        $validator = Validator::make($data, $this->getValidationRules($data));
+        $data = $this->handleStartAndEndDateForRequest($data);
+        $validator = $this->taskService->create($data + ['is_draft' => 1]);
 
-        if ($validator->fails()) {
+        if (! $validator->get('success')) {
             return [
                 'error' => [
                     'index' => $index,
                     'row' => $index + 1,
-                    'messages' => $validator->getMessageBag()->toArray(),
+                    'messages' => $validator->get('data')->get('message'),
                 ],
             ];
         }
 
-        return $validator->validated();
+        return $data;
     }
 
     /**
-     * Get the task input validation rules.
+     * Handles start and end dates for the request.
      */
-    public function getValidationRules(array $data): array
+    public function handleStartAndEndDateForRequest(array $data): array
     {
-        $startDate = Arr::get($data, 'start_date');
-        $startTime = Arr::get($data, 'start_time');
-        $startDateTime = Carbon::create($startDate.' '.$startTime);
+        if ($startDate = Arr::get($data, 'start_date')) {
+            $startTime = Arr::pull($data, 'start_time', '00:00');
+            $startDateTime = Carbon::create($startDate.' '.$startTime)->format('Y-m-d H:i:s');
+            $data['start_date'] = $startDateTime;
+        }
 
-        $dueDate = Arr::get($data, 'due_date');
-        $dueTime = Arr::get($data, 'due_time');
-        $dueDateTime = Carbon::create($dueDate.' '.$dueTime);
+        if ($dueDate = Arr::get($data, 'due_date')) {
+            $dueTime = Arr::pull($data, 'due_time', '00:00');
+            $dueDateTime = Carbon::create($dueDate.' '.$dueTime)->format('Y-m-d H:i:s');
+            $data['due_date'] = $dueDateTime;
+        }
 
-        $rules = [
-            'title' => ['required'],
-            'issue_type' => ['required'],
-            'category' => ['nullable'],
-            'job_group_code' => ['required', 'regex:/^jg\-[\d]{5}$/'],
-            'status' => ['nullable'],
-            'assignees' => ['nullable', 'array'],
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'start_time' => ['nullable', 'date_format:H:i'],
-            'due_date' => [
-                'nullable',
-                'date_format:Y-m-d',
-                new DateValid(),
-                new CompareDateValid($dueDateTime, 'gt', $startDateTime),
-            ],
-            'due_time' => ['nullable', 'date_format:H:i'],
-            'description' => ['nullable'],
-        ];
-
-        return $rules;
+        return $data;
     }
 
-    public function create(array $data)
+    /**
+     * Handle create a new task.
+     */
+    public function create(array $data, string $storeId): ?Collection
     {
-        // code...
+        $data = $this->handleStartAndEndDateForRequest($data);
+        $result = $this->taskService->create($data + ['store_id' => $storeId, 'is_draft' => 0]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $result = $this->taskService->getOptions();
+
+        if (! $result->get('success')) {
+            return [];
+        }
+
+        return $result->get('data')->toArray();
     }
 }
