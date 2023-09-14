@@ -16,7 +16,10 @@ class LocalizationMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         //Check header request and set language defaut
-        $lang = ($request->hasHeader('X-localization')) ? $request->header('X-localization') : 'ja';
+        $lang = ($request->hasHeader('X-localization'))
+            ? $request->header('X-localization')
+            : config('app.locale', 'ja');
+
         //Set laravel localization
         app()->setLocale($lang);
 

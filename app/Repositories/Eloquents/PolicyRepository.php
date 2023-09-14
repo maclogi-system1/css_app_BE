@@ -16,6 +16,7 @@ use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -595,11 +596,12 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Handle data validation to create simulation policy.
      */
-    public function handleValidationSimulationStore(array $data): array
+    public function handleValidationSimulationStore(Request $request, array $data): array
     {
-        $requestRule = StorePolicySimulationRequest::create('');
-        $requestRule->initialize(query: $data, request: $data);
-        $validator = Validator::make($data, $requestRule->rules());
+        $validator = Validator::make(
+            $data,
+            StorePolicySimulationRequest::getInstance($request->route(), $data)->rules()
+        );
 
         if ($validator->fails()) {
             return [

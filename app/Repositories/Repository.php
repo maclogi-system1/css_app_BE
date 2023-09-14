@@ -41,9 +41,9 @@ abstract class Repository
      *
      * @return \Illuminate\Database\Eloquent\Model
      */
-    public function model()
+    public function model(array $attributes = [])
     {
-        return app($this->getModelName());
+        return app($this->getModelName())->fill($attributes);
     }
 
     /**

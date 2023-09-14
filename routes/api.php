@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\MqCostController;
+use App\Http\Controllers\Api\MqSheetController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
@@ -116,6 +117,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/get-forecast-vs-actual/{storeId}', 'getForecastVsActual')->name('get-forecast-vs-actual');
             Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
+        });
+
+    Route::prefix('mq-sheets')
+        ->name('mq-sheets.')
+        ->controller(MqSheetController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{mqSheet}', 'show')->name('show');
+            Route::post('/', 'store')->name('store');
+            Route::put('/{mqSheet}', 'update')->name('update');
+            Route::delete('/{mqSheet}', 'destroy')->name('destroy');
         });
 
     Route::prefix('mq-cost')
