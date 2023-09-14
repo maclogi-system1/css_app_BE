@@ -214,9 +214,7 @@ class MacroController extends Controller
     {
         $result = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
 
-        return response()->json([
-            'result' => $result,
-        ]);
+        return response()->json($result);
     }
 
     public function run(MacroConfiguration $macroConfiguration): JsonResponse
