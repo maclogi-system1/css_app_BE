@@ -129,4 +129,6 @@ return [
     'alerts' => [
         'table_label' => 'アラート',
     ],
+    'actual' => '（実績）',
+    'diff' => '（差分）',
 ];

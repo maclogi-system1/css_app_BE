@@ -465,4 +465,7 @@ class MacroConstant
         self::MACRO_POSITION_DISPLAY_3 => 'マクログラフ3',
         self::MACRO_POSITION_DISPLAY_4 => 'マクログラフ4',
     ];
+
+    public const ACCOUNTING_ACTUAL_COLUMN = '.actual';
+    public const ACCOUNTING_DIFF_COLUMN = '.diff';
 }
