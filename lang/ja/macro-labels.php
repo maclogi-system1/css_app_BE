@@ -15,6 +15,7 @@ return [
         'store_id' => '店舗ID',
         'year' => '年次',
         'month' => '月次',
+        'year_month' => '年月',
         'mq_kpi_id' => '売上',
         'mq_access_num_id' => 'アクセスID',
         'mq_ad_sales_amnt_id' => '広告経由売上ID',

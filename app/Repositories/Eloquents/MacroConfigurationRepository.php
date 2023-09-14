@@ -121,6 +121,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'table' => 'mq_accounting',
                     'column' => 'year_month',
                     'type' => 'string',
+                    'label' => trans('macro-labels.mq_accounting.year_month'),
                 ]);
             }
         }
@@ -815,6 +816,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 ->select('store_id', ...$columns)
                 ->whereIn('store_id', $storeIds);
             if ($table == 'mq_accounting') {
+                $labelArr['year_month'] = trans('macro-labels.'.$table.'.year_month');
                 $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
             }
 
@@ -870,7 +872,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $itemAttributes = get_object_vars($resultItem);
                     $newItem = [];
                     foreach ($itemAttributes as $key => $value) {
-                        if ($key != 'store_id' && $key != 'year' && $key != 'month') {
+                        if (
+                            $key != 'store_id'
+                            && $key != 'year'
+                            && $key != 'month'
+                            && $key != 'year_month'
+                        ) {
                             $different = '';
                             if (is_numeric($value)) {
                                 $different = Arr::get($actualItem, $key) - $value;
@@ -888,8 +895,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
                 foreach ($columns as $column) {
                     $columnName = explode('.', $column)[1];
-                    $labelArr[$columnName.MacroConstant::ACCOUNTING_ACTUAL_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN);
-                    $labelArr[$columnName.MacroConstant::ACCOUNTING_DIFF_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN);
+                    if (
+                        $columnName != 'year'
+                        && $columnName != 'month'
+                    ) {
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_ACTUAL_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN);
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_DIFF_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN);
+                    }
                 }
 
                 return collect([
@@ -941,6 +953,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $column != 'store_id'
                 && $column != 'year'
                 && $column != 'month'
+                && $column != 'year_month'
             ) {
                 $result->add([
                     'table' => $table,
