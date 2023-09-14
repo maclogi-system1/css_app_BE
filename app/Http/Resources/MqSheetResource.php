@@ -5,14 +5,14 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class MacroTemplateResource extends JsonResource
+class MqSheetResource extends JsonResource
 {
     /**
      * The "data" wrapper that should be applied.
      *
      * @var string|null
      */
-    public static $wrap = 'macro_template';
+    public static $wrap = 'mq_sheet';
 
     /**
      * Transform the resource into an array.
@@ -21,6 +21,10 @@ class MacroTemplateResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return $this->resource->payload_decode;
+        return [
+            'id' => $this->resource->id,
+            'store_id' => $this->resource->store_id,
+            'name' => $this->resource->name,
+        ];
     }
 }

@@ -93,7 +93,6 @@ class MacroController extends Controller
     ): JsonResource|JsonResponse {
         $validation = $this->validationMultipleData($request, $request->all() + [
             'macro_type' => $macroConfiguration->macro_type,
-            'macroConfiguration' => $macroConfiguration,
         ]);
 
         if (! empty(Arr::get($validation, 'errors', []))) {
@@ -118,9 +117,11 @@ class MacroController extends Controller
      */
     private function validationMultipleData(Request $request, array $data): array
     {
-        $requestRule = MacroConfigurationRequest::create('');
-        $requestRule->initialize(query: $data, request: $data);
-        $validator = Validator::make($data, $requestRule->rules());
+        $validator = Validator::make(
+            $data,
+            MacroConfigurationRequest::getInstance($request->route(), $data)->rules()
+        );
+
         $bagErrors = [
             'message' => 'There are a few failures.',
         ];
@@ -137,7 +138,14 @@ class MacroController extends Controller
         $macroType = Arr::get($data, 'macro_type');
 
         if ($macroType == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION) {
-            $validated = $this->policyRepository->handleValidationSimulationStore(Arr::get($data, 'simulation', []));
+            $validated = $this->policyRepository->handleValidationSimulationStore(
+                $request,
+                Arr::get(
+                    $data,
+                    'simulation',
+                    []
+                )
+            );
             $key = 'simulation';
 
             if (isset($validated['error'])) {

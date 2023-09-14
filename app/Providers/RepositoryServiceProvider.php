@@ -37,6 +37,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MacroTemplateRepository::class => \App\Repositories\Eloquents\MacroTemplateRepository::class,
         \App\Repositories\Contracts\AccessAnalysisRepository::class => \App\Repositories\APIs\AccessAnalysisRepository::class,
         \App\Repositories\Contracts\StoreChartRepository::class => \App\Repositories\APIs\StoreChartRepository::class,
+        \App\Repositories\Contracts\MqSheetRepository::class => \App\Repositories\Eloquents\MqSheetRepository::class,
     ];
 
     /**

@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\Policy;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 interface PolicyRepository extends Repository
@@ -41,7 +42,7 @@ interface PolicyRepository extends Repository
     /**
      * Handle data validation to create simulation policy.
      */
-    public function handleValidationSimulationStore(array $data): array;
+    public function handleValidationSimulationStore(Request $request, array $data): array;
 
     /**
      * Get the policy input validation rules.

@@ -1,8 +1,8 @@
 <?php
 
-namespace {{ namespace }};
+namespace App\Http\Requests;
 
-class {{ class }} extends FormRequest
+class GetMqSheetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,7 +20,7 @@ class {{ class }} extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'store_id' => ['required', 'string', 'max:255'],
         ];
     }
 }
