@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Http\Requests\StorePolicySimulationRequest;
 use App\Jobs\RunPolicySimulation;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
@@ -589,5 +590,23 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         return $result;
+    }
+
+    /**
+     * Handle data validation to create simulation policy.
+     */
+    public function handleValidationSimulationStore(array $data): array
+    {
+        $requestRule = StorePolicySimulationRequest::create('');
+        $requestRule->initialize(query: $data, request: $data);
+        $validator = Validator::make($data, $requestRule->rules());
+
+        if ($validator->fails()) {
+            return [
+                'error' => $validator->getMessageBag()->toArray(),
+            ];
+        }
+
+        return [];
     }
 }

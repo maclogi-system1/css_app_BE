@@ -136,7 +136,14 @@ class MacroController extends Controller
 
         $macroType = Arr::get($data, 'macro_type');
 
-        if ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
+        if ($macroType == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION) {
+            $validated = $this->policyRepository->handleValidationSimulationStore(Arr::get($data, 'simulation', []));
+            $key = 'simulation';
+
+            if (isset($validated['error'])) {
+                $errors = $validated['error'];
+            }
+        } elseif ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
             $policies = Arr::get($data, 'policies', []);
             $key = 'policies';
 
@@ -164,7 +171,11 @@ class MacroController extends Controller
         }
 
         if (! empty($errors)) {
-            $bagErrors['errors'] = array_merge(Arr::get($bagErrors, 'errors', []), [$key => $errors]);
+            if ($key == 'simulation') {
+                $bagErrors['errors'][$key] = $errors;
+            } else {
+                $bagErrors['errors'] = array_merge(Arr::get($bagErrors, 'errors', []), [$key => $errors]);
+            }
         }
 
         return ! Arr::has($bagErrors, 'errors') ? [
