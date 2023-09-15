@@ -253,6 +253,17 @@ class MacroController extends Controller
      */
     public function getQueryConditionsResults(GetQueryConditionsResultsRequest $request)
     {
+        $validation = $this->validationMultipleData($request, $request->all());
+
+        $validation = Validator::make(
+            $request->all(),
+            GetQueryConditionsResultsRequest::getInstance($request->route(), $request->all())->rules()
+        );
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
         $conditions = json_decode($request->getContent(), true);
         $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions);
 

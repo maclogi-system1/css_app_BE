@@ -25,6 +25,7 @@ class GetQueryConditionsResultsRequest extends FormRequest
             'conditions.table' => ['required', 'string'],
             'conditions.operator' => ['required', 'string'],
             'conditions.conditions' => ['required', 'array'],
+            'conditions.conditions.*.value' => ['required'],
         ];
     }
 }
