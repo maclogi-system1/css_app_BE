@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-class GetQueryConditionsResultsRequest extends FormRequest
+class GetQueryResultsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,14 +20,12 @@ class GetQueryConditionsResultsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_ids' => ['required', 'string'],
+            'table' => ['required', 'string'],
+            'operator' => ['required', 'string'],
             'conditions' => ['required', 'array'],
-            'conditions.table' => ['required', 'string'],
-            'conditions.operator' => ['required', 'string'],
-            'conditions.conditions' => ['required', 'array'],
-            'conditions.conditions.*.value' => ['required'],
-            'conditions.conditions.*.field' => ['required'],
-            'conditions.conditions.*.operator' => ['required'],
+            'conditions.*.value' => ['required'],
+            'conditions.*.field' => ['required'],
+            'conditions.*.operator' => ['required'],
         ];
     }
 }
