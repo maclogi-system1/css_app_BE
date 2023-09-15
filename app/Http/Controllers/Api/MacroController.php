@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetQueryConditionsResultsRequest;
+use App\Http\Requests\GetQueryResultsRequest;
 use App\Http\Requests\MacroConfigurationRequest;
 use App\Http\Resources\MacroConfigurationResource;
 use App\Models\MacroConfiguration;
@@ -218,8 +219,23 @@ class MacroController extends Controller
     /**
      * Get the query results obtained from the conditions of the macro configuration.
      */
-    public function getQueryResults(MacroConfiguration $macroConfiguration): JsonResponse
+    public function getQueryResults(Request $request, MacroConfiguration $macroConfiguration): JsonResponse
     {
+        $validation = Validator::make(
+            $macroConfiguration->conditions_decode,
+            GetQueryResultsRequest::getInstance($request->route(), $macroConfiguration->conditions_decode)->rules()
+        );
+
+        if ($validation->fails()) {
+            return response()->json(
+                [
+                    'message' => trans('validation.required'),
+                    'errors' => $validation->errors()->toArray(),
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
         $result = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
 
         return response()->json($result);
@@ -253,8 +269,6 @@ class MacroController extends Controller
      */
     public function getQueryConditionsResults(GetQueryConditionsResultsRequest $request)
     {
-        $validation = $this->validationMultipleData($request, $request->all());
-
         $validation = Validator::make(
             $request->all(),
             GetQueryConditionsResultsRequest::getInstance($request->route(), $request->all())->rules()
