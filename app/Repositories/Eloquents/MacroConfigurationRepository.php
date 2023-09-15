@@ -741,16 +741,25 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $dataX = $this->getNestedProperty($axisXCol, $item);
                     $dataY = [];
                     foreach ($axisY as $axisYItem) {
-                        $axisYItemCol = explode('.', Arr::get($axisYItem, 'field'))[1];
+                        $parts = explode('.', Arr::get($axisYItem, 'field'));
+                        $axisYItemCol = isset($parts[1]) ? trim($parts[1]) : '';
+                        $axisYItemCol .= isset($parts[2]) ? '.'.trim($parts[2]) : '';
                         $dataYVal = $this->getNestedProperty($axisYItemCol, $item);
-                        $dataY[] = [
-                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol),
+                        if (! is_null(Arr::get($dataYVal, $axisYItemCol))) {
+                            $dataY[] = [
+                                Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol),
+                            ];
+                        }
+                    }
+                    if (
+                        ! is_null(Arr::get($dataX, $axisXCol, ''))
+                        && ! empty($dataY)
+                    ) {
+                        $graphData[] = [
+                            'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
+                            'axis_y' => $dataY,
                         ];
                     }
-                    $graphData[] = [
-                        'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
-                        'axis_y' => $dataY,
-                    ];
                 }
 
                 $result[$positionItem] = [
@@ -934,10 +943,28 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $result = $this->schemaService->getQueryConditionsResult($conditions);
             $data = $result->get('data');
 
-            return $data;
+            $ossColumns = $this->macroService->getListTableOSS();
+            if ($ossColumns->get('success')) {
+                $tables = $ossColumns->get('data');
+                foreach ($tables as $tableItem) {
+                    foreach ($tableItem as $tableColumn) {
+                        $table = Arr::get($tableColumn, 'table');
+                        $column = Arr::get($tableColumn, 'column');
+                        $labelArr[$table.'.'.$column] = Arr::get($tableColumn, 'label');
+                    }
+                }
+            }
+
+            return collect([
+                'values' => $data,
+                'labels' => $labelArr,
+            ]);
         }
 
-        return collect();
+        return collect([
+            'values' => [],
+            'labels' => [],
+        ]);
     }
 
     /**
