@@ -32,6 +32,7 @@ class StorePolicySimulationRequest extends FormRequest
 
         return [
             'name' => ['required', 'max:100', 'string'],
+            'store_id' => [Rule::requiredIf(fn () => ! $this->route('storeId')), 'max:100', 'string'],
             'simulation_start_date' => ['required', 'date_format:Y-m-d', new DateValid()],
             'simulation_start_time' => ['required', 'date_format:H:i'],
             'simulation_end_date' => [

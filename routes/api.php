@@ -154,7 +154,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/detail/{policy}', 'show')->name('show');
 
-            Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            // deprecated
+            Route::post('/simulation/{storeId}', 'storeSimulationByStoreId')->name('store-simulation-by-store-id');
+
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
 
             // Work Breakdown Structure
@@ -162,7 +164,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
-            Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
+
+            // deprecated
+            Route::post('/{storeId}', 'storeMultipleByStoreId')->name('store-multiple-by-store-id');
+        });
+    Route::prefix('policies')
+        ->name('policies.')
+        ->controller(PolicyController::class)
+        ->group(function () {
+            Route::post('/', 'storeMultiple')->name('store-multiple');
+            Route::post('/simulation', 'storeSimulation')->name('store-simulation');
         });
 
     Route::prefix('policy-simulation-histories')

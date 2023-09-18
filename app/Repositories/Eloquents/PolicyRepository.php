@@ -301,6 +301,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
+            'store_id' => ['required', 'string', 'max:255'],
         ];
 
         return $rules;
@@ -375,9 +376,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
-     * Handle create a new policy.
+     * Handle create a new policy by storeId.
      */
-    public function create(array $data, string $storeId): ?array
+    public function createByStoreId(array $data, string $storeId): ?array
     {
         return $this->handleSafely(function () use ($data, $storeId) {
             $policyData = $data['policy'] + ['store_id' => $storeId];
@@ -404,13 +405,45 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'policy' => $policy,
                 'job_group_id' => $jobGroupId,
             ];
+        }, 'Create policy by store_id');
+    }
+
+    /**
+     * Handle create a new policy.
+     */
+    public function create(array $data): ?array
+    {
+        return $this->handleSafely(function () use ($data) {
+            $policyData = $data['policy'];
+            $policy = $this->model()->fill($policyData);
+            $policy->save();
+
+            if ($attachmentKey = Arr::get($policyData, 'attachment_key')) {
+                PolicyAttachment::where('attachment_key', $attachmentKey)
+                    ->whereNull('policy_id')
+                    ->update(['policy_id' => $policy->id]);
+            }
+
+            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
+            $singleJobs = Arr::get($jobGroup, 'single_jobs');
+            $singleJob = Arr::first($singleJobs);
+            $jobGroupId = Arr::get($jobGroup, 'job_group_id');
+
+            $policy->job_group_id = $jobGroupId;
+            $policy->single_job_id = $singleJob['id'];
+            $policy->save();
+
+            return [
+                'policy' => $policy,
+                'job_group_id' => $jobGroupId,
+            ];
         }, 'Create policy');
     }
 
     /**
-     * Handle create a new simulation policy.
+     * Handle create a new simulation policy by storeId.
      */
-    public function createSimulation(array $data, string $storeId): ?Policy
+    public function createSimulationByStoreId(array $data, string $storeId): ?Policy
     {
         return $this->handleSafely(function () use ($data, $storeId) {
             $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
@@ -418,6 +451,40 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $policySimulation = $this->model()->fill([
                 'store_id' => $storeId,
+                'name' => $data['name'],
+                'category' => Policy::SIMULATION_CATEGORY,
+                'simulation_start_date' => $simulationStartDate,
+                'simulation_end_date' => $simulationEndDate,
+                'simulation_promotional_expenses' => $data['simulation_promotional_expenses'],
+                'simulation_store_priority' => $data['simulation_store_priority'],
+                'simulation_product_priority' => $data['simulation_product_priority'],
+            ]);
+            $policySimulation->save();
+
+            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+                foreach ($policyRules as $policyRule) {
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
+                    $policySimulation->rules()->create($policyRule);
+                }
+            }
+
+            return $policySimulation->withAllRels();
+        }, 'Create simulation policy by store_id');
+    }
+
+    /**
+     * Handle create a new simulation policy.
+     */
+    public function createSimulation(array $data): ?Policy
+    {
+        return $this->handleSafely(function () use ($data) {
+            $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
+            $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
+
+            $policySimulation = $this->model()->fill([
+                'store_id' => $data['store_id'],
                 'name' => $data['name'],
                 'category' => Policy::SIMULATION_CATEGORY,
                 'simulation_start_date' => $simulationStartDate,
