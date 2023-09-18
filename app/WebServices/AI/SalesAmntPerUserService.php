@@ -93,9 +93,6 @@ class SalesAmntPerUserService extends Service
         $dataFake = collect();
 
         for ($i = 0; $i < 30; $i++) {
-        }
-
-        for ($i = 0; $i < 30; $i++) {
             $dataFake->add([
                 'PV' => rand(0, 70000),
                 'sales_amnt' =>  rand(1000, 5000),
