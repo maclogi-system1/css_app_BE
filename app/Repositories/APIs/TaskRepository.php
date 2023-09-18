@@ -125,6 +125,31 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         return null;
     }
 
+    public function update(array $data, string $storeId): ?Collection
+    {
+        $data = $this->handleStartAndEndDateForRequest($data);
+        if (! ($id = Arr::get($data, 'id'))) {
+            return null;
+        }
+
+        $result = $this->taskService->update($id, $data + ['store_id' => $storeId]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
+    }
+
     /**
      * Get a list of the option for select.
      */
@@ -137,5 +162,28 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         }
 
         return $result->get('data')->toArray();
+    }
+
+    public function delete(string $storeId, int $taskId): ?Collection
+    {
+        $result = $this->taskService->delete($storeId, $taskId);
+
+        if (in_array($result->get('status'), [Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_NOT_FOUND])) {
+            $errors = $result->get('data')->get('message');
+            if (! is_array($errors)) {
+                $errors = ['message' => $errors];
+            }
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
     }
 }
