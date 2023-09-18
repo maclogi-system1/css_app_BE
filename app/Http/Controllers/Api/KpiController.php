@@ -7,6 +7,7 @@ use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
+use App\Repositories\Contracts\ProductAnalysisRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
 use App\Repositories\Contracts\SalesAmntPerUserAnalysisRepository;
 use App\Repositories\Contracts\StoreChartRepository;
@@ -27,7 +28,8 @@ class KpiController extends Controller
         protected MacroConfigurationRepository $macroConfigurationRepository,
         protected AccessAnalysisRepository $accessAnalysisRepository,
         protected StoreChartRepository $storeChartRepository,
-        protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository
+        protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository,
+        protected ProductAnalysisRepository $productAnalysisRepository
     ) {
     }
 
@@ -290,6 +292,71 @@ class KpiController extends Controller
     public function chartPVSaleAmountPerUser(Request $request, string $storeId): JsonResponse
     {
         $result = $this->salesAmntPerUserAnalysisRepository->getChartPVSalesAmntPerUser($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get data summary product analysis from AI.
+     */
+    public function productAnalysisSummary(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->productAnalysisRepository->getProductSummary($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart selected products sales per month from AI.
+     */
+    public function chartSelectedProducts(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->productAnalysisRepository->getChartSelectedProducts($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart products's trends from AI.
+     */
+    public function chartProductsTrends(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->productAnalysisRepository->getChartProductsTrends($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart products's stay times from AI.
+     */
+    public function chartProductsStayTimes(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->productAnalysisRepository->getChartProductsStayTimes($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart products's rakuten ranking from AI.
+     */
+    public function chartProductsRakutenRanking(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->productAnalysisRepository->getChartProductsRakutenRanking($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart products's reviews trends from AI.
+     */
+    public function chartProductsReviewsTrends(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->productAnalysisRepository->getChartProductsReviewsTrends($conditions);
 
         return response()->json($result);
     }

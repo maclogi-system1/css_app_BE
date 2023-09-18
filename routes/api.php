@@ -288,5 +288,16 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/table-comparison/{storeId}', 'tableSaleAmountPerUserComparison')->name('table-comparison');
                 Route::get('/chart-pv-and-sales/{storeId}', 'chartPVSaleAmountPerUser')->name('chart-pv-and-sales');
             });
+
+            Route::prefix('product-analysis')
+            ->name('product-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'productAnalysisSummary')->name('summary');
+                Route::post('/chart-selected-products', 'chartSelectedProducts')->name('chart-selected-products');
+                Route::post('/chart-products-trends', 'chartProductsTrends')->name('chart-selected-products-trends');
+                Route::post('/chart-products-stay-times', 'chartProductsStayTimes')->name('chart-products-stay-times');
+                Route::post('/chart-products-rakuten-ranking', 'chartProductsRakutenRanking')->name('chart-products-rakuten-ranking');
+                Route::post('/chart-products-reviews-trends', 'chartProductsReviewsTrends')->name('chart-products-reviews-trends');
+            });
         });
 });
