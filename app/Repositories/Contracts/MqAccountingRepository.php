@@ -55,7 +55,7 @@ interface MqAccountingRepository extends Repository
     /**
      * Get a list of validation rules for validator.
      */
-    public function getValidationRules(): array;
+    public function getValidationRules(string $storeId): array;
 
     /**
      * Handle data validation to update mq_accounting.
