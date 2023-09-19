@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
-class UploadMqAccountingCsvRequest extends FormRequest
+class UpdateMqAccountingRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +23,6 @@ class UploadMqAccountingCsvRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mq_accounting' => ['required', 'file', 'max:2048', 'mimes:csv,txt'],
             'mq_sheet_id' => [
                 'required',
                 'string',

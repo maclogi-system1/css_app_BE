@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
 use App\Imports\MqAccountingImport;
 use App\Repositories\Contracts\MqAccountingRepository;
@@ -39,14 +40,18 @@ class MqAccountingController extends Controller
     /**
      * Update metrics of mq_accounting by store id (corresponds to shop_url in OSS).
      */
-    public function updateByStore(Request $request, $storeId): JsonResponse
+    public function updateByStore(UpdateMqAccountingRequest $request, $storeId): JsonResponse
     {
         $numberFailures = 0;
         $errors = [];
         $status = Response::HTTP_OK;
+        $mqSheetId = $request->input('mq_sheet_id');
 
         foreach ($request->post() as $data) {
-            $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
+            $validated = $this->mqAccountingRepository->handleValidationUpdate(
+                $data + ['mq_sheet_id' => $mqSheetId],
+                $storeId
+            );
 
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
@@ -138,6 +143,7 @@ class MqAccountingController extends Controller
      */
     public function uploadMqAccountingCsv(UploadMqAccountingCsvRequest $request, $storeId): JsonResponse
     {
+        $mqSheetId = $request->input('mq_sheet_id');
         $rows = Excel::toArray(new MqAccountingImport(), $request->file('mq_accounting'))[0];
         $dataReaded = $this->mqAccountingRepository->readAndParseCsvFileContents($rows);
         $numberFailures = 0;
@@ -145,7 +151,10 @@ class MqAccountingController extends Controller
         $status = Response::HTTP_OK;
 
         foreach ($dataReaded as $data) {
-            $validated = $this->mqAccountingRepository->handleValidationUpdate($data, $storeId);
+            $validated = $this->mqAccountingRepository->handleValidationUpdate(
+                $data + ['mq_sheet_id' => $mqSheetId],
+                $storeId
+            );
 
             if (isset($validated['error'])) {
                 $errors[] = $validated['error'];
