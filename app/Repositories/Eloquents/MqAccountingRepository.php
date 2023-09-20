@@ -184,6 +184,25 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     }
 
     /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function getListCompareActualsWithExpectedValues(string $storeId, array $filters = []): array
+    {
+        $actualMqAccounting = $this->getListFromAIByStore($storeId, $filters);
+        $expectedMqAccounting = $this->getListByStore($storeId, $filters)->toArray();
+        $difference = (new MqAccountingCsv())->compareActualsWithExpectedValues(
+            $actualMqAccounting,
+            $expectedMqAccounting
+        );
+
+        return [
+            'actual_mq_accounting' => $actualMqAccounting,
+            'expected_mq_accounting' => $expectedMqAccounting,
+            'difference' => $difference,
+        ];
+    }
+
+    /**
      * Return a callback handle stream csv file.
      */
     public function streamCsvFile(array $filters = [], ?string $storeId = ''): Closure

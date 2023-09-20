@@ -23,6 +23,11 @@ interface MqAccountingRepository extends Repository
     public function getListFromAIByStore(string $storeId, array $filters = []): ?array;
 
     /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function getListCompareActualsWithExpectedValues(string $storeId, array $filters = []): array;
+
+    /**
      * Read and parse csv file contents.
      */
     public function readAndParseCsvFileContents(array $rows);
