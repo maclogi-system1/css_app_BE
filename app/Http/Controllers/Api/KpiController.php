@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
+use App\Repositories\Contracts\CategoryAnalysisRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ProductAnalysisRepository;
@@ -29,7 +30,8 @@ class KpiController extends Controller
         protected AccessAnalysisRepository $accessAnalysisRepository,
         protected StoreChartRepository $storeChartRepository,
         protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository,
-        protected ProductAnalysisRepository $productAnalysisRepository
+        protected ProductAnalysisRepository $productAnalysisRepository,
+        protected CategoryAnalysisRepository $categoryAnalysisRepository
     ) {
     }
 
@@ -357,6 +359,60 @@ class KpiController extends Controller
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartProductsReviewsTrends($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get data summary category analysis from AI.
+     */
+    public function categoryAnalysisSummary(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->categoryAnalysisRepository->getCategorySummary($storeId, $request->query());
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart selected categories sales per month from AI.
+     */
+    public function chartSelectedCategories(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->categoryAnalysisRepository->getChartSelectedCategories($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart categories's trends from AI.
+     */
+    public function chartCategoriesTrends(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->categoryAnalysisRepository->getChartCategoriesTrends($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart categories's stay times from AI.
+     */
+    public function chartCategoriesStayTimes(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->categoryAnalysisRepository->getChartCategoriesStayTimes($conditions);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get chart categories's reviews trends from AI.
+     */
+    public function chartCategoriesReviewsTrends(Request $request): JsonResponse
+    {
+        $conditions = json_decode($request->getContent(), true);
+        $result = $this->categoryAnalysisRepository->chartCategoriesReviewsTrends($conditions);
 
         return response()->json($result);
     }

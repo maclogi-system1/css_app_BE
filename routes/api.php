@@ -299,5 +299,15 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-products-rakuten-ranking', 'chartProductsRakutenRanking')->name('chart-products-rakuten-ranking');
                 Route::post('/chart-products-reviews-trends', 'chartProductsReviewsTrends')->name('chart-products-reviews-trends');
             });
+
+            Route::prefix('category-analysis')
+            ->name('category-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'categoryAnalysisSummary')->name('summary');
+                Route::post('/chart-selected-categories', 'chartSelectedCategories')->name('chart-selected-categories');
+                Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
+                Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
+                Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
+            });
         });
 });
