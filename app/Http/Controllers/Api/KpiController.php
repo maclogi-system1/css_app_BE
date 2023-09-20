@@ -72,7 +72,7 @@ class KpiController extends Controller
     {
         $result = $this->userAccessRepository->getDataChartUserAccess($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
@@ -82,7 +82,7 @@ class KpiController extends Controller
     {
         $result = $this->userAccessRepository->getDataChartUserAccessAds($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
@@ -92,7 +92,7 @@ class KpiController extends Controller
     {
         $result = $this->userAccessRepository->getDataChartAccessSource($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
@@ -102,7 +102,7 @@ class KpiController extends Controller
     {
         $result = $this->userAccessRepository->getDataTableAccessSource($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
