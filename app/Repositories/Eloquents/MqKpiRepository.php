@@ -33,6 +33,25 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
      */
     public function getSummary(string $storeId, array $filters = []): array
     {
+        $result[] = $this->getSummaryData($storeId, $filters);
+
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $result[] = $this->getSummaryData($storeId, $filters);
+        }
+
+        return $result;
+    }
+
+    private function getSummaryData(string $storeId, array $filters = []): array
+    {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         $expectedMqKpi = $this->mqAccountingRepository->model()
@@ -72,6 +91,8 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
         ];
 
         return [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date'  => Arr::get($filters, 'to_date'),
             'target_achievement_rate' => $targetAchievementRate,
             'performance_summary' => $actualMqKpi,
         ];
