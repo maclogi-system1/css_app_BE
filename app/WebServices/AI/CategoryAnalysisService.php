@@ -235,7 +235,7 @@ class CategoryAnalysisService extends Service
                 ]);
 
                 $categoriesReviewWritingRate->add([
-                    Arr::get($category, 'item_id') => round(rand(10, $allCategoryReview)/$allCategoryReview, 2) * 100,
+                    Arr::get($category, 'item_id') => round(rand(10, $allCategoryReview) / $allCategoryReview, 2) * 100,
                 ]);
             }
 

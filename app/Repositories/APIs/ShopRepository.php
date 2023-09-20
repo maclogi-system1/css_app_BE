@@ -3,9 +3,12 @@
 namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\ShopRepository as ShopRepositoryContract;
+use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\WebServices\OSS\ShopService;
 use App\WebServices\OSS\UserService;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 
 class ShopRepository extends Repository implements ShopRepositoryContract
 {
@@ -53,9 +56,29 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function getUsers(array $filters = [])
     {
+        if (Cache::has('oss_shop_users')) {
+            return Cache::get('oss_shop_users');
+        }
+
+        $cssUsers = app(UserRepository::class)->getList(['per_page' => -1], ['name', 'email']);
         $result = $this->userService->getShopUsers($filters);
         $data = $result->get('data');
-        $data['users'] = array_map(fn ($user) => ['label' => $user['name'], 'value' => $user['id']], $data['users']);
+
+        if ($result->get('success')) {
+            $data['users'] = collect(Arr::get($data, 'users'))
+                ->whereIn('email', $cssUsers->pluck('email'))
+                ->map(function ($user) use ($cssUsers) {
+                    $name = $cssUsers->where('email', $user['email'])->first()?->name;
+
+                    return ['label' => $name, 'value' => $user['id']];
+                })
+                ->values()
+                ->toArray();
+
+            if (! empty($data['users'])) {
+                Cache::put('oss_shop_users', $data, 300);
+            }
+        }
 
         return $data;
     }
