@@ -28,13 +28,9 @@ class MqAccountingController extends Controller
      */
     public function getListByStore(Request $request, $storeId): JsonResponse
     {
-        $actualMqAccounting = $this->mqAccountingRepository->getListFromAIByStore($storeId, $request->query());
-        $expectedMqAccounting = $this->mqAccountingRepository->getListByStore($storeId, $request->query());
+        $result = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues($storeId, $request->query());
 
-        return response()->json([
-            'actual_mq_accounting' => $actualMqAccounting,
-            'expected_mq_accounting' => $expectedMqAccounting,
-        ]);
+        return response()->json($result);
     }
 
     /**
