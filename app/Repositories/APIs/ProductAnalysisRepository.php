@@ -45,7 +45,6 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
             $result[] = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
         }
 
-
         return collect($result);
     }
 
