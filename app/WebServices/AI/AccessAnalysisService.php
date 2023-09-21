@@ -4,6 +4,7 @@ namespace App\WebServices\AI;
 
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class AccessAnalysisService extends Service
@@ -16,6 +17,8 @@ class AccessAnalysisService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
             'table_report_search' => collect([
                 [
                     'display_name' => 'カテゴリA',

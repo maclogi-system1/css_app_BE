@@ -31,7 +31,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result[] = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
+        $result = $this->productAnalysisService->getProductSummary($storeId, $filters);
+        $data[] = $result->get('data');
 
         // Get compared data product analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -42,10 +43,13 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result[] = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
+            $data[] = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -53,7 +57,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartSelectedProducts(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartSelectedProducts($filters)->get('data');
+        $result = $this->productAnalysisService->getChartSelectedProducts($filters);
+        $data = $result->get('data');
 
         // Get compared data product analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -64,10 +69,13 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->productAnalysisService->getChartSelectedProducts($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartSelectedProducts($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -75,7 +83,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsTrends(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsTrends($filters)->get('data');
+        $result = $this->productAnalysisService->getChartProductsTrends($filters);
+        $data = $result->get('data');
 
         // Get compared data product analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -86,10 +95,13 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->productAnalysisService->getChartProductsTrends($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsTrends($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -97,7 +109,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsStayTimes(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsStayTimes($filters)->get('data');
+        $result = $this->productAnalysisService->getChartProductsStayTimes($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -108,10 +121,13 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->productAnalysisService->getChartProductsStayTimes($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsStayTimes($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -119,7 +135,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsRakutenRanking(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsRakutenRanking($filters)->get('data');
+        $result = $this->productAnalysisService->getChartProductsRakutenRanking($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -130,10 +147,13 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->productAnalysisService->getChartProductsRakutenRanking($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsRakutenRanking($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -141,7 +161,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsReviewsTrends(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsReviewsTrends($filters)->get('data');
+        $result = $this->productAnalysisService->getChartProductsReviewsTrends($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -152,9 +173,12 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->productAnalysisService->getChartProductsReviewsTrends($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsReviewsTrends($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }

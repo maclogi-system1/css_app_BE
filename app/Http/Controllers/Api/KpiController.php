@@ -275,7 +275,7 @@ class KpiController extends Controller
     {
         $result = $this->salesAmntPerUserAnalysisRepository->getChartSummarySalesAmntPerUser($storeId, $request->query());
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -285,7 +285,7 @@ class KpiController extends Controller
     {
         $result = $this->salesAmntPerUserAnalysisRepository->getTableSalesAmntPerUserComparison($storeId, $request->query());
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -295,7 +295,7 @@ class KpiController extends Controller
     {
         $result = $this->salesAmntPerUserAnalysisRepository->getChartPVSalesAmntPerUser($storeId, $request->query());
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -305,7 +305,7 @@ class KpiController extends Controller
     {
         $result = $this->productAnalysisRepository->getProductSummary($storeId, $request->query());
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -316,7 +316,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartSelectedProducts($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -327,7 +327,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartProductsTrends($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -338,7 +338,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartProductsStayTimes($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -349,7 +349,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartProductsRakutenRanking($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -360,7 +360,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->productAnalysisRepository->getChartProductsReviewsTrends($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -370,7 +370,7 @@ class KpiController extends Controller
     {
         $result = $this->categoryAnalysisRepository->getCategorySummary($storeId, $request->query());
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -381,7 +381,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartSelectedCategories($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -392,7 +392,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesTrends($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -403,7 +403,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesStayTimes($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
@@ -414,7 +414,7 @@ class KpiController extends Controller
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->chartCategoriesReviewsTrends($conditions);
 
-        return response()->json($result);
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
     /**
