@@ -42,6 +42,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\ProductAnalysisRepository::class => \App\Repositories\APIs\ProductAnalysisRepository::class,
         \App\Repositories\Contracts\ShopSettingMqAccountingRepository::class => \App\Repositories\Eloquents\ShopSettingMqAccountingRepository::class,
         \App\Repositories\Contracts\CategoryAnalysisRepository::class => \App\Repositories\APIs\CategoryAnalysisRepository::class,
+        \App\Repositories\Contracts\ShopSettingRankingRepository::class => \App\Repositories\Eloquents\ShopSettingRankingRepository::class,
     ];
 
     /**

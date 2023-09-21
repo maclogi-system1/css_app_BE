@@ -75,6 +75,7 @@ class ShopSettingMqAccountingCsv
         $results = [];
         $errors = [];
         $titles = $this->getFields('title');
+        $validateRules = $this->getFields('validation');
         $stream = fopen($file->getPathname(), 'r');
 
         /** @var ShopSettingMqAccountingRepository $shopSettingMqAccountingRepo */
@@ -96,7 +97,7 @@ class ShopSettingMqAccountingCsv
 
                     $validator = Validator::make(
                         data: $data,
-                        rules: $this->getFields('validation'),
+                        rules: $validateRules,
                         attributes: $titles
                     );
 
