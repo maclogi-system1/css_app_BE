@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ShopSettingController;
 use App\Http\Controllers\Api\ShopUserController;
 use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
@@ -309,5 +310,18 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
                 Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
             });
+        });
+
+    Route::prefix('shop-settings')
+        ->name('shop-settings.')
+        ->controller(ShopSettingController::class)
+        ->group(function () {
+           Route::prefix('mq-accounting')
+               ->name('mq-accounting')
+               ->group(function () {
+                   Route::get('/', 'getMQAccountingSettings')->name('list');
+                   Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
+                   Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+               });
         });
 });
