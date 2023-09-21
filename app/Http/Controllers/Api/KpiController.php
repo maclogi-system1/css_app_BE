@@ -112,7 +112,7 @@ class KpiController extends Controller
     {
         $result = $this->reportSearchRepository->getDataChartReportSearch($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
@@ -122,7 +122,7 @@ class KpiController extends Controller
     {
         $result = $this->reportSearchRepository->getDataTableReportSearch($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**
@@ -132,7 +132,7 @@ class KpiController extends Controller
     {
         $result = $this->reportSearchRepository->getDataReportSearchByProduct($storeId, $request->query());
 
-        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+        return response()->json($result);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\WebServices\AI;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
 
 class ReportSearchService extends Service
 {
@@ -44,9 +45,7 @@ class ReportSearchService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_report_search' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 
@@ -56,6 +55,8 @@ class ReportSearchService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
             'table_report_search' => collect([
                 [
                     'display_name' => 'キーワード1',
@@ -180,6 +181,8 @@ class ReportSearchService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
             'product_1' => collect([
                 'total_access' => rand(1000, 5000),
                 'item_id' => rand(1000, 5000),
@@ -229,9 +232,7 @@ class ReportSearchService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'detail_report_search_by_product' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 
