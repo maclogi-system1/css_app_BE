@@ -4,6 +4,7 @@ namespace App\WebServices\AI;
 
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class AdsAnalysisService extends Service
@@ -16,6 +17,8 @@ class AdsAnalysisService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
             'sales_amnt_total' => 1000000,
             'consumption_rate' => rand(10, 100),
             'ad_cost_total' => 1000000,
@@ -62,9 +65,7 @@ class AdsAnalysisService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'detail_ads_conversion' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 
@@ -74,6 +75,8 @@ class AdsAnalysisService extends Service
 
         $dataFake->add([
             'store_id' => $storeId,
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
             'high_roas_products' => collect([
                 [
                     'product_control_number' => 1,
@@ -203,9 +206,7 @@ class AdsAnalysisService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'list_product_by_roas' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 

@@ -4,8 +4,8 @@ namespace App\WebServices\AI;
 
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class ReportSearchService extends Service
 {

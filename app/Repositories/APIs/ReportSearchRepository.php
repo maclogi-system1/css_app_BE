@@ -31,7 +31,8 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataReportSearch($storeId, $filters)->get('data');
+        $result = $this->reportSearchService->getDataReportSearch($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -42,10 +43,13 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->reportSearchService->getDataReportSearch($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataReportSearch($storeId, $filters)->get('data'));
         }
 
-        return $result;
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -56,7 +60,8 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getRankingReportSearch($storeId, $filters)->get('data');
+        $result = $this->reportSearchService->getRankingReportSearch($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -67,10 +72,13 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->reportSearchService->getRankingReportSearch($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getRankingReportSearch($storeId, $filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -81,7 +89,8 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data');
+        $result = $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -92,10 +101,13 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**

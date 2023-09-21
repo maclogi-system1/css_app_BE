@@ -64,7 +64,8 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->userAccessService->getListUserAccess($storeId, $filters)->get('data');
+        $result = $this->userAccessService->getListUserAccess($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -75,10 +76,13 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->userAccessService->getListUserAccess($storeId, $filters)->get('data'));
+            $data = $data->merge($this->userAccessService->getListUserAccess($storeId, $filters)->get('data'));
         }
 
-        return $result;
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -89,7 +93,8 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->userAccessService->getListUserAccessAds($storeId, $filters)->get('data');
+        $result = $this->userAccessService->getListUserAccessAds($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -100,10 +105,13 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->userAccessService->getListUserAccessAds($storeId, $filters)->get('data'));
+            $data = $data->merge($this->userAccessService->getListUserAccessAds($storeId, $filters)->get('data'));
         }
 
-        return $result;
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -114,7 +122,8 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->accessSourceService->getListAccessSource($storeId, $filters)->get('data');
+        $result = $this->accessSourceService->getListAccessSource($storeId, $filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -125,10 +134,13 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->accessSourceService->getListAccessSource($storeId, $filters)->get('data'));
+            $data = $data->merge($this->accessSourceService->getListAccessSource($storeId, $filters)->get('data'));
         }
 
-        return $result;
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
