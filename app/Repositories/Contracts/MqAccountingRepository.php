@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\MqSheet;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -66,4 +67,9 @@ interface MqAccountingRepository extends Repository
      * Handle data validation to update mq_accounting.
      */
     public function handleValidationUpdate($data, $storeId): array;
+
+    /**
+     * Handle creating empty mq_accounting.
+     */
+    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void;
 }

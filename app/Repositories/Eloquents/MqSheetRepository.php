@@ -3,8 +3,10 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\MqSheet;
+use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository as MqSheetRepositoryContract;
 use App\Repositories\Repository;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class MqSheetRepository extends Repository implements MqSheetRepositoryContract
@@ -36,6 +38,11 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
         return $this->handleSafely(function () use ($data) {
             $mqSheet = $this->model($data);
             $mqSheet->save();
+            $storeId = Arr::get($data, 'store_id');
+
+            /** @var \App\Repositories\Contracts\MqAccountingRepository */
+            $mqAccountingRepository = app(MqAccountingRepository::class);
+            $mqAccountingRepository->makeEmptyData($storeId, $mqSheet->refresh());
 
             return $mqSheet;
         }, 'Create mq_sheets');
