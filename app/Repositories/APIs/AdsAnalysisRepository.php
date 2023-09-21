@@ -31,8 +31,25 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m');
+            }
+
+            $data = $data->merge($this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -43,8 +60,25 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->adsAnalysisService->getListAdsConversion($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->adsAnalysisService->getListAdsConversion($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m');
+            }
+
+            $data = $data->merge($this->adsAnalysisService->getListAdsConversion($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -55,8 +89,25 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->adsAnalysisService->getListProductByRoas($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->adsAnalysisService->getListProductByRoas($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m');
+            }
+
+            $data = $data->merge($this->adsAnalysisService->getListProductByRoas($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -67,7 +118,24 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters);
+        $data[] = $result->get('data');
 
-        return $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m');
+            }
+
+            $data[] = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters)->get('data');
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }
