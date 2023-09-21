@@ -317,11 +317,19 @@ Route::middleware('auth:sanctum')->group(function () {
         ->controller(ShopSettingController::class)
         ->group(function () {
            Route::prefix('mq-accounting')
-               ->name('mq-accounting')
+               ->name('mq-accounting.')
                ->group(function () {
                    Route::get('/', 'getMQAccountingSettings')->name('list');
                    Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
                    Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+               });
+
+           Route::prefix('rankings')
+               ->name('rankings.')
+               ->group(function () {
+                   Route::get('/', 'getRankingsSettings')->name('list');
+                   Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
+                   Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
                });
         });
 });
