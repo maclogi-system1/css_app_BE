@@ -13,6 +13,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Database\Query\Builder::class => \App\Mixin\BuilderMixin::class,
         \Illuminate\Support\Facades\Http::class => \App\Mixin\HttpMixin::class,
         \Illuminate\Support\Str::class => \App\Mixin\StrMixin::class,
+        \Illuminate\Support\Collection::class => \App\Mixin\CollectionMixin::class,
     ];
 
     /**

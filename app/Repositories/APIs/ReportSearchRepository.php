@@ -104,6 +104,10 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
             $data = $data->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data'));
         }
 
+        $perPage = Arr::get($filters, 'per_page', 10);
+        $data = $data->paginate($perPage)->toArray();
+        Arr::set($data, 'data', array_values(Arr::get($data, 'data')));
+
         return collect([
             'data' => $data,
             'status' => $result->get('status'),

@@ -183,7 +183,7 @@ class ReportSearchService extends Service
             'store_id' => $storeId,
             'from_date' => Arr::get($filters, 'from_date'),
             'to_date' => Arr::get($filters, 'to_date'),
-            'product_1' => collect([
+            'product' => [
                 'total_access' => rand(1000, 5000),
                 'item_id' => rand(1000, 5000),
                 'item_name' => '商品名1テキス',
@@ -226,7 +226,7 @@ class ReportSearchService extends Service
                     ],
                 ]),
                 'chart_report_search_by_product' => $chartByProduct,
-            ]),
+            ],
         ]);
 
         return collect([
