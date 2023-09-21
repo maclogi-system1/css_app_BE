@@ -118,8 +118,25 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
+        $result = $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataChartOrganicInflows($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -130,7 +147,24 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
+        $result = $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }
