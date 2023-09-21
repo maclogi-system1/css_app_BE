@@ -262,6 +262,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/detail-ads-conversion/{storeId}', 'detailAdsConversion')->name('detail-ads-conversion');
                 Route::get('/list-product-by-roas/{storeId}', 'getListProductByRoas')->name('list-product-by-roas');
                 Route::get('/chart-sales-and-access/{storeId}', 'chartSalesAndAccess')->name('chart-sales-and-access');
+                Route::get('/options', 'getOptions')->name('options');
             });
 
             Route::prefix('access-analysis')
