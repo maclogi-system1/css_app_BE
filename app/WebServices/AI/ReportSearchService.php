@@ -270,9 +270,7 @@ class ReportSearchService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_organic_inflows' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 
@@ -310,9 +308,7 @@ class ReportSearchService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_inflows_via_specific_words' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 }
