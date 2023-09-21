@@ -163,10 +163,10 @@ class ProductAnalysisService extends Service
         }
 
         $dataFake->add([
-            'sales_all' => $dailySales,
-            'visit_all' => $dailyAccess,
-            'conversion_rate' => $dailyConvertionRate,
-            'sales_amnt_per_user' => $dailySalesAmntPerUser,
+            'chart_sales_all' => $dailySales,
+            'chart_visit_all' => $dailyAccess,
+            'chart_conversion_rate' => $dailyConvertionRate,
+            'chart_sales_amnt_per_user' => $dailySalesAmntPerUser,
         ]);
 
         return collect([

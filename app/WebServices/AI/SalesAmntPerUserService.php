@@ -4,6 +4,7 @@ namespace App\WebServices\AI;
 
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Support\Arr;
 
 class SalesAmntPerUserService extends Service
 {
@@ -33,10 +34,10 @@ class SalesAmntPerUserService extends Service
             $dataFake->add([
                 'store_id' => $storeId,
                 'date' => $date,
-                'sales_amnt_total' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
-                'sales_amnt_pc' => $salesAmntPC,
-                'sales_amnt_app' => $salesAmntApp,
-                'sales_amnt_sp' =>  $salesAmntSP,
+                'sales_all' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
+                'sales_pc' => $salesAmntPC,
+                'sales_sd_web' => $salesAmntApp,
+                'sales_sd_app' =>  $salesAmntSP,
             ]);
         }
 
@@ -71,10 +72,10 @@ class SalesAmntPerUserService extends Service
             $dataFake->add([
                 'store_id' => $storeId,
                 'date' => $date,
-                'sales_amnt_total' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
-                'sales_amnt_pc' => $salesAmntPC,
-                'sales_amnt_app' => $salesAmntApp,
-                'sales_amnt_sp' =>  $salesAmntSP,
+                'sales_all' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
+                'sales_pc' => $salesAmntPC,
+                'sales_sd_web' => $salesAmntApp,
+                'sales_sd_app' =>  $salesAmntSP,
             ]);
         }
 
@@ -95,14 +96,18 @@ class SalesAmntPerUserService extends Service
         for ($i = 0; $i < 30; $i++) {
             $dataFake->add([
                 'PV' => rand(0, 70000),
-                'sales_amnt' =>  rand(1000, 5000),
+                'sales_all' =>  rand(1000, 5000),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_pv' => $dataFake,
+            ]),
         ]);
     }
 }

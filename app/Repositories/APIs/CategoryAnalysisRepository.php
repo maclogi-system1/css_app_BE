@@ -31,7 +31,8 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result[] = $this->categoryAnalysisService->getCategorySummary($storeId, $filters)->get('data');
+        $result = $this->categoryAnalysisService->getCategorySummary($storeId, $filters);
+        $data[] = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -42,10 +43,13 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result[] = $this->categoryAnalysisService->getCategorySummary($storeId, $filters)->get('data');
+            $data[] = $this->categoryAnalysisService->getCategorySummary($storeId, $filters)->get('data');
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -53,7 +57,8 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
      */
     public function getChartSelectedCategories(array $filters = []): Collection
     {
-        $result = $this->categoryAnalysisService->getChartSelectedCategories($filters)->get('data');
+        $result = $this->categoryAnalysisService->getChartSelectedCategories($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -64,10 +69,13 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->categoryAnalysisService->getChartSelectedCategories($filters)->get('data'));
+            $data = $data->merge($this->categoryAnalysisService->getChartSelectedCategories($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -75,7 +83,8 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
      */
     public function getChartCategoriesTrends(array $filters = []): Collection
     {
-        $result = $this->categoryAnalysisService->getChartCategoriesTrends($filters)->get('data');
+        $result = $this->categoryAnalysisService->getChartCategoriesTrends($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -86,10 +95,13 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->categoryAnalysisService->getChartCategoriesTrends($filters)->get('data'));
+            $data = $data->merge($this->categoryAnalysisService->getChartCategoriesTrends($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -97,7 +109,8 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
      */
     public function getChartCategoriesStayTimes(array $filters = []): Collection
     {
-        $result = $this->categoryAnalysisService->getChartCategoriesStayTimes($filters)->get('data');
+        $result = $this->categoryAnalysisService->getChartCategoriesStayTimes($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -108,10 +121,13 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $result = $result->merge($this->categoryAnalysisService->getChartCategoriesStayTimes($filters)->get('data'));
+            $data = $data->merge($this->categoryAnalysisService->getChartCategoriesStayTimes($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -119,7 +135,8 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
      */
     public function chartCategoriesReviewsTrends(array $filters = []): Collection
     {
-        $result = $this->categoryAnalysisService->chartCategoriesReviewsTrends($filters)->get('data');
+        $result = $this->categoryAnalysisService->chartCategoriesReviewsTrends($filters);
+        $data = $result->get('data');
 
         // Get compared data category analysis
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -130,9 +147,12 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $result = $result->merge($this->categoryAnalysisService->chartCategoriesReviewsTrends($filters)->get('data'));
+            $data = $data->merge($this->categoryAnalysisService->chartCategoriesReviewsTrends($filters)->get('data'));
         }
 
-        return collect($result);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }
