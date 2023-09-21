@@ -416,4 +416,14 @@ class KpiController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Get options for select box.
+     */
+    public function getOptions(Request $request): JsonResponse
+    {
+        $options = $this->mqKpiRepository->getOptions();
+
+        return response()->json($options);
+    }
 }

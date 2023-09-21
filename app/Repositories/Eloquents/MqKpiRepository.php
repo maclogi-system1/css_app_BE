@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Constants\KpiConstant;
 use App\Models\MqKpi;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqKpiRepository as MqKpiRepositoryContract;
@@ -50,6 +51,9 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
         return $result;
     }
 
+    /**
+     * Get kpi summary dạta.
+     */
     private function getSummaryData(string $storeId, array $filters = []): array
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
@@ -95,6 +99,20 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
             'to_date'  => Arr::get($filters, 'to_date'),
             'target_achievement_rate' => $targetAchievementRate,
             'performance_summary' => $actualMqKpi,
+        ];
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $adsTypes = collect(KpiConstant::ADS_TYPES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+
+        return [
+            'ads_types' => $adsTypes,
         ];
     }
 }
