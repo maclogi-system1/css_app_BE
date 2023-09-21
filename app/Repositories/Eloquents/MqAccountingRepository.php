@@ -477,4 +477,40 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'expected' => $expected,
         ];
     }
+
+    /**
+     * Handle creating empty mq_accounting.
+     */
+    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void
+    {
+        $dateRange = $this->getDateTimeRange(now()->firstOfYear(), now()->endOfYear());
+
+        foreach ($dateRange as $yearMonth) {
+            $this->handleSafely(function () use ($yearMonth, $storeId, $mqSheet) {
+                [$year, $month] = explode('-', $yearMonth);
+                $mqKpi = MqKpi::create([]);
+                $mqAccessNum = MqAccessNum::create([]);
+                $mqAdSalesAmnt = MqAdSalesAmnt::create([]);
+                $mqUserTrends = MqUserTrend::create([]);
+                $mqCost = MqCost::create([]);
+                $mqAccounting = $this->model([
+                    'store_id' => $storeId,
+                    'year' => $year,
+                    'month' => $month,
+                    'mq_kpi_id' => $mqKpi->id,
+                    'mq_access_num_id' => $mqAccessNum->id,
+                    'mq_ad_sales_amnt_id' => $mqAdSalesAmnt->id,
+                    'mq_user_trends_id' => $mqUserTrends->id,
+                    'mq_cost_id' => $mqCost->id,
+                    'mq_sheet_id' => $mqSheet->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $mqAccounting->save();
+
+                return $mqAccounting;
+            }, 'Create empty mq accounting');
+        }
+    }
 }

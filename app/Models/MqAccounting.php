@@ -22,6 +22,7 @@ class MqAccounting extends Model
         'mq_ad_sales_amnt_id',
         'mq_user_trends_id',
         'mq_cost_id',
+        'mq_sheet_id',
         'ltv_2y_amnt',
         'lim_cpa',
         'cpo_via_ad',

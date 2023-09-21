@@ -8,6 +8,7 @@ use App\Http\Requests\StoreMqSheetRequest;
 use App\Http\Requests\UpdateMqSheetRequest;
 use App\Http\Resources\MqSheetResource;
 use App\Models\MqSheet;
+use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,7 +17,8 @@ use Illuminate\Http\Response;
 class MqSheetController extends Controller
 {
     public function __construct(
-        protected MqSheetRepository $mqSheetRepository
+        protected MqSheetRepository $mqSheetRepository,
+        protected MqAccountingRepository $mqAccountingRepository,
     ) {
     }
 
@@ -41,9 +43,25 @@ class MqSheetController extends Controller
     {
         $mqSheet = $this->mqSheetRepository->create($request->validated());
 
-        return $mqSheet
-            ? new MqSheetResource($mqSheet)
-            : response()->json([
+        if ($mqSheet) {
+            $mqAccounting = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
+                $request->input('store_id'),
+                [
+                    'mq_sheet_id' => $mqSheet->id,
+                    'from_date' => now()->firstOfYear()->format('Y-m'),
+                    'to_date' => now()->lastOfYear()->format('Y-m'),
+                ],
+            );
+
+            $mqSheetResource = new MqSheetResource($mqSheet);
+            $mqSheetResource->additional([
+                'mq_accounting' => $mqAccounting,
+            ]);
+
+            return $mqSheetResource;
+        }
+
+        return response()->json([
                 'message' => __('Created failure.'),
             ], Response::HTTP_BAD_REQUEST);
     }
