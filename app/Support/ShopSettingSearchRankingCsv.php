@@ -2,18 +2,20 @@
 
 namespace App\Support;
 
-use App\Repositories\Contracts\ShopSettingRankingRepository;
+use App\Repositories\Contracts\ShopSettingSearchRankingRepository;
 use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ShopSettingRankingCsv
+class ShopSettingSearchRankingCsv
 {
     public const HEADING = [
         'store_competitive_id' => ['title' => '店舗ID', 'validation' => ['nullable', 'max:255']],
         'merchandise_control_number' => ['title' => '商品管理番号', 'validation' => ['nullable', 'max:255']],
-        'directory_id' => ['title' => 'ディレクトリID', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],
+        'keyword_1' => ['title' => 'キーワード1', 'validation' => ['nullable', 'max:255']],
+        'keyword_2' => ['title' => 'キーワード2', 'validation' => ['nullable', 'max:255']],
+        'keyword_3' => ['title' => 'キーワード3', 'validation' => ['nullable', 'max:255']],
     ];
 
     public function getFields(string $key = 'title'): array
@@ -32,7 +34,7 @@ class ShopSettingRankingCsv
     public function streamCsvFile(bool $isCompetitiveRanking): Closure
     {
         $header = $this->getFields('title');
-        $sampleData = ['futtonda', 'hurikake-3set', '502936'];
+        $sampleData = ['hurikake-3set', '40000001', 'ふりかけ昆布', 'ご飯のお供', 'ふりかけ'];
 
         if (! $isCompetitiveRanking) {
             unset($header['store_competitive_id'], $sampleData[0]);
@@ -46,7 +48,7 @@ class ShopSettingRankingCsv
         };
     }
 
-    public function importRankingSettingCSV(string $storeId, bool $isCompetitiveRanking, UploadedFile $file): array
+    public function importSearchRankingSettingCSV(string $storeId, bool $isCompetitiveRanking, UploadedFile $file): array
     {
         $header = [];
         $count = 0;
@@ -60,11 +62,11 @@ class ShopSettingRankingCsv
             unset($titles['store_competitive_id'], $validateRules['store_competitive_id']);
         }
 
-        /** @var ShopSettingRankingRepository $shopSettingRankingRepo */
-        $shopSettingRankingRepo = resolve(ShopSettingRankingRepository::class);
+        /** @var ShopSettingSearchRankingRepository $shopSettingSearchRankingRepo */
+        $shopSettingSearchRankingRepo = resolve(ShopSettingSearchRankingRepository::class);
         DB::beginTransaction();
         try {
-            $shopSettingRankingRepo->deleteAllByStoreId($storeId, $isCompetitiveRanking);
+            $shopSettingSearchRankingRepo->deleteAllByStoreId($storeId, $isCompetitiveRanking);
             while (($row = fgetcsv($stream)) !== false) {
                 $row = convert_sjis_to_utf8($row);
 
@@ -92,7 +94,7 @@ class ShopSettingRankingCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        if ($result = $shopSettingRankingRepo->create($data + ['store_id' => $storeId])?->refresh()) {
+                        if ($result = $shopSettingSearchRankingRepo->create($data + ['store_id' => $storeId])?->refresh()) {
                             $results[] = $result;
                         }
                     }
@@ -102,7 +104,7 @@ class ShopSettingRankingCsv
             }
 
             fclose($stream);
-            if (! $shopSettingRankingRepo->checkExistAnyRecord()) {
+            if (! $shopSettingSearchRankingRepo->checkExistAnyRecord()) {
                 DB::rollBack();
             } else {
                 DB::commit();
