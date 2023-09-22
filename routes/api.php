@@ -311,6 +311,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
                 Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
             });
+
+            Route::prefix('review-analysis')
+            ->name('review-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'reviewAnalysisSummary')->name('summary');
+                Route::get('/chart-reviews-trends/{storeId}', 'chartReviewsTrends')->name('chart-reviews-trends');
+            });
         });
 
     Route::prefix('shop-settings')
