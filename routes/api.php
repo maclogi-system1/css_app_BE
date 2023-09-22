@@ -332,5 +332,12 @@ Route::middleware('auth:sanctum')->group(function () {
                    Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
                    Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
                });
+            Route::prefix('award-points')
+                ->name('award-points.')
+                ->group(function () {
+                    Route::get('/', 'getAwardPointSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateAwardPointCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadAwardPointCsv')->name('upload-csv');
+                });
         });
 });

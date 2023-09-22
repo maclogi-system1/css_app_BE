@@ -2,18 +2,18 @@
 
 namespace App\Support;
 
-use App\Repositories\Contracts\ShopSettingRankingRepository;
+use App\Repositories\Contracts\ShopSettingAwardPointRepository;
 use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ShopSettingRankingCsv
+class ShopSettingAwardPointCsv
 {
     public const HEADING = [
-        'store_competitive_id' => ['title' => '店舗ID', 'validation' => ['nullable', 'max:255']],
-        'merchandise_control_number' => ['title' => '商品管理番号', 'validation' => ['nullable', 'max:255']],
-        'directory_id' => ['title' => 'ディレクトリID', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],
+        'purchase_date' => ['title' => '購入日付', 'validation' => ['nullable', 'date_format:Y/m/d']],
+        'order_number' => ['title' => '注文番号', 'validation' => ['nullable', 'max:255']],
+        'points_awarded' => ['title' => 'ポイント付与数', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],
     ];
 
     public function getFields(string $key = 'title'): array
@@ -29,24 +29,19 @@ class ShopSettingRankingCsv
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile(bool $isCompetitiveRanking): Closure
+    public function streamCsvFile(): Closure
     {
-        $header = $this->getFields('title');
-        $sampleData = ['futtonda', 'hurikake-3set', '502936'];
-
-        if (! $isCompetitiveRanking) {
-            unset($header['store_competitive_id'], $sampleData[0]);
-        }
-
-        return function () use ($header, $sampleData) {
+        return function () {
             $file = fopen('php://output', 'w');
-            fputcsv($file, convert_fields_to_sjis(array_values($header)));
-            fputcsv($file, convert_fields_to_sjis($sampleData));
+            fputcsv($file, convert_fields_to_sjis(array_values($this->getFields('title'))));
+            fputcsv($file, convert_fields_to_sjis([
+                '2023/06/01', '252628-20230601-0004926638', 19,
+            ]));
             fclose($file);
         };
     }
 
-    public function importRankingSettingCSV(string $storeId, bool $isCompetitiveRanking, UploadedFile $file): array
+    public function importAwardPointSettingCSV(string $storeId, UploadedFile $file): array
     {
         $header = [];
         $count = 0;
@@ -56,15 +51,11 @@ class ShopSettingRankingCsv
         $validateRules = $this->getFields('validation');
         $stream = fopen($file->getPathname(), 'r');
 
-        if (! $isCompetitiveRanking) {
-            unset($titles['store_competitive_id'], $validateRules['store_competitive_id']);
-        }
-
-        /** @var ShopSettingRankingRepository $shopSettingRankingRepo */
-        $shopSettingRankingRepo = resolve(ShopSettingRankingRepository::class);
+        /** @var ShopSettingAwardPointRepository $shopSettingAwardPointRepo */
+        $shopSettingAwardPointRepo = resolve(ShopSettingAwardPointRepository::class);
         DB::beginTransaction();
         try {
-            $shopSettingRankingRepo->deleteAllByStoreId($storeId, $isCompetitiveRanking);
+            $shopSettingAwardPointRepo->deleteAllByStoreId($storeId);
             while (($row = fgetcsv($stream)) !== false) {
                 if ($count == 0) {
                     $header = convert_sjis_to_utf8($row);
@@ -73,7 +64,7 @@ class ShopSettingRankingCsv
                     $temp = array_combine($header, $row);
                     foreach ($titles as $field => $title) {
                         $data[$field] = isset($temp[$title])
-                            ? preg_replace('/[\s\%]+/', '', $temp[$title])
+                            ? trim($temp[$title])
                             : null;
                     }
 
@@ -90,7 +81,7 @@ class ShopSettingRankingCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        $results[] = $shopSettingRankingRepo->create($data + ['store_id' => $storeId])?->refresh();
+                        $results[] = $shopSettingAwardPointRepo->create($data + ['store_id' => $storeId])?->refresh();
                     }
                 }
 
@@ -98,7 +89,8 @@ class ShopSettingRankingCsv
             }
 
             fclose($stream);
-            if (! $shopSettingRankingRepo->checkExistAnyRecord()) {
+
+            if (! $shopSettingAwardPointRepo->checkExistAnyRecord()) {
                 DB::rollBack();
             } else {
                 DB::commit();
