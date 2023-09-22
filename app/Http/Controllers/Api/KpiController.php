@@ -10,6 +10,7 @@ use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ProductAnalysisRepository;
 use App\Repositories\Contracts\ReportSearchRepository;
+use App\Repositories\Contracts\ReviewAnalysisRepository;
 use App\Repositories\Contracts\SalesAmntPerUserAnalysisRepository;
 use App\Repositories\Contracts\StoreChartRepository;
 use App\Repositories\Contracts\UserAccessRepository;
@@ -31,7 +32,8 @@ class KpiController extends Controller
         protected StoreChartRepository $storeChartRepository,
         protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository,
         protected ProductAnalysisRepository $productAnalysisRepository,
-        protected CategoryAnalysisRepository $categoryAnalysisRepository
+        protected CategoryAnalysisRepository $categoryAnalysisRepository,
+        protected ReviewAnalysisRepository $reviewAnalysisRepository
     ) {
     }
 
@@ -425,5 +427,25 @@ class KpiController extends Controller
         $options = $this->mqKpiRepository->getOptions();
 
         return response()->json($options);
+    }
+
+    /**
+     * Get data summary review analysis from AI.
+     */
+    public function reviewAnalysisSummary(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reviewAnalysisRepository->getReviewSummary($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get chart reviews's trends from AI.
+     */
+    public function chartReviewsTrends(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->reviewAnalysisRepository->getChartReviewsTrends($storeId, $request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 }
