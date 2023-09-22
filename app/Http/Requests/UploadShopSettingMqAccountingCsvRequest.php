@@ -22,7 +22,7 @@ class UploadShopSettingMqAccountingCsvRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'max:2048', 'mimes:csv,txt'],
+            'file' => ['required', 'file', 'mimes:csv,txt'],
         ];
     }
 }

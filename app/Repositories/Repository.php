@@ -340,6 +340,14 @@ abstract class Repository
     }
 
     /**
+     * Check Exist any data.
+     */
+    public function checkExistAnyRecord(): bool
+    {
+        return $this->model()->newQuery()->exists();
+    }
+
+    /**
      * Handle dynamic method calls into the method.
      *
      * @throws \InvalidArgumentException

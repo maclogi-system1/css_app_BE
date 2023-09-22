@@ -116,7 +116,11 @@ class ShopSettingMqAccountingCsv
             }
 
             fclose($stream);
-            DB::commit();
+            if (! $shopSettingMqAccountingRepo->checkExistAnyRecord()) {
+                DB::rollBack();
+            } else {
+                DB::commit();
+            }
         } catch (\Exception $e) {
             fclose($stream);
             DB::rollBack();
