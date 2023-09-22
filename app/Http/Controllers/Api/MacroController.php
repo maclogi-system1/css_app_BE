@@ -145,7 +145,7 @@ class MacroController extends Controller
                     $data,
                     'simulation',
                     []
-                )
+                ) + ['store_id' => Arr::get($data, 'store_ids')],
             );
             $key = 'simulation';
 
