@@ -179,55 +179,57 @@ class ReportSearchService extends Service
             ]);
         }
 
-        $dataFake->add([
-            'store_id' => $storeId,
-            'from_date' => Arr::get($filters, 'from_date'),
-            'to_date' => Arr::get($filters, 'to_date'),
-            'product' => [
-                'total_access' => rand(1000, 5000),
-                'item_id' => rand(1000, 5000),
-                'item_name' => '商品名1テキス',
-                'ranking' => 1,
-                'table_report_serach_by_product' => collect([
-                    [
-                        'display_name' => 'キーワード1',
-                        'keyword' => 'keyword_1',
-                        'value' => rand(1000, 5000),
-                        'rate' => rand(3, 20),
-                        'conversion_rate' => rand(3, 20),
-                    ],
-                    [
-                        'display_name' => 'キーワード2',
-                        'keyword' => 'keyword_2',
-                        'value' => rand(1000, 5000),
-                        'rate' => rand(3, 20),
-                        'conversion_rate' => rand(3, 20),
-                    ],
-                    [
-                        'display_name' => 'キーワード3',
-                        'keyword' => 'keyword_3',
-                        'value' => rand(1000, 5000),
-                        'rate' => rand(3, 20),
-                        'conversion_rate' => rand(3, 20),
-                    ],
-                    [
-                        'display_name' => 'キーワード4',
-                        'keyword' => 'keyword_4',
-                        'value' => rand(1000, 5000),
-                        'rate' => rand(3, 20),
-                        'conversion_rate' => rand(3, 20),
-                    ],
-                    [
-                        'display_name' => 'キーワード5',
-                        'keyword' => 'keyword_5',
-                        'value' => rand(1000, 5000),
-                        'rate' => rand(3, 20),
-                        'conversion_rate' => rand(3, 20),
-                    ],
-                ]),
-                'chart_report_search_by_product' => $chartByProduct,
-            ],
-        ]);
+        for ($i = 0; $i < 15; $i++) {
+            $dataFake->add([
+                'store_id' => $storeId,
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'product' => [
+                    'total_access' => rand(1000, 5000),
+                    'item_id' => rand(1000, 5000),
+                    'item_name' => '商品名1テキス',
+                    'ranking' => 1,
+                    'table_report_serach_by_product' => collect([
+                        [
+                            'display_name' => 'キーワード1',
+                            'keyword' => 'keyword_1',
+                            'value' => rand(1000, 5000),
+                            'rate' => rand(3, 20),
+                            'conversion_rate' => rand(3, 20),
+                        ],
+                        [
+                            'display_name' => 'キーワード2',
+                            'keyword' => 'keyword_2',
+                            'value' => rand(1000, 5000),
+                            'rate' => rand(3, 20),
+                            'conversion_rate' => rand(3, 20),
+                        ],
+                        [
+                            'display_name' => 'キーワード3',
+                            'keyword' => 'keyword_3',
+                            'value' => rand(1000, 5000),
+                            'rate' => rand(3, 20),
+                            'conversion_rate' => rand(3, 20),
+                        ],
+                        [
+                            'display_name' => 'キーワード4',
+                            'keyword' => 'keyword_4',
+                            'value' => rand(1000, 5000),
+                            'rate' => rand(3, 20),
+                            'conversion_rate' => rand(3, 20),
+                        ],
+                        [
+                            'display_name' => 'キーワード5',
+                            'keyword' => 'keyword_5',
+                            'value' => rand(1000, 5000),
+                            'rate' => rand(3, 20),
+                            'conversion_rate' => rand(3, 20),
+                        ],
+                    ]),
+                    'chart_report_search_by_product' => $chartByProduct,
+                ],
+            ]);
+        }
 
         return collect([
             'success' => true,
