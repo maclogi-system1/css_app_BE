@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DownloadShopSettingRankingRequest;
 use App\Http\Requests\DownloadShopSettingSearchRankingRequest;
+use App\Http\Requests\GetShopSettingMQAccountingRequest;
 use App\Http\Requests\GetShopSettingRankingRequest;
 use App\Http\Requests\GetShopSettingSearchRankingRequest;
+use App\Http\Requests\UpdateShopSettingAwardPointRequest;
+use App\Http\Requests\UpdateShopSettingMQAccountingRequest;
+use App\Http\Requests\UpdateShopSettingRankingRequest;
+use App\Http\Requests\UpdateShopSettingSearchRankingRequest;
 use App\Http\Requests\UploadShopSettingAwardPointCsvRequest;
 use App\Http\Requests\UploadShopSettingMqAccountingCsvRequest;
 use App\Http\Requests\UploadShopSettingRankingCsvRequest;
@@ -21,6 +26,7 @@ use App\Support\ShopSettingRankingCsv;
 use App\Support\ShopSettingSearchRankingCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ShopSettingController extends Controller
@@ -30,6 +36,10 @@ class ShopSettingController extends Controller
         protected ShopSettingRankingCsv $shopSettingRankingCsv,
         protected ShopSettingAwardPointCsv $shopSettingAwardPointCsv,
         protected ShopSettingSearchRankingCsv $shopSettingSearchRankingCsv,
+        protected ShopSettingMqAccountingRepository $shopSettingMqAccountingRepository,
+        protected ShopSettingAwardPointRepository $shopSettingAwardPointRepository,
+        protected ShopSettingRankingRepository $shopSettingRankingRepository,
+        protected ShopSettingSearchRankingRepository $shopSettingSearchRankingRepository,
     ) {
     }
 
@@ -65,14 +75,30 @@ class ShopSettingController extends Controller
         ]);
     }
 
-    public function getMQAccountingSettings(Request $request): JsonResponse
+    public function getMQAccountingSettings(GetShopSettingMQAccountingRequest $request): JsonResponse
     {
-        /** @var ShopSettingMqAccountingRepository $shopSettingMqAccountingRepo */
-        $shopSettingMqAccountingRepo = resolve(ShopSettingMqAccountingRepository::class);
+        return response()->json([
+            'shop_mq_accounting_settings' => $this->shopSettingMqAccountingRepository->getList($request->all(), ['shop_setting_mq_accounting.*']),
+        ]);
+    }
+
+    /**
+     * Handle update multiple settings.
+     */
+    public function updateMQAccounting(string $storeId, UpdateShopSettingMQAccountingRequest $request): JsonResponse
+    {
+        $settings = $request->get('settings', []);
+        $result = $this->shopSettingMqAccountingRepository->updateMultiple($storeId, $settings);
+
+        if ($result) {
+            return response()->json([
+                'message' => __('Successfully updated.'),
+            ]);
+        }
 
         return response()->json([
-            'shop_mq_accounting_settings' => $shopSettingMqAccountingRepo->getList($request->all(), ['shop_setting_mq_accounting.*']),
-        ]);
+            'message' => __('Updated failure.'),
+        ], ResponseAlias::HTTP_BAD_REQUEST);
     }
 
     /**
@@ -112,12 +138,29 @@ class ShopSettingController extends Controller
 
     public function getRankingsSettings(GetShopSettingRankingRequest $request): JsonResponse
     {
-        /** @var ShopSettingRankingRepository $shopSettingRankingRepo */
-        $shopSettingRankingRepo = resolve(ShopSettingRankingRepository::class);
+        return response()->json([
+            'shop_ranking_settings' => $this->shopSettingRankingRepository->getList($request->all(), ['shop_setting_rankings.*']),
+        ]);
+    }
+
+    /**
+     * Handle update multiple settings.
+     */
+    public function updateRankingSettings(string $storeId, UpdateShopSettingRankingRequest $request): JsonResponse
+    {
+        $settings = $request->get('settings', []);
+        $isCompetitiveRanking = (bool) $request->get('is_competitive_ranking', true);
+        $result = $this->shopSettingRankingRepository->updateMultiple($storeId, $settings, $isCompetitiveRanking);
+
+        if ($result) {
+            return response()->json([
+                'message' => __('Successfully updated.'),
+            ]);
+        }
 
         return response()->json([
-            'shop_ranking_settings' => $shopSettingRankingRepo->getList($request->all(), ['shop_setting_rankings.*']),
-        ]);
+            'message' => __('Updated failure.'),
+        ], ResponseAlias::HTTP_BAD_REQUEST);
     }
 
     public function downloadTemplateAwardPointCsv(): StreamedResponse
@@ -149,13 +192,29 @@ class ShopSettingController extends Controller
         ]);
     }
 
-    public function getAwardPointSettings(Request $request): JsonResponse
+    /**
+     * Handle update multiple settings.
+     */
+    public function updateAwardPoint(string $storeId, UpdateShopSettingAwardPointRequest $request): JsonResponse
     {
-        /** @var ShopSettingAwardPointRepository $shopSettingAwardPointRepo */
-        $shopSettingAwardPointRepo = resolve(ShopSettingAwardPointRepository::class);
+        $settings = $request->get('settings', []);
+        $result = $this->shopSettingAwardPointRepository->updateMultiple($storeId, $settings);
+
+        if ($result) {
+            return response()->json([
+                'message' => __('Successfully updated.'),
+            ]);
+        }
 
         return response()->json([
-            'shop_award_point_settings' => $shopSettingAwardPointRepo->getList($request->all(), ['shop_setting_award_points.*']),
+            'message' => __('Updated failure.'),
+        ], ResponseAlias::HTTP_BAD_REQUEST);
+    }
+
+    public function getAwardPointSettings(Request $request): JsonResponse
+    {
+        return response()->json([
+            'shop_award_point_settings' => $this->shopSettingAwardPointRepository->getList($request->all(), ['shop_setting_award_points.*']),
         ]);
     }
 
@@ -196,11 +255,28 @@ class ShopSettingController extends Controller
 
     public function getSearchRankingsSettings(GetShopSettingSearchRankingRequest $request): JsonResponse
     {
-        /** @var ShopSettingSearchRankingRepository $shopSettingSearchRankingRepo */
-        $shopSettingSearchRankingRepo = resolve(ShopSettingSearchRankingRepository::class);
+        return response()->json([
+            'shop_search_ranking_settings' => $this->shopSettingSearchRankingRepository->getList($request->all(), ['shop_setting_search_rankings.*']),
+        ]);
+    }
+
+    /**
+     * Handle update multiple settings.
+     */
+    public function updateSearchRankingSettings(string $storeId, UpdateShopSettingSearchRankingRequest $request): JsonResponse
+    {
+        $settings = $request->get('settings', []);
+        $isCompetitiveRanking = (bool) $request->get('is_competitive_ranking', true);
+        $result = $this->shopSettingSearchRankingRepository->updateMultiple($storeId, $settings, $isCompetitiveRanking);
+
+        if ($result) {
+            return response()->json([
+                'message' => __('Successfully updated.'),
+            ]);
+        }
 
         return response()->json([
-            'shop_search_ranking_settings' => $shopSettingSearchRankingRepo->getList($request->all(), ['shop_setting_search_rankings.*']),
-        ]);
+            'message' => __('Updated failure.'),
+        ], ResponseAlias::HTTP_BAD_REQUEST);
     }
 }

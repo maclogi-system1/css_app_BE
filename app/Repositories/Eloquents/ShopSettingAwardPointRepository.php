@@ -5,11 +5,14 @@ namespace App\Repositories\Eloquents;
 use App\Models\ShopSettingAwardPoint;
 use App\Repositories\Contracts\ShopSettingAwardPointRepository as ShopSettingAwardPointRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
 class ShopSettingAwardPointRepository extends Repository implements ShopSettingAwardPointRepositoryContract
 {
+    use ShopSettingUpdateRepository;
+
     /**
      * Get full name of model.
      */

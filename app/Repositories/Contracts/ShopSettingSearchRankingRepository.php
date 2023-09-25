@@ -15,4 +15,9 @@ interface ShopSettingSearchRankingRepository extends Repository
      * Handle delete all ranking setting by storeId.
      */
     public function deleteAllByStoreId(string $storeId, bool $isCompetitiveRanking): mixed;
+
+    /**
+     * Handle update multiply by storeId and id.
+     */
+    public function updateMultiple(string $storeId, array $settings, bool $isCompetitiveRanking): null|bool;
 }

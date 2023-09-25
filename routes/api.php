@@ -330,6 +330,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('/', 'getMQAccountingSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateMQAccounting')->name('update');
                 });
 
             Route::prefix('rankings')
@@ -338,6 +339,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('/', 'getRankingsSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateRankingSettings')->name('update');
                 });
             Route::prefix('award-points')
                 ->name('award-points.')
@@ -345,6 +347,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('/', 'getAwardPointSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateAwardPointCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadAwardPointCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateAwardPoint')->name('update');
                 });
             Route::prefix('search-rankings')
                 ->name('search-rankings.')
@@ -352,6 +355,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('/', 'getSearchRankingsSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateSearchRankingCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadSearchRankingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateSearchRankingSettings')->name('update');
                 });
         });
 });

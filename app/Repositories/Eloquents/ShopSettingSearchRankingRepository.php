@@ -5,11 +5,16 @@ namespace App\Repositories\Eloquents;
 use App\Models\ShopSettingSearchRanking;
 use App\Repositories\Contracts\ShopSettingSearchRankingRepository as ShopSettingSearchRankingRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
 class ShopSettingSearchRankingRepository extends Repository implements ShopSettingSearchRankingRepositoryContract
 {
+    use ShopSettingUpdateRepository {
+        updateMultiple as updateMultipleTrait;
+    }
+
     /**
      * Get full name of model.
      */
@@ -62,5 +67,16 @@ class ShopSettingSearchRankingRepository extends Repository implements ShopSetti
         }
 
         return parent::getWithFilter($builder, $filters);
+    }
+
+    public function updateMultiple(string $storeId, array $settings, bool $isCompetitiveRanking): null|bool
+    {
+        if (! $isCompetitiveRanking) {
+            foreach ($settings as &$setting) {
+                unset($setting['store_competitive_id']);
+            }
+        }
+
+        return $this->updateMultipleTrait($storeId, $settings);
     }
 }
