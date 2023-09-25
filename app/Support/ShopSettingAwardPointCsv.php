@@ -57,8 +57,10 @@ class ShopSettingAwardPointCsv
         try {
             $shopSettingAwardPointRepo->deleteAllByStoreId($storeId);
             while (($row = fgetcsv($stream)) !== false) {
+                $row = convert_sjis_to_utf8($row);
+
                 if ($count == 0) {
-                    $header = convert_sjis_to_utf8($row);
+                    $header = $row;
                 } else {
                     $data = [];
                     $temp = array_combine($header, $row);
@@ -81,7 +83,9 @@ class ShopSettingAwardPointCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        $results[] = $shopSettingAwardPointRepo->create($data + ['store_id' => $storeId])?->refresh();
+                        if ($result = $shopSettingAwardPointRepo->create($data + ['store_id' => $storeId])?->refresh()) {
+                            $results[] = $result;
+                        }
                     }
                 }
 

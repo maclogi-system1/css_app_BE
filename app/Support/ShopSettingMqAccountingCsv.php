@@ -7,6 +7,7 @@ use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ShopSettingMqAccountingCsv
 {
@@ -84,15 +85,24 @@ class ShopSettingMqAccountingCsv
         try {
             $shopSettingMqAccountingRepo->deleteAllByStoreId($storeId);
             while (($row = fgetcsv($stream)) !== false) {
+                $row = convert_sjis_to_utf8($row);
+
                 if ($count == 0) {
-                    $header = convert_sjis_to_utf8($row);
+                    $header = $row;
                 } else {
                     $data = [];
                     $temp = array_combine($header, $row);
                     foreach ($titles as $field => $title) {
-                        $data[$field] = isset($temp[$title])
-                            ? preg_replace('/[\s\%]+/', '', $temp[$title])
-                            : null;
+                        $value = null;
+
+                        if (isset($temp[$title])) {
+                            $value = trim($temp[$title]);
+                            if (Str::endsWith($field, '_rate')) {
+                                $value = preg_replace('/[\s\%]+/', '', $value);
+                            }
+                        }
+
+                        $data[$field] = $value;
                     }
 
                     $validator = Validator::make(
@@ -108,7 +118,9 @@ class ShopSettingMqAccountingCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        $results[] = $shopSettingMqAccountingRepo->create($data + ['store_id' => $storeId])?->refresh();
+                        if ($result = $shopSettingMqAccountingRepo->create($data + ['store_id' => $storeId])?->refresh()) {
+                            $results[] = $result;
+                        }
                     }
                 }
 

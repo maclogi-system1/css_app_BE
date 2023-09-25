@@ -324,27 +324,34 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('shop-settings.')
         ->controller(ShopSettingController::class)
         ->group(function () {
-           Route::prefix('mq-accounting')
-               ->name('mq-accounting.')
-               ->group(function () {
-                   Route::get('/', 'getMQAccountingSettings')->name('list');
-                   Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
-                   Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
-               });
+            Route::prefix('mq-accounting')
+                ->name('mq-accounting.')
+                ->group(function () {
+                    Route::get('/', 'getMQAccountingSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+                });
 
-           Route::prefix('rankings')
-               ->name('rankings.')
-               ->group(function () {
-                   Route::get('/', 'getRankingsSettings')->name('list');
-                   Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
-                   Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
-               });
+            Route::prefix('rankings')
+                ->name('rankings.')
+                ->group(function () {
+                    Route::get('/', 'getRankingsSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
+                });
             Route::prefix('award-points')
                 ->name('award-points.')
                 ->group(function () {
                     Route::get('/', 'getAwardPointSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateAwardPointCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadAwardPointCsv')->name('upload-csv');
+                });
+            Route::prefix('search-rankings')
+                ->name('search-rankings.')
+                ->group(function () {
+                    Route::get('/', 'getSearchRankingsSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateSearchRankingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadSearchRankingCsv')->name('upload-csv');
                 });
         });
 });
