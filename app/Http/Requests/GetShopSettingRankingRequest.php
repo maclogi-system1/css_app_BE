@@ -23,6 +23,7 @@ class GetShopSettingRankingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'store_id' => ['required'],
             'is_competitive_ranking' => ['nullable', Rule::in([0, 1])],
         ];
     }

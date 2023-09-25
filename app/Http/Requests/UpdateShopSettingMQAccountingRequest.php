@@ -2,10 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ShopSettingMqAccountingCsv;
+use App\Support\Traits\ShopSettingUpdateRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class GetShopSettingAwardPointRequest extends FormRequest
+class UpdateShopSettingMQAccountingRequest extends FormRequest
 {
+    use ShopSettingUpdateRequest;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -21,10 +25,11 @@ class GetShopSettingAwardPointRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'store_id' => ['required'],
-            'from_date' => ['nullable', 'date_format:Y-m-d'],
-            'to_date' => ['nullable', 'required_with:from_date', 'date_format:Y-m-d'],
-        ];
+        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'validation');
+    }
+
+    public function attributes()
+    {
+        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'title');
     }
 }

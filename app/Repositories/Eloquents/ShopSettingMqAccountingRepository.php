@@ -5,11 +5,14 @@ namespace App\Repositories\Eloquents;
 use App\Models\ShopSettingMqAccounting;
 use App\Repositories\Contracts\ShopSettingMqAccountingRepository as ShopSettingMqAccountingRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
 class ShopSettingMqAccountingRepository extends Repository implements ShopSettingMqAccountingRepositoryContract
 {
+    use ShopSettingUpdateRepository;
+
     /**
      * Get full name of model.
      */

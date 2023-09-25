@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class GetShopSettingAwardPointRequest extends FormRequest
+class GetShopSettingMQAccountingRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +23,6 @@ class GetShopSettingAwardPointRequest extends FormRequest
     {
         return [
             'store_id' => ['required'],
-            'from_date' => ['nullable', 'date_format:Y-m-d'],
-            'to_date' => ['nullable', 'required_with:from_date', 'date_format:Y-m-d'],
         ];
     }
 }
