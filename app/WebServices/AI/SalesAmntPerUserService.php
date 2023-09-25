@@ -28,16 +28,17 @@ class SalesAmntPerUserService extends Service
         $dataFake = collect();
 
         foreach ($dateTimeRange as $date) {
-            $salesAmntPC = rand(1000, 5000);
-            $salesAmntApp = rand(1000, 5000);
-            $salesAmntSP = rand(1000, 5000);
+            $listStoreValues = collect();
+            for ($i = 0; $i < 10; $i++) {
+                $listStoreValues->add([
+                    'display_name' => '店舗'.$i + 1,
+                    'store_id' => 'store_'.$i + 1,
+                    'sales_amnt_per_user' => rand(1000, 5000),
+                ]);
+            }
             $dataFake->add([
-                'store_id' => $storeId,
                 'date' => $date,
-                'sales_all' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
-                'sales_pc' => $salesAmntPC,
-                'sales_sd_web' => $salesAmntApp,
-                'sales_sd_app' =>  $salesAmntSP,
+                'stores_sales_amnt_per_user' => $listStoreValues,
             ]);
         }
 
@@ -70,12 +71,11 @@ class SalesAmntPerUserService extends Service
             $salesAmntApp = rand(1000, 5000);
             $salesAmntSP = rand(1000, 5000);
             $dataFake->add([
-                'store_id' => $storeId,
                 'date' => $date,
-                'sales_all' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
-                'sales_pc' => $salesAmntPC,
-                'sales_sd_web' => $salesAmntApp,
-                'sales_sd_app' =>  $salesAmntSP,
+                'total' => $salesAmntPC + $salesAmntApp + $salesAmntSP,
+                'pc' => $salesAmntPC,
+                'app' => $salesAmntApp,
+                'phone' =>  $salesAmntSP,
             ]);
         }
 
@@ -95,8 +95,8 @@ class SalesAmntPerUserService extends Service
 
         for ($i = 0; $i < 30; $i++) {
             $dataFake->add([
-                'PV' => rand(0, 70000),
                 'sales_all' =>  rand(1000, 5000),
+                'PV' => rand(0, 70000),
             ]);
         }
 
