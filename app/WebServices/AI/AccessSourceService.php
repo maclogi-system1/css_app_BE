@@ -67,9 +67,7 @@ class AccessSourceService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_access_source' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 

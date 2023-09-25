@@ -9,7 +9,10 @@ use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfiguratio
 use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Contracts\MacroTemplateRepository;
 use App\Repositories\Repository;
+use App\Support\Traits\ColumnTypeHandler;
+use App\WebServices\AI\MqAccountingService;
 use App\WebServices\MacroService;
+use App\WebServices\OSS\SchemaService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
@@ -19,11 +22,15 @@ use Illuminate\Support\Facades\Schema;
 
 class MacroConfigurationRepository extends Repository implements MacroConfigurationRepositoryContract
 {
+    use ColumnTypeHandler;
+
     public function __construct(
         protected MacroService $macroService,
         protected ShopService $shopService,
         protected MacroGraphRepository $macroGraphRepository,
         protected MacroTemplateRepository $macroTemplateRepository,
+        protected SchemaService $schemaService,
+        protected MqAccountingService $mqAccountingService,
     ) {
     }
 
@@ -100,20 +107,44 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $tables = [];
 
         foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+            if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
+                continue;
+            }
+
             $tables[$tableName] = $this->getAllColumnOfTableAndRelativeTable(
                 $tableName,
                 Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
             );
             if ($tableName === 'mq_accounting') {
+                $tables[$tableName] = $this->buildAccountingTableColumns($tables[$tableName]);
                 $tables[$tableName]->push([
                     'table' => 'mq_accounting',
                     'column' => 'year_month',
-                    'type' => 'string'
+                    'type' => 'string',
+                    'label' => trans('macro-labels.mq_accounting.year_month'),
                 ]);
             }
         }
 
+        $ossColumns = $this->macroService->getListTableOSS();
+        if ($ossColumns->get('success')) {
+            $tables = $ossColumns->get('data')->merge($tables)->toArray();
+        }
+
         return $tables;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTableLabels(): array
+    {
+        $tableLabels = [];
+        foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+            $tableLabels[$tableName] = trans("macro-labels.$tableName.table_label");
+        }
+
+        return $tableLabels;
     }
 
     /**
@@ -135,10 +166,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     private function getAllColumnOfTable($tableName): Collection
     {
-        if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
-            return $this->getAllColumnOfTableOSS($tableName);
-        }
-
         $columns = collect(Schema::getColumnListing($tableName));
         $hiddenColumns = Arr::get(MacroConstant::DESCRIPTION_TABLES, $tableName.'.'.MacroConstant::REMOVE_COLUMNS);
         $convertColumnType = fn ($type) => $this->convertColumnType($type);
@@ -150,6 +177,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'table' => $tableName,
                 'column' => $columnName,
                 'type' => $convertColumnType(Schema::getColumnType($tableName, $columnName)),
+                'label' => trans("macro-labels.$tableName.$columnName"),
             ];
         })->values();
     }
@@ -186,9 +214,13 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         $macroConfiguration = $this->queryBuilder()->with(['graph', 'templates'])->where('id', $id)->first($columns);
 
+        if (is_null($macroConfiguration)) {
+            return null;
+        }
+
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
-            'filters' => ['shop_url' => $macroConfiguration->store_ids],
+            'filters' => ['shop_url' => $macroConfiguration?->store_ids],
         ]);
 
         if ($shopResponse->get('success')) {
@@ -412,20 +444,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             'graph_types' => $graphTypes,
             'position_display' => $positionDisplay,
         ];
-    }
-
-    /**
-     * Convert the type of the column in the database to the typescript.
-     */
-    private function convertColumnType($type): string
-    {
-        if (in_array($type, ['integer', 'bigint', 'smallint', 'decimal', 'boolean'])) {
-            return 'number';
-        } elseif (in_array($type, ['datetime', 'date'])) {
-            return 'date';
-        }
-
-        return 'string';
     }
 
     /**
@@ -695,36 +713,53 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $axisY = collect($axisYArr)->map(function ($item) {
                     return [
                         'field' => $item,
-                        'type' => $this->getChartDataType($item),
+                        'type' => $this->getColumnDataType($item),
+                        'label' => trans("macro-labels.$item"),
                     ];
                 });
 
+                foreach ($axisYArr as $item) {
+                    $axisYItemTable = explode('.', $item)[0];
+                    if ($axisYItemTable == 'mq_accounting') {
+                        $axisY->add([
+                            'field' => $item.MacroConstant::ACCOUNTING_ACTUAL_COLUMN,
+                            'type' => $this->getColumnDataType($item),
+                            'label' => trans("macro-labels.$item").trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN),
+                        ]);
+                        $axisY->add([
+                            'field' => $item.MacroConstant::ACCOUNTING_DIFF_COLUMN,
+                            'type' => $this->getColumnDataType($item),
+                            'label' => trans("macro-labels.$item").trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN),
+                        ]);
+                    }
+                }
+
                 $macroConfiguration = $this->queryBuilder()->where('id', $macroGraphItem->macro_configuration_id)->first();
-                $dataResult = $this->getQueryResults($macroConfiguration);
+                $dataResult = $this->getQueryResults($macroConfiguration)->get('values');
                 $graphData = [];
                 foreach ($dataResult as $item) {
-                    $itemAttributes = get_object_vars($item);
-                    $dataX = array_filter(
-                        $itemAttributes,
-                        fn ($key) => $key === $axisXCol,
-                        ARRAY_FILTER_USE_KEY
-                    );
+                    $dataX = $this->getNestedProperty($axisXCol, $item);
                     $dataY = [];
                     foreach ($axisY as $axisYItem) {
-                        $axisYItemCol = explode('.', Arr::get($axisYItem, 'field'))[1];
-                        $dataYVal = array_filter(
-                            $itemAttributes,
-                            fn ($key) => $key === $axisYItemCol,
-                            ARRAY_FILTER_USE_KEY
-                        );
-                        $dataY[] = [
-                            Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol)
+                        $parts = explode('.', Arr::get($axisYItem, 'field'));
+                        $axisYItemCol = isset($parts[1]) ? trim($parts[1]) : '';
+                        $axisYItemCol .= isset($parts[2]) ? '.'.trim($parts[2]) : '';
+                        $dataYVal = $this->getNestedProperty($axisYItemCol, $item);
+                        if (! is_null(Arr::get($dataYVal, $axisYItemCol))) {
+                            $dataY[] = [
+                                Arr::get($axisYItem, 'field') => Arr::get($dataYVal, $axisYItemCol),
+                            ];
+                        }
+                    }
+                    if (
+                        ! is_null(Arr::get($dataX, $axisXCol, ''))
+                        && ! empty($dataY)
+                    ) {
+                        $graphData[] = [
+                            'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
+                            'axis_y' => $dataY,
                         ];
                     }
-                    $graphData[] = [
-                        'axis_x' =>  Arr::get($dataX, $axisXCol, ''),
-                        'axis_y' => $dataY,
-                    ];
                 }
 
                 $result[$positionItem] = [
@@ -732,7 +767,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     'graph_type' => $macroGraphItem->graph_type,
                     'axis_x' => [
                         'field' => $axisX,
-                        'type' => $this->getChartDataType($axisX),
+                        'type' => $this->getColumnDataType($axisX),
+                        'label' => trans("macro-labels.$axisX"),
                     ],
                     'axis_y' => $axisY,
                     'data' => $graphData,
@@ -743,21 +779,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         }
 
         return collect($result);
-    }
-
-    /**
-     * Get column data type from input string 'table.column'.
-     * Return empty when exception table not found has been thrown.
-     */
-    private function getChartDataType(string $tableColumnStr): string
-    {
-        try {
-            $columnType = Schema::getColumnType(explode('.', $tableColumnStr)[0], explode('.', $tableColumnStr)[1]);
-
-            return $this->convertColumnType($columnType);
-        } catch(\Exception $e) {
-            return '';
-        }
     }
 
     /**
@@ -780,6 +801,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $table = Arr::get($conditions, 'table');
         $boolean = Arr::get($conditions, 'operator', 'and');
         $conditionItems = Arr::get($conditions, 'conditions', []);
+        $labelArr = [];
 
         if (is_null($table)) {
             return null;
@@ -794,11 +816,16 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $columns = $this->getAllColumnOfTable($table)
                 ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                 ->toArray();
+            foreach ($columns as $column) {
+                $labelArr[explode('.', $column)[1]] = trans('macro-labels.'.$column);
+            }
+            $labelArr['store_id'] = trans('macro-labels.'.$table.'.store_id');
 
             $query = DB::table($table)
                 ->select('store_id', ...$columns)
                 ->whereIn('store_id', $storeIds);
             if ($table == 'mq_accounting') {
+                $labelArr['year_month'] = trans('macro-labels.'.$table.'.year_month');
                 $query->addSelect(DB::raw("CONCAT(`{$table}`.`year`, '-', LPAD(`{$table}`.`month`, 2, '0'), '-01') as `year_month`"));
             }
 
@@ -809,6 +836,14 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
                 $this->handleJoinRelation($query, $table, $relativeTable);
 
+                foreach ($columnsRelativeTable as $column) {
+                    $labelArr[explode('.', $column)[1]] = trans('macro-labels.'.$column);
+                    if ($table == 'mq_accounting') {
+                        $columnName = explode('.', $column)[1];
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_ACTUAL_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN);
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_DIFF_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN);
+                    }
+                }
                 $query->addSelect($columnsRelativeTable);
             }
 
@@ -825,9 +860,157 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $query->{$method}(...$params);
             }
 
-            return $query->get();
+            $result = $query->get();
+            if ($table == 'mq_accounting') {
+                $actualFilter = $result->map(function ($item) {
+                    return [
+                        'store_id' => $item->store_id,
+                        'year' => $item->year,
+                        'month' => $item->month,
+                    ];
+                })->toArray();
+
+                $actualResult = $this->mqAccountingService->getMacroQueryResult($actualFilter)->get('data');
+                $accountingResult = $result->map(function ($resultItem) use ($actualResult) {
+                    $actualItem = $actualResult->filter(function ($item) use ($resultItem) {
+                        return Arr::get($item, 'store_id') == $resultItem->store_id
+                                && Arr::get($item, 'year') == $resultItem->year
+                                && Arr::get($item, 'month') == $resultItem->month;
+                    })->first();
+
+                    $itemAttributes = get_object_vars($resultItem);
+                    $newItem = [];
+                    foreach ($itemAttributes as $key => $value) {
+                        if (
+                            $key != 'store_id'
+                            && $key != 'year'
+                            && $key != 'month'
+                            && $key != 'year_month'
+                        ) {
+                            $different = '';
+                            if (is_numeric($value)) {
+                                $different = Arr::get($actualItem, $key) - $value;
+                            }
+                            $newItem[$key] = $value;
+                            $newItem[$key.MacroConstant::ACCOUNTING_ACTUAL_COLUMN] = Arr::get($actualItem, $key);
+                            $newItem[$key.MacroConstant::ACCOUNTING_DIFF_COLUMN] = $different;
+                        } else {
+                            $newItem[$key] = $value;
+                        }
+                    }
+
+                    return (object) $newItem;
+                });
+
+                foreach ($columns as $column) {
+                    $columnName = explode('.', $column)[1];
+                    if (
+                        $columnName != 'year'
+                        && $columnName != 'month'
+                    ) {
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_ACTUAL_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN);
+                        $labelArr[$columnName.MacroConstant::ACCOUNTING_DIFF_COLUMN] = trans('macro-labels.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN);
+                    }
+                }
+
+                return collect([
+                    'values' => $accountingResult,
+                    'labels' => $labelArr,
+                ]);
+            }
+
+            return collect([
+                'values' => $result,
+                'labels' => $labelArr,
+            ]);
+        } else {
+            $conditions['conditions'] = array_map(function ($conditionItem) {
+                if (Arr::has($conditionItem, 'date_condition')) {
+                    $newDateCondition = $this->handleConditionContainingDate($conditionItem);
+                    $conditionItem['field'] = $newDateCondition[0];
+                    $conditionItem['operator'] = $newDateCondition[1];
+                    $conditionItem['value'] = $newDateCondition[2]->format('Y/m/d');
+                }
+
+                return $conditionItem;
+            }, $conditionItems);
+            array_push($conditions['conditions'], [
+                'field' => 'store_id',
+                'operator' => 'in',
+                'value' => implode(',', $storeIds),
+            ]);
+
+            $result = $this->schemaService->getQueryConditionsResult($conditions);
+            $data = $result->get('data');
+
+            $ossColumns = $this->macroService->getListTableOSS();
+            if ($ossColumns->get('success')) {
+                $tables = $ossColumns->get('data');
+                foreach ($tables as $tableItem) {
+                    foreach ($tableItem as $tableColumn) {
+                        $table = Arr::get($tableColumn, 'table');
+                        $column = Arr::get($tableColumn, 'column');
+                        $labelArr[$table.'.'.$column] = Arr::get($tableColumn, 'label');
+                    }
+                }
+            }
+
+            return collect([
+                'values' => $data,
+                'labels' => $labelArr,
+            ]);
         }
 
-        return collect();
+        return collect([
+            'values' => [],
+            'labels' => [],
+        ]);
+    }
+
+    /**
+     * Build accounting table, add actual, different to each column.
+     */
+    private function buildAccountingTableColumns($tableColumns): Collection
+    {
+        $result = $tableColumns;
+        foreach ($tableColumns as $item) {
+            $table = Arr::get($item, 'table');
+            $column = Arr::get($item, 'column');
+            if (
+                $column != 'store_id'
+                && $column != 'year'
+                && $column != 'month'
+                && $column != 'year_month'
+            ) {
+                $result->add([
+                    'table' => $table,
+                    'column' => $column.MacroConstant::ACCOUNTING_ACTUAL_COLUMN,
+                    'type' => 'date',
+                    'label' => trans('macro-labels.'.$table.'.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_ACTUAL_COLUMN),
+                ]);
+                $result->add([
+                    'table' => $table,
+                    'column' => $column.MacroConstant::ACCOUNTING_DIFF_COLUMN,
+                    'type' => 'date',
+                    'label' => trans('macro-labels.'.$table.'.'.$column).trans('macro-labels'.MacroConstant::ACCOUNTING_DIFF_COLUMN),
+                ]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get object property value.
+     */
+    private function getNestedProperty($property, $object)
+    {
+        $itemAttributes = get_object_vars($object);
+
+        return array_filter(
+            $itemAttributes,
+            fn ($key) => $key === $property,
+            ARRAY_FILTER_USE_KEY
+        );
     }
 }

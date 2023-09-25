@@ -13,8 +13,12 @@ trait HasMqDateTimeHandler
      */
     public function getDateTimeRange($fromDate, $toDate, array|string $options = 'Y-m'): array
     {
+        if (is_string($options)) {
+            $options = ['format' => 'Y-m'];
+        }
+
         $step = Arr::get($options, 'step', '1 month');
-        $format = is_string($options) ? $options : Arr::get($options, 'format', 'Y-m');
+        $format = Arr::get($options, 'format', 'Y-m');
         $period = new CarbonPeriod($fromDate, $step, $toDate);
 
         $result = [];

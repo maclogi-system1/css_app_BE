@@ -44,6 +44,10 @@ return [
             ],
             'tasks' => [
                 'list' => '/tasks',
+                'create' => '/tasks',
+                'update' => '/tasks/{id}',
+                'delete' => '/tasks/{id}',
+                'options' => '/tasks/options',
             ],
             'job_groups' => [
                 'list' => '/job-groups',
@@ -66,7 +70,9 @@ return [
             ],
             'schema' => [
                 'get_columns' => '/schema/column',
+                'get_list_table' => '/schema/list-table',
                 'check_exist_with_store' => '/schema/check-exist-with-store',
+                'query_condition_result' => '/schema/query-condition-result',
             ]
         ],
     ],

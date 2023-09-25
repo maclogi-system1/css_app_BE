@@ -28,18 +28,28 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartReportSearch(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
+        $result = $this->reportSearchService->getDataReportSearch($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->reportSearchService->getDataReportSearch($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataReportSearch($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -47,18 +57,28 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataTableReportSearch(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
+        $result = $this->reportSearchService->getRankingReportSearch($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->reportSearchService->getRankingReportSearch($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getRankingReportSearch($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -66,17 +86,89 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection
     {
-        if (
-            ! Arr::get($filters, 'from_date')
-            || Arr::get($filters, 'from_date') < now()->subMonth(3)->format('Y-m-d')
-        ) {
-            $filters['from_date'] = now()->setDay(1)->subMonth(1)->format('Y-m-d');
-        }
-
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
+        $result = $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters);
+        $data = $result->get('data');
 
-        return $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters);
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data'));
+        }
+
+        $perPage = Arr::get($filters, 'per_page', 10);
+        $data = $data->paginate($perPage)->toArray();
+        Arr::set($data, 'data', array_values(Arr::get($data, 'data')));
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
+    }
+
+    /**
+     * Get chart data organic inflows report search keywords from AI.
+     */
+    public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection
+    {
+        if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+        $result = $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters);
+        $data = $result->get('data');
+
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataChartOrganicInflows($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
+    }
+
+    /**
+     * Get chart data inflows via specific words report search from AI.
+     */
+    public function getDataChartInflowsViaSpecificWords(string $storeId, array $filters = []): Collection
+    {
+        if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+        $result = $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters);
+        $data = $result->get('data');
+
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }

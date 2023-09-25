@@ -2,13 +2,18 @@
 
 namespace App\Http\Resources;
 
-use App\Constants\MacroConstant;
-use App\Models\MacroTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MacroTemplateResource extends JsonResource
 {
+    /**
+     * The "data" wrapper that should be applied.
+     *
+     * @var string|null
+     */
+    public static $wrap = 'macro_template';
+
     /**
      * Transform the resource into an array.
      *

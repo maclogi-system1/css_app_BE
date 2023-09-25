@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use App\Support\Traits\HasCompositePrimaryKey;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 class MqAccounting extends Model
 {
-    use HasFactory, HasCompositePrimaryKey;
+    use HasFactory;
 
     protected $table = 'mq_accounting';
     protected $fillable = [
@@ -22,6 +22,7 @@ class MqAccounting extends Model
         'mq_ad_sales_amnt_id',
         'mq_user_trends_id',
         'mq_cost_id',
+        'mq_sheet_id',
         'ltv_2y_amnt',
         'lim_cpa',
         'cpo_via_ad',
@@ -32,36 +33,34 @@ class MqAccounting extends Model
         'fixed_cost',
     ];
 
-    /**
-     * @var array
-     */
-    protected $primaryKey = ['store_id', 'year', 'month'];
-
-    public $incrementing = false;
-
-    public function mqKpi()
+    public function mqKpi(): BelongsTo
     {
         return $this->belongsTo(MqKpi::class);
     }
 
-    public function mqAccessNum()
+    public function mqAccessNum(): BelongsTo
     {
         return $this->belongsTo(MqAccessNum::class);
     }
 
-    public function mqAdSalesAmnt()
+    public function mqAdSalesAmnt(): BelongsTo
     {
         return $this->belongsTo(MqAdSalesAmnt::class);
     }
 
-    public function mqUserTrends()
+    public function mqUserTrends(): BelongsTo
     {
         return $this->belongsTo(MqUserTrend::class, 'mq_user_trends_id');
     }
 
-    public function mqCost()
+    public function mqCost(): BelongsTo
     {
         return $this->belongsTo(MqCost::class);
+    }
+
+    public function mqSheet(): BelongsTo
+    {
+        return $this->belongsTo(MqSheet::class);
     }
 
     public function scopeDateRange(Builder $query, Carbon $fromDate, Carbon $toDate): Builder
@@ -86,5 +85,16 @@ class MqAccounting extends Model
         }
 
         return $query;
+    }
+
+    protected static function booted()
+    {
+        static::deleted(function (MqAccounting $mqAccounting) {
+            $mqAccounting->mqKpi()->delete();
+            $mqAccounting->mqAccessNum()->delete();
+            $mqAccounting->mqAdSalesAmnt()->delete();
+            $mqAccounting->mqUserTrends()->delete();
+            $mqAccounting->mqCost()->delete();
+        });
     }
 }

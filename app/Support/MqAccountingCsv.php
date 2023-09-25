@@ -441,4 +441,85 @@ class MqAccountingCsv
     {
         return $this->rows;
     }
+
+    /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function compareActualsWithExpectedValues(array $actual, array $expected): array
+    {
+        $difference = [];
+
+        foreach ($expected as $index => $item) {
+            $difference[] = [
+                'year' => Arr::get($item, 'year'),
+                'month' => Arr::get($item, 'month'),
+                'ltv_2y_amnt' => abs(Arr::get($item, 'ltv_2y_amnt', 0) - Arr::get($actual, $index.'.ltv_2y_amnt', 0)),
+                'lim_cpa' => abs(Arr::get($item, 'lim_cpa', 0) - Arr::get($actual, $index.'.lim_cpa', 0)),
+                'cpo_via_ad' => abs(Arr::get($item, 'cpo_via_ad', 0) - Arr::get($actual, $index.'.cpo_via_ad', 0)),
+                'csv_usage_fee' => abs(Arr::get($item, 'csv_usage_fee', 0) - Arr::get($actual, $index.'.csv_usage_fee', 0)),
+                'store_opening_fee' => abs(Arr::get($item, 'store_opening_fee', 0) - Arr::get($actual, $index.'.store_opening_fee', 0)),
+                'fixed_cost' => abs(Arr::get($item, 'fixed_cost', 0) - Arr::get($actual, $index.'.fixed_cost', 0)),
+                'mq_kpi' => [
+                    'sales_amnt' => abs(Arr::get($item, 'mq_kpi.sales_amnt', 0) - Arr::get($actual, $index.'.mq_kpi.sales_amnt', 0)),
+                    'sales_num' => abs(Arr::get($item, 'mq_kpi.sales_num', 0) - Arr::get($actual, $index.'.mq_kpi.sales_num', 0)),
+                    'access_num' => abs(Arr::get($item, 'mq_kpi.access_num', 0) - Arr::get($actual, $index.'.mq_kpi.access_num', 0)),
+                    'conversion_rate' => abs(Arr::get($item, 'mq_kpi.conversion_rate', 0) - Arr::get($actual, $index.'.mq_kpi.conversion_rate', 0)),
+                    'sales_amnt_per_user' => abs(Arr::get($item, 'mq_kpi.sales_amnt_per_user', 0) - Arr::get($actual, $index.'.mq_kpi.sales_amnt_per_user', 0)),
+                ],
+                'mq_access_num' => [
+                    'access_flow_sum' => abs(Arr::get($item, 'mq_access_num.access_flow_sum', 0) - Arr::get($actual, $index.'.mq_access_num.access_flow_sum', 0)),
+                    'search_flow_num' => abs(Arr::get($item, 'mq_access_num.search_flow_num', 0) - Arr::get($actual, $index.'.mq_access_num.search_flow_num', 0)),
+                    'ranking_flow_num' => abs(Arr::get($item, 'mq_access_num.ranking_flow_num', 0) - Arr::get($actual, $index.'.mq_access_num.ranking_flow_num', 0)),
+                    'instagram_flow_num' => abs(Arr::get($item, 'mq_access_num.instagram_flow_num', 0) - Arr::get($actual, $index.'.mq_access_num.instagram_flow_num', 0)),
+                    'google_flow_num' => abs(Arr::get($item, 'mq_access_num.google_flow_num', 0) - Arr::get($actual, $index.'.mq_access_num.google_flow_num', 0)),
+                    'cpc_num' => abs(Arr::get($item, 'mq_access_num.cpc_num', 0) - Arr::get($actual, $index.'.mq_access_num.cpc_num', 0)),
+                    'display_num' => abs(Arr::get($item, 'mq_access_num.display_num', 0) - Arr::get($actual, $index.'.mq_access_num.display_num', 0)),
+                ],
+                'mq_ad_sales_amnt' => [
+                    'sales_amnt_via_ad' => abs(Arr::get($item, 'mq_ad_sales_amnt.sales_amnt_via_ad', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.sales_amnt_via_ad', 0)),
+                    'sales_amnt_seasonal' => abs(Arr::get($item, 'mq_ad_sales_amnt.sales_amnt_seasonal', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.sales_amnt_seasonal', 0)),
+                    'sales_amnt_event' => abs(Arr::get($item, 'mq_ad_sales_amnt.sales_amnt_event', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.sales_amnt_event', 0)),
+                    'tda_access_num' => abs(Arr::get($item, 'mq_ad_sales_amnt.tda_access_num', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.tda_access_num', 0)),
+                    'tda_v_sales_amnt' => abs(Arr::get($item, 'mq_ad_sales_amnt.tda_v_sales_amnt', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.tda_v_sales_amnt', 0)),
+                    'tda_v_roas' => abs(Arr::get($item, 'mq_ad_sales_amnt.tda_v_roas', 0) - Arr::get($actual, $index.'.mq_ad_sales_amnt.tda_v_roas', 0)),
+                ],
+                'mq_user_trends' => [
+                    'new_sales_amnt' => abs(Arr::get($item, 'mq_user_trends.new_sales_amnt', 0) - Arr::get($actual, $index.'.mq_user_trends.new_sales_amnt', 0)),
+                    'new_sales_num' => abs(Arr::get($item, 'mq_user_trends.new_sales_num', 0) - Arr::get($actual, $index.'.mq_user_trends.new_sales_num', 0)),
+                    'new_price_per_user' => abs(Arr::get($item, 'mq_user_trends.new_price_per_user', 0) - Arr::get($actual, $index.'.mq_user_trends.new_price_per_user', 0)),
+                    're_sales_amnt' => abs(Arr::get($item, 'mq_user_trends.re_sales_amnt', 0) - Arr::get($actual, $index.'.mq_user_trends.re_sales_amnt', 0)),
+                    're_sales_num' => abs(Arr::get($item, 'mq_user_trends.re_sales_num', 0) - Arr::get($actual, $index.'.mq_user_trends.re_sales_num', 0)),
+                    're_price_per_user' => abs(Arr::get($item, 'mq_user_trends.re_price_per_user', 0) - Arr::get($actual, $index.'.mq_user_trends.re_price_per_user', 0)),
+                ],
+                'mq_cost' => [
+                    'coupon_points_cost' => abs(Arr::get($item, 'mq_cost.coupon_points_cost', 0) - Arr::get($actual, $index.'.mq_cost.coupon_points_cost', 0)),
+                    'coupon_points_cost_rate' => abs(Arr::get($item, 'mq_cost.coupon_points_cost_rate', 0) - Arr::get($actual, $index.'.mq_cost.coupon_points_cost_rate', 0)),
+                    'ad_cost' => abs(Arr::get($item, 'mq_cost.ad_cost', 0) - Arr::get($actual, $index.'.mq_cost.ad_cost', 0)),
+                    'ad_cpc_cost' => abs(Arr::get($item, 'mq_cost.ad_cpc_cost', 0) - Arr::get($actual, $index.'.mq_cost.ad_cpc_cost', 0)),
+                    'ad_season_cost' => abs(Arr::get($item, 'mq_cost.ad_season_cost', 0) - Arr::get($actual, $index.'.mq_cost.ad_season_cost', 0)),
+                    'ad_event_cost' => abs(Arr::get($item, 'mq_cost.ad_event_cost', 0) - Arr::get($actual, $index.'.mq_cost.ad_event_cost', 0)),
+                    'ad_tda_cost' => abs(Arr::get($item, 'mq_cost.ad_tda_cost', 0) - Arr::get($actual, $index.'.mq_cost.ad_tda_cost', 0)),
+                    'ad_cost_rate' => abs(Arr::get($item, 'mq_cost.ad_cost_rate', 0) - Arr::get($actual, $index.'.mq_cost.ad_cost_rate', 0)),
+                    'cost_price' => abs(Arr::get($item, 'mq_cost.cost_price', 0) - Arr::get($actual, $index.'.mq_cost.cost_price', 0)),
+                    'cost_price_rate' => abs(Arr::get($item, 'mq_cost.cost_price_rate', 0) - Arr::get($actual, $index.'.mq_cost.cost_price_rate', 0)),
+                    'postage' => abs(Arr::get($item, 'mq_cost.postage', 0) - Arr::get($actual, $index.'.mq_cost.postage', 0)),
+                    'postage_rate' => abs(Arr::get($item, 'mq_cost.postage_rate', 0) - Arr::get($actual, $index.'.mq_cost.postage_rate', 0)),
+                    'commision' => abs(Arr::get($item, 'mq_cost.commision', 0) - Arr::get($actual, $index.'.mq_cost.commision', 0)),
+                    'commision_rate' => abs(Arr::get($item, 'mq_cost.commision_rate', 0) - Arr::get($actual, $index.'.mq_cost.commision_rate', 0)),
+                    'variable_cost_sum' => abs(Arr::get($item, 'mq_cost.variable_cost_sum', 0) - Arr::get($actual, $index.'.mq_cost.variable_cost_sum', 0)),
+                    'gross_profit' => abs(Arr::get($item, 'mq_cost.gross_profit', 0) - Arr::get($actual, $index.'.mq_cost.gross_profit', 0)),
+                    'gross_profit_rate' => abs(Arr::get($item, 'mq_cost.gross_profit_rate', 0) - Arr::get($actual, $index.'.mq_cost.gross_profit_rate', 0)),
+                    'management_agency_fee' => abs(Arr::get($item, 'mq_cost.management_agency_fee', 0) - Arr::get($actual, $index.'.mq_cost.management_agency_fee', 0)),
+                    'reserve1' => abs(Arr::get($item, 'mq_cost.reserve1', 0) - Arr::get($actual, $index.'.mq_cost.reserve1', 0)),
+                    'reserve2' => abs(Arr::get($item, 'mq_cost.reserve2', 0) - Arr::get($actual, $index.'.mq_cost.reserve2', 0)),
+                    'management_agency_fee_rate' => abs(Arr::get($item, 'mq_cost.management_agency_fee_rate', 0) - Arr::get($actual, $index.'.mq_cost.management_agency_fee_rate', 0)),
+                    'cost_sum' => abs(Arr::get($item, 'mq_cost.cost_sum', 0) - Arr::get($actual, $index.'.mq_cost.cost_sum', 0)),
+                    'profit' => abs(Arr::get($item, 'mq_cost.profit', 0) - Arr::get($actual, $index.'.mq_cost.profit', 0)),
+                    'sum_profit' => abs(Arr::get($item, 'mq_cost.sum_profit', 0) - Arr::get($actual, $index.'.mq_cost.sum_profit', 0)),
+                ],
+            ];
+        }
+
+        return $difference;
+    }
 }

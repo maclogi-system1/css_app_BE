@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\Policy;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 interface PolicyRepository extends Repository
@@ -39,6 +40,11 @@ interface PolicyRepository extends Repository
     public function handleValidation(array $data, int $index): array;
 
     /**
+     * Handle data validation to create simulation policy.
+     */
+    public function handleValidationSimulationStore(Request $request, array $data): array;
+
+    /**
      * Get the policy input validation rules.
      */
     public function getValidationRules(array $data): array;
@@ -49,14 +55,28 @@ interface PolicyRepository extends Repository
     public function getDataForJobGroup(array $data): array;
 
     /**
+     * Handle create multiple policy by storeId.
+     *
+     * @deprecated This method will be replaced by the create method.
+     */
+    public function createByStoreId(array $data, string $storeId): ?array;
+
+    /**
+     * Handle create a new simulation policy by storeId.
+     *
+     * @deprecated This method will be replaced by the createSimulation method.
+     */
+    public function createSimulationByStoreId(array $data, string $storeId): ?Policy;
+
+    /**
      * Handle create multiple policy.
      */
-    public function create(array $data, string $storeId): ?array;
+    public function create(array $data): ?array;
 
     /**
      * Handle create a new simulation policy.
      */
-    public function createSimulation(array $data, string $storeId): ?Policy;
+    public function createSimulation(array $data): ?Policy;
 
     /**
      * Handle update a specified policy.

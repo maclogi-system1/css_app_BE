@@ -4,11 +4,12 @@ namespace App\Repositories\APIs;
 
 use App\Repositories\Contracts\TaskRepository as TaskRepositoryContract;
 use App\Repositories\Repository;
-use App\Rules\CompareDateValid;
 use App\Rules\DateValid;
 use App\WebServices\OSS\TaskService;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
 class TaskRepository extends Repository implements TaskRepositoryContract
@@ -46,7 +47,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
                 'error' => [
                     'index' => $index,
                     'row' => $index + 1,
-                    'messages' => $validator->getMessageBag()->toArray(),
+                    'messages' => $validator->messages(),
                 ],
             ];
         }
@@ -59,14 +60,6 @@ class TaskRepository extends Repository implements TaskRepositoryContract
      */
     public function getValidationRules(array $data): array
     {
-        $startDate = Arr::get($data, 'start_date');
-        $startTime = Arr::get($data, 'start_time');
-        $startDateTime = Carbon::create($startDate.' '.$startTime);
-
-        $dueDate = Arr::get($data, 'due_date');
-        $dueTime = Arr::get($data, 'due_time');
-        $dueDateTime = Carbon::create($dueDate.' '.$dueTime);
-
         $rules = [
             'title' => ['required'],
             'issue_type' => ['required'],
@@ -74,13 +67,12 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             'job_group_code' => ['required', 'regex:/^jg\-[\d]{5}$/'],
             'status' => ['nullable'],
             'assignees' => ['nullable', 'array'],
-            'start_date' => ['nullable', 'date_format:Y/m/d'],
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'due_date' => [
                 'nullable',
-                'date_format:Y/m/d',
+                'date_format:Y-m-d',
                 new DateValid(),
-                new CompareDateValid($dueDateTime, 'gt', $startDateTime),
             ],
             'due_time' => ['nullable', 'date_format:H:i'],
             'description' => ['nullable'],
@@ -89,8 +81,109 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         return $rules;
     }
 
-    public function create(array $data)
+    /**
+     * Handles start and end dates for the request.
+     */
+    public function handleStartAndEndDateForRequest(array $data): array
     {
-        # code...
+        if ($startDate = Arr::get($data, 'start_date')) {
+            $startTime = Arr::pull($data, 'start_time', '00:00');
+            $startDateTime = Carbon::create($startDate.' '.$startTime)->format('Y-m-d H:i:s');
+            $data['start_date'] = $startDateTime;
+        }
+
+        if ($dueDate = Arr::get($data, 'due_date')) {
+            $dueTime = Arr::pull($data, 'due_time', '00:00');
+            $dueDateTime = Carbon::create($dueDate.' '.$dueTime)->format('Y-m-d H:i:s');
+            $data['due_date'] = $dueDateTime;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Handle create a new task.
+     */
+    public function create(array $data, string $storeId): ?Collection
+    {
+        $data = $this->handleStartAndEndDateForRequest($data);
+        $result = $this->taskService->create($data + ['store_id' => $storeId, 'is_draft' => 0]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
+    }
+
+    public function update(array $data, string $storeId): ?Collection
+    {
+        $data = $this->handleStartAndEndDateForRequest($data);
+        if (! ($id = Arr::get($data, 'id'))) {
+            return null;
+        }
+
+        $result = $this->taskService->update($id, $data + ['store_id' => $storeId]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $result = $this->taskService->getOptions();
+
+        if (! $result->get('success')) {
+            return [];
+        }
+
+        return $result->get('data')->toArray();
+    }
+
+    public function delete(string $storeId, int $taskId): ?Collection
+    {
+        $result = $this->taskService->delete($storeId, $taskId);
+
+        if (in_array($result->get('status'), [Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_NOT_FOUND])) {
+            $errors = $result->get('data')->get('message');
+            if (! is_array($errors)) {
+                $errors = ['message' => $errors];
+            }
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $result->get('data');
+        }
+
+        return null;
     }
 }

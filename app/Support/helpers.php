@@ -32,6 +32,21 @@ if (! function_exists('convert_fields_to_sjis')) {
     }
 }
 
+if (! function_exists('convert_sjis_to_utf8')) {
+    /**
+     * Convert sjis to utf8 encoding.
+     */
+    function convert_sjis_to_utf8(array $fields)
+    {
+        $result = [];
+        foreach ($fields as $field) {
+            $result[] = mb_detect_encoding($field) == 'UTF-8' ? $field : mb_convert_encoding($field, 'UTF-8', 'SJIS');
+        }
+
+        return $result;
+    }
+}
+
 if (! function_exists('to_array')) {
     /**
      * Results array of items from Collection or Arrayable.

@@ -11,15 +11,6 @@ class Policy extends Model
 {
     use HasFactory, HasUuids;
 
-    public const EDIT_ACTION = 1;
-    public const CREATE_ACTION = 2;
-    public const REMOVE_ACTION = 3;
-    public const CONTROL_ACTIONS = [
-        self::EDIT_ACTION => '更新',
-        self::CREATE_ACTION => '新規',
-        self::REMOVE_ACTION => '削除',
-    ];
-
     public const MEASURES_CATEGORY = 1;
     public const PROJECT_CATEGORY = 2;
     public const SIMULATION_CATEGORY = 3;

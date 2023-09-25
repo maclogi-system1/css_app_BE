@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Http\Requests\StorePolicySimulationRequest;
 use App\Jobs\RunPolicySimulation;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
@@ -15,6 +16,7 @@ use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -200,9 +202,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->only([Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY])
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
-        $controlActions = collect(Policy::CONTROL_ACTIONS)
-            ->map(fn ($label, $value) => compact('value', 'label'))
-            ->values();
         $textInputConditions = collect(PolicyRule::TEXT_INPUT_CONDITIONS)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
@@ -217,7 +216,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->values();
 
         return $this->singleJobRepository->getOptions()->merge([
-            'control_actions' => $controlActions,
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
             'policy_rule_services' => $policyRuleServices,
@@ -273,11 +271,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
-        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION) {
-            $ossErrorMessages = $this->jobGroupRepository->validateUpdate($this->getDataForJobGroup($data));
-        } else {
-            $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
-        }
+        $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -304,14 +298,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getValidationRules(array $data): array
     {
         $rules = [
-            'control_actions' => ['required', Rule::in(array_keys(Policy::CONTROL_ACTIONS))],
-            'policy_id' => [
-                Rule::requiredIf(Arr::get($data, 'control_actions', Policy::CREATE_ACTION) == Policy::EDIT_ACTION),
-                Rule::exists('policies', 'id'),
-            ],
             'category' => ['required', Rule::in(array_keys(Policy::CATEGORIES))],
             'immediate_reflection' => ['nullable', Rule::in([0, 1])],
             'attachment_key' => ['nullable', 'string', 'size:16'],
+            'store_id' => ['required', 'string', 'max:255'],
         ];
 
         return $rules;
@@ -323,19 +313,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function getDataForJobGroup(array $data): array
     {
         $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
-        $policy = null;
-
-        if (Arr::get($data, 'control_actions') == Policy::EDIT_ACTION && ($policyId = Arr::get($data, 'policy_id'))) {
-            $policy = $this->model()->find($policyId);
-        }
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
             'job_group_explanation' => Arr::get($data, 'job_group_explanation'),
-            'job_group_start_date' => Arr::get($data, 'execution_date'),
+            'job_group_start_date' => str_replace('-', '/', Arr::get($data, 'execution_date')),
             'job_group_start_time' => Arr::get($data, 'execution_time'),
-            'job_group_end_date' => Arr::get($data, 'undo_date'),
+            'job_group_end_date' => str_replace('-', '/', Arr::get($data, 'undo_date')),
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
             'managers' => Arr::get($data, 'managers', []),
@@ -343,14 +328,13 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'status' => Arr::get($data, 'status'),
             'single_jobs' => [
                 [
-                    'id' => $policy ? $policy->single_job_id : null,
-                    'uuid' => $policy ? null : (string) str()->uuid(),
+                    'uuid' => (string) str()->uuid(),
                     'template_id' => Arr::get($data, 'template_id'),
                     'title' => Arr::get($data, 'job_title'),
                     'immediate_reflection' => Arr::get($data, 'immediate_reflection', 0),
-                    'execution_date' => Arr::get($data, 'execution_date'),
+                    'execution_date' => str_replace('-', '/', Arr::get($data, 'execution_date')),
                     'execution_time' => Arr::get($data, 'execution_time'),
-                    'undo_date' => Arr::get($data, 'undo_date'),
+                    'undo_date' => str_replace('-', '/', Arr::get($data, 'undo_date')),
                     'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
@@ -363,9 +347,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'item_name_text' => Arr::get($data, 'item_name_text'),
                     'item_name_text_error' => Arr::get($data, 'item_name_text_error'),
                     'point_magnification' => Arr::get($data, 'point_magnification'),
-                    'point_start_date' => Arr::get($data, 'point_start_date'),
+                    'point_start_date' => str_replace('-', '/', Arr::get($data, 'point_start_date')),
                     'point_start_time' => Arr::get($data, 'point_start_time'),
-                    'point_end_date' => Arr::get($data, 'point_end_date'),
+                    'point_end_date' => str_replace('-', '/', Arr::get($data, 'point_end_date')),
                     'point_end_time' => Arr::get($data, 'point_end_time'),
                     'point_error' => Arr::get($data, 'point_error'),
                     'point_operational' => Arr::get($data, 'point_operational'),
@@ -378,9 +362,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'double_price_text' => Arr::get($data, 'double_price_text'),
                     'shipping_fee' => Arr::get($data, 'shipping_fee'),
                     'stock_specify' => Arr::get($data, 'stock_specify'),
-                    'time_sale_start_date' => Arr::get($data, 'time_sale_start_date'),
+                    'time_sale_start_date' => str_replace('-', '/', Arr::get($data, 'time_sale_start_date')),
                     'time_sale_start_time' => Arr::get($data, 'time_sale_start_time'),
-                    'time_sale_end_date' => Arr::get($data, 'time_sale_end_date'),
+                    'time_sale_end_date' => str_replace('-', '/', Arr::get($data, 'time_sale_end_date')),
                     'time_sale_end_time' => Arr::get($data, 'time_sale_end_time'),
                     'is_unavailable_for_search' => Arr::get($data, 'is_unavailable_for_search'),
                     'description_for_pc' => Arr::get($data, 'description_for_pc'),
@@ -392,9 +376,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     }
 
     /**
-     * Handle create a new policy.
+     * Handle create a new policy by storeId.
      */
-    public function create(array $data, string $storeId): ?array
+    public function createByStoreId(array $data, string $storeId): ?array
     {
         return $this->handleSafely(function () use ($data, $storeId) {
             $policyData = $data['policy'] + ['store_id' => $storeId];
@@ -421,13 +405,45 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                 'policy' => $policy,
                 'job_group_id' => $jobGroupId,
             ];
+        }, 'Create policy by store_id');
+    }
+
+    /**
+     * Handle create a new policy.
+     */
+    public function create(array $data): ?array
+    {
+        return $this->handleSafely(function () use ($data) {
+            $policyData = $data['policy'];
+            $policy = $this->model()->fill($policyData);
+            $policy->save();
+
+            if ($attachmentKey = Arr::get($policyData, 'attachment_key')) {
+                PolicyAttachment::where('attachment_key', $attachmentKey)
+                    ->whereNull('policy_id')
+                    ->update(['policy_id' => $policy->id]);
+            }
+
+            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
+            $singleJobs = Arr::get($jobGroup, 'single_jobs');
+            $singleJob = Arr::first($singleJobs);
+            $jobGroupId = Arr::get($jobGroup, 'job_group_id');
+
+            $policy->job_group_id = $jobGroupId;
+            $policy->single_job_id = $singleJob['id'];
+            $policy->save();
+
+            return [
+                'policy' => $policy,
+                'job_group_id' => $jobGroupId,
+            ];
         }, 'Create policy');
     }
 
     /**
-     * Handle create a new simulation policy.
+     * Handle create a new simulation policy by storeId.
      */
-    public function createSimulation(array $data, string $storeId): ?Policy
+    public function createSimulationByStoreId(array $data, string $storeId): ?Policy
     {
         return $this->handleSafely(function () use ($data, $storeId) {
             $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
@@ -435,6 +451,40 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $policySimulation = $this->model()->fill([
                 'store_id' => $storeId,
+                'name' => $data['name'],
+                'category' => Policy::SIMULATION_CATEGORY,
+                'simulation_start_date' => $simulationStartDate,
+                'simulation_end_date' => $simulationEndDate,
+                'simulation_promotional_expenses' => $data['simulation_promotional_expenses'],
+                'simulation_store_priority' => $data['simulation_store_priority'],
+                'simulation_product_priority' => $data['simulation_product_priority'],
+            ]);
+            $policySimulation->save();
+
+            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
+                foreach ($policyRules as $policyRule) {
+                    $this->handleCondition(1, $policyRule);
+                    $this->handleCondition(2, $policyRule);
+                    $this->handleCondition(3, $policyRule);
+                    $policySimulation->rules()->create($policyRule);
+                }
+            }
+
+            return $policySimulation->withAllRels();
+        }, 'Create simulation policy by store_id');
+    }
+
+    /**
+     * Handle create a new simulation policy.
+     */
+    public function createSimulation(array $data): ?Policy
+    {
+        return $this->handleSafely(function () use ($data) {
+            $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
+            $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
+
+            $policySimulation = $this->model()->fill([
+                'store_id' => $data['store_id'],
                 'name' => $data['name'],
                 'category' => Policy::SIMULATION_CATEGORY,
                 'simulation_start_date' => $simulationStartDate,
@@ -608,5 +658,24 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         return $result;
+    }
+
+    /**
+     * Handle data validation to create simulation policy.
+     */
+    public function handleValidationSimulationStore(Request $request, array $data): array
+    {
+        $validator = Validator::make(
+            $data,
+            StorePolicySimulationRequest::getInstance($request->route(), $data)->rules()
+        );
+
+        if ($validator->fails()) {
+            return [
+                'error' => $validator->getMessageBag()->toArray(),
+            ];
+        }
+
+        return [];
     }
 }

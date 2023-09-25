@@ -13,7 +13,7 @@ class UploadFileService
     {
         $fileName ??= str(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
             ->snake()
-            ->append('_'.time().'.'.$file->extension());
+            ->append('_'.time().'.'.$file->getClientOriginalExtension());
 
         return $file->storeAs($dir, $fileName);
     }

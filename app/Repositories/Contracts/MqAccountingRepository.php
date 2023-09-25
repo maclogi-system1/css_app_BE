@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\MqSheet;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -21,6 +22,11 @@ interface MqAccountingRepository extends Repository
      * Get mq_accounting details from AI by storeId.
      */
     public function getListFromAIByStore(string $storeId, array $filters = []): ?array;
+
+    /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function getListCompareActualsWithExpectedValues(string $storeId, array $filters = []): array;
 
     /**
      * Read and parse csv file contents.
@@ -55,10 +61,15 @@ interface MqAccountingRepository extends Repository
     /**
      * Get a list of validation rules for validator.
      */
-    public function getValidationRules(): array;
+    public function getValidationRules(string $storeId): array;
 
     /**
      * Handle data validation to update mq_accounting.
      */
     public function handleValidationUpdate($data, $storeId): array;
+
+    /**
+     * Handle creating empty mq_accounting.
+     */
+    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void;
 }

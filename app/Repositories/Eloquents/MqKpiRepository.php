@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Constants\KpiConstant;
 use App\Models\MqKpi;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqKpiRepository as MqKpiRepositoryContract;
@@ -32,6 +33,28 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
      * Get KPI summary (KPI target achievement rate, KPI performance summary).
      */
     public function getSummary(string $storeId, array $filters = []): array
+    {
+        $result[] = $this->getSummaryData($storeId, $filters);
+
+        // Get compared data category analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $result[] = $this->getSummaryData($storeId, $filters);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get kpi summary dạta.
+     */
+    private function getSummaryData(string $storeId, array $filters = []): array
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
@@ -72,8 +95,24 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
         ];
 
         return [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date'  => Arr::get($filters, 'to_date'),
             'target_achievement_rate' => $targetAchievementRate,
             'performance_summary' => $actualMqKpi,
+        ];
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $adsTypes = collect(KpiConstant::ADS_TYPES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+
+        return [
+            'ads_types' => $adsTypes,
         ];
     }
 }

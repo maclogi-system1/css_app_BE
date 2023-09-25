@@ -35,6 +35,16 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MacroGraphRepository::class => \App\Repositories\Eloquents\MacroGraphRepository::class,
         \App\Repositories\Contracts\AdsAnalysisRepository::class => \App\Repositories\APIs\AdsAnalysisRepository::class,
         \App\Repositories\Contracts\MacroTemplateRepository::class => \App\Repositories\Eloquents\MacroTemplateRepository::class,
+        \App\Repositories\Contracts\AccessAnalysisRepository::class => \App\Repositories\APIs\AccessAnalysisRepository::class,
+        \App\Repositories\Contracts\StoreChartRepository::class => \App\Repositories\APIs\StoreChartRepository::class,
+        \App\Repositories\Contracts\MqSheetRepository::class => \App\Repositories\Eloquents\MqSheetRepository::class,
+        \App\Repositories\Contracts\SalesAmntPerUserAnalysisRepository::class => \App\Repositories\APIs\SalesAmntPerUserAnalysisRepository::class,
+        \App\Repositories\Contracts\ProductAnalysisRepository::class => \App\Repositories\APIs\ProductAnalysisRepository::class,
+        \App\Repositories\Contracts\ShopSettingMqAccountingRepository::class => \App\Repositories\Eloquents\ShopSettingMqAccountingRepository::class,
+        \App\Repositories\Contracts\CategoryAnalysisRepository::class => \App\Repositories\APIs\CategoryAnalysisRepository::class,
+        \App\Repositories\Contracts\ShopSettingRankingRepository::class => \App\Repositories\Eloquents\ShopSettingRankingRepository::class,
+        \App\Repositories\Contracts\ShopSettingAwardPointRepository::class => \App\Repositories\Eloquents\ShopSettingAwardPointRepository::class,
+        \App\Repositories\Contracts\ReviewAnalysisRepository::class => \App\Repositories\APIs\ReviewAnalysisRepository::class,
     ];
 
     /**

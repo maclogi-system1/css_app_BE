@@ -49,6 +49,7 @@ class MacroConstant
             self::TABLE_NAME => 'mq_accounting',
             self::TABLE_TYPE => self::TYPE_INTERNAL,
             self::REMOVE_COLUMNS => [
+                'id',
                 'mq_kpi_id',
                 'mq_access_num_id',
                 'mq_ad_sales_amnt_id',
@@ -57,6 +58,7 @@ class MacroConstant
                 'created_at',
                 'updated_at',
                 'store_id',
+                'mq_sheet_id',
             ],
         ],
         'mq_access_num' => [
@@ -465,4 +467,7 @@ class MacroConstant
         self::MACRO_POSITION_DISPLAY_3 => 'マクログラフ3',
         self::MACRO_POSITION_DISPLAY_4 => 'マクログラフ4',
     ];
+
+    public const ACCOUNTING_ACTUAL_COLUMN = '.actual';
+    public const ACCOUNTING_DIFF_COLUMN = '.diff';
 }

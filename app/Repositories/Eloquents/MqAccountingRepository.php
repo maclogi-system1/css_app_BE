@@ -7,6 +7,7 @@ use App\Models\MqAccounting;
 use App\Models\MqAdSalesAmnt;
 use App\Models\MqCost;
 use App\Models\MqKpi;
+use App\Models\MqSheet;
 use App\Models\MqUserTrend;
 use App\Repositories\Contracts\MqAccountingRepository as MqAccountingRepositoryContract;
 use App\Repositories\Repository;
@@ -17,6 +18,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class MqAccountingRepository extends Repository implements MqAccountingRepositoryContract
 {
@@ -103,12 +105,20 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get a list of validation rules for validator.
      */
-    public function getValidationRules(): array
+    public function getValidationRules(string $storeId): array
     {
         return $this->validationRules +
             [
                 'year' => ['required', 'integer', 'max:'.now()->addYear()->year, 'min:'.now()->subYear(2)->year],
                 'month' => ['required', 'integer', 'min:1', 'max:12'],
+                'mq_sheet_id' => [
+                    'required',
+                    'string',
+                    'max:36',
+                    Rule::exists('mq_sheets', 'id')->where(function ($query) use ($storeId) {
+                        return $query->where('store_id', $storeId);
+                    }),
+                ],
             ];
     }
 
@@ -117,7 +127,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function handleValidationUpdate($data, $storeId): array
     {
-        $validator = Validator::make($data, $this->getValidationRules());
+        $validator = Validator::make($data, $this->getValidationRules($storeId));
 
         if ($validator->fails()) {
             return [
@@ -141,11 +151,13 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     public function getListByStore(string $storeId, array $filters = []): ?Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $mqSheetId = Arr::get($filters, 'mq_sheet_id');
 
-        return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
+        return $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost', 'mqSheet'])
             ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
             ->queryBuilder()
             ->where('store_id', $storeId)
+            ->where('mq_sheet_id', $mqSheetId)
             ->get()
             ->map(function ($item) {
                 $item->fixed_cost = is_null($item->fixed_cost)
@@ -172,6 +184,25 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     }
 
     /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function getListCompareActualsWithExpectedValues(string $storeId, array $filters = []): array
+    {
+        $actualMqAccounting = $this->getListFromAIByStore($storeId, $filters);
+        $expectedMqAccounting = $this->getListByStore($storeId, $filters)->toArray();
+        $difference = (new MqAccountingCsv())->compareActualsWithExpectedValues(
+            $actualMqAccounting,
+            $expectedMqAccounting
+        );
+
+        return [
+            'actual_mq_accounting' => $actualMqAccounting,
+            'expected_mq_accounting' => $expectedMqAccounting,
+            'difference' => $difference,
+        ];
+    }
+
+    /**
      * Return a callback handle stream csv file.
      */
     public function streamCsvFile(array $filters = [], ?string $storeId = ''): Closure
@@ -179,9 +210,15 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $mqAccounting = collect();
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
+        $mqSheetId = Arr::get($filters, 'mq_sheet_id');
         $options = Arr::get($filters, 'options', []);
 
         if ($storeId) {
+            if (! $mqSheetId) {
+                $mqSheetId = MqSheet::where('store_id', $storeId)->first()?->id;
+            }
+
+            $filters['mq_sheet_id'] = $mqSheetId;
             $mqAccounting = $this->getListByStore($storeId, $filters);
         }
 
@@ -263,8 +300,10 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         return $this->handleSafely(function () use ($rows, $storeId) {
             $year = $rows['year'];
             $month = $rows['month'];
+            $mqSheetId = $rows['mq_sheet_id'];
 
             $mqAccounting = MqAccounting::where('store_id', $storeId)
+                ->where('mq_sheet_id', $mqSheetId)
                 ->where('year', $year)
                 ->where('month', $month)
                 ->first();
@@ -309,6 +348,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 'csv_usage_fee',
                 'store_opening_fee',
                 'fixed_cost',
+                'mq_sheet_id',
             ]))->save();
 
             return $mqAccounting;
@@ -353,6 +393,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'cpo_via_ad',
             'csv_usage_fee',
             'store_opening_fee',
+            'mq_sheet_id',
         ]);
         $kpi = Arr::only($data, (new MqKpi())->getFillable());
         $accessNum = Arr::only($data, (new MqAccessNum())->getFillable());
@@ -435,5 +476,41 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'actual' => $actual,
             'expected' => $expected,
         ];
+    }
+
+    /**
+     * Handle creating empty mq_accounting.
+     */
+    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void
+    {
+        $dateRange = $this->getDateTimeRange(now()->firstOfYear(), now()->endOfYear());
+
+        foreach ($dateRange as $yearMonth) {
+            $this->handleSafely(function () use ($yearMonth, $storeId, $mqSheet) {
+                [$year, $month] = explode('-', $yearMonth);
+                $mqKpi = MqKpi::create([]);
+                $mqAccessNum = MqAccessNum::create([]);
+                $mqAdSalesAmnt = MqAdSalesAmnt::create([]);
+                $mqUserTrends = MqUserTrend::create([]);
+                $mqCost = MqCost::create([]);
+                $mqAccounting = $this->model([
+                    'store_id' => $storeId,
+                    'year' => $year,
+                    'month' => $month,
+                    'mq_kpi_id' => $mqKpi->id,
+                    'mq_access_num_id' => $mqAccessNum->id,
+                    'mq_ad_sales_amnt_id' => $mqAdSalesAmnt->id,
+                    'mq_user_trends_id' => $mqUserTrends->id,
+                    'mq_cost_id' => $mqCost->id,
+                    'mq_sheet_id' => $mqSheet->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $mqAccounting->save();
+
+                return $mqAccounting;
+            }, 'Create empty mq accounting');
+        }
     }
 }

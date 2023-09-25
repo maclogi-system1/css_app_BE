@@ -33,9 +33,7 @@ class UserAccessService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_user_access' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 
@@ -62,9 +60,7 @@ class UserAccessService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => collect([
-                'chart_user_access_ads' => $dataFake,
-            ]),
+            'data' => $dataFake,
         ]);
     }
 }

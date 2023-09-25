@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Database\Query\Builder;
+use Illuminate\Validation\Rule;
+
 class UploadMqAccountingCsvRequest extends FormRequest
 {
     /**
@@ -21,6 +24,14 @@ class UploadMqAccountingCsvRequest extends FormRequest
     {
         return [
             'mq_accounting' => ['required', 'file', 'max:2048', 'mimes:csv,txt'],
+            'mq_sheet_id' => [
+                'required',
+                'string',
+                'max:36',
+                Rule::exists('mq_sheets', 'id')->where(function (Builder $query) {
+                    return $query->where('store_id', $this->route('storeId'));
+                }),
+            ],
         ];
     }
 }

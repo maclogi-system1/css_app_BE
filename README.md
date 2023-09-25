@@ -125,7 +125,7 @@ after we write the code, we have to run the command to format the code according
 `bin/format <file path to format>`.
 
 ```bash
-bin/format app/Http/Controllers/SampleController.php
+./dockx bash bin/format app/Http/Controllers/SampleController.php
 ```
 
 ## Git rules

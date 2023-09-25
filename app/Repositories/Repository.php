@@ -41,9 +41,9 @@ abstract class Repository
      *
      * @return \Illuminate\Database\Eloquent\Model
      */
-    public function model()
+    public function model(array $attributes = [])
     {
-        return app($this->getModelName());
+        return app($this->getModelName())->fill($attributes);
     }
 
     /**
@@ -337,6 +337,14 @@ abstract class Repository
         }
 
         return $this->guard($guard)->user();
+    }
+
+    /**
+     * Check Exist any data.
+     */
+    public function checkExistAnyRecord(): bool
+    {
+        return $this->model()->newQuery()->exists();
     }
 
     /**

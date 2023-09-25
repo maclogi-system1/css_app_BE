@@ -33,7 +33,7 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
         return $this->handleSafely(function () use ($file, $attachmentKey) {
             $fileName = str($file->getClientOriginalName())
                 ->snake()
-                ->append('_'.time().'.'.$file->extension());
+                ->append('_'.time().'.'.$file->getClientOriginalExtension());
             $dir = PolicyAttachment::IMAGE_PATH;
             $type = PolicyAttachment::IMAGE_TYPE;
 
@@ -42,7 +42,7 @@ class PolicyAttachmentRepository extends Repository implements PolicyAttachmentR
                 $type = PolicyAttachment::TEXT_TYPE;
             }
 
-            $pathUploadedFile = $this->uploadFileService->uploadImage(file: $file, dir: $dir);
+            $pathUploadedFile = $this->uploadFileService->uploadImage($file, $fileName, $dir);
 
             $policy = $this->model()->fill([
                 'attachment_key' => $attachmentKey,

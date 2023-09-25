@@ -13,11 +13,13 @@ use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\MqCostController;
+use App\Http\Controllers\Api\MqSheetController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\PolicySimulationHistoryController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ShopSettingController;
 use App\Http\Controllers\Api\ShopUserController;
 use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
@@ -118,6 +120,17 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/get-comparative-analysis/{storeId}', 'getComparativeAnalysis')->name('get-comparative-analysis');
         });
 
+    Route::prefix('mq-sheets')
+        ->name('mq-sheets.')
+        ->controller(MqSheetController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{mqSheet}', 'show')->name('show');
+            Route::post('/', 'store')->name('store');
+            Route::put('/{mqSheet}', 'update')->name('update');
+            Route::delete('/{mqSheet}', 'destroy')->name('destroy');
+        });
+
     Route::prefix('mq-cost')
         ->name('mq-cost.')
         ->controller(MqCostController::class)
@@ -142,7 +155,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/options', 'getOptions')->name('get-options')->withoutMiddleware('auth:sanctum');
             Route::get('/detail/{policy}', 'show')->name('show');
 
-            Route::post('/simulation/{storeId}', 'storeSimulation')->name('store-simulation');
+            // deprecated
+            Route::post('/simulation/{storeId}', 'storeSimulationByStoreId')->name('store-simulation-by-store-id');
+
             Route::post('/run-simulation', 'runSimulation')->name('run-simulation');
 
             // Work Breakdown Structure
@@ -150,7 +165,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/{storeId}', 'getListByStore')
                 ->name('get-list-by-store');
-            Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
+
+            // deprecated
+            Route::post('/{storeId}', 'storeMultipleByStoreId')->name('store-multiple-by-store-id');
+        });
+    Route::prefix('policies')
+        ->name('policies.')
+        ->controller(PolicyController::class)
+        ->group(function () {
+            Route::post('/', 'storeMultiple')->name('store-multiple');
+            Route::post('/simulation', 'storeSimulation')->name('store-simulation');
         });
 
     Route::prefix('policy-simulation-histories')
@@ -227,6 +251,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/detail-report-by-product/{storeId}', 'detailReportSearchByProduct')
                 ->name('detail-report-by-product');
             Route::get('/chart-macro-graph/{storeId}', 'chartMacroGraph')->name('chart-macro-graph');
+            Route::get('/chart-organic-inflows/{storeId}', 'chartOrganicInflows')->name('chart-organic-inflows');
+            Route::get('/chart-inflows-via-specific-words/{storeId}', 'chartInflowsViaSpecificWords')
+                ->name('chart-inflows-via-specific-words');
 
             Route::prefix('ads-analysis')
             ->name('ads-analysis.')
@@ -235,6 +262,89 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/detail-ads-conversion/{storeId}', 'detailAdsConversion')->name('detail-ads-conversion');
                 Route::get('/list-product-by-roas/{storeId}', 'getListProductByRoas')->name('list-product-by-roas');
                 Route::get('/chart-sales-and-access/{storeId}', 'chartSalesAndAccess')->name('chart-sales-and-access');
+                Route::get('/options', 'getOptions')->name('options');
             });
+
+            Route::prefix('access-analysis')
+            ->name('access-analysis.')
+            ->group(function () {
+                Route::get('/summary-table/{storeId}', 'tableAccessAnalysis')->name('summary-table');
+                Route::get('/chart-new-user-access/{storeId}', 'chartNewUserAccess')->name('chart-new-user-access');
+                Route::get('/chart-exist-user-access/{storeId}', 'chartExistUserAccess')
+                    ->name('chart-exist-user-access');
+            });
+
+            Route::prefix('conversion-rate-analysis')
+            ->name('conversion-rate-analysis.')
+            ->group(function () {
+                Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
+                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('chart-comparison');
+                Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
+                    ->name('chart-relation-PV-and-conversion-rate');
+            });
+
+            Route::prefix('sales-amnt-per-user')
+            ->name('sales-amnt-per-user.')
+            ->group(function () {
+                Route::get('/summary-graph/{storeId}', 'chartSummarySaleAmountPerUser')->name('summary');
+                Route::get('/table-comparison/{storeId}', 'tableSaleAmountPerUserComparison')->name('table-comparison');
+                Route::get('/chart-pv-and-sales/{storeId}', 'chartPVSaleAmountPerUser')->name('chart-pv-and-sales');
+            });
+
+            Route::prefix('product-analysis')
+            ->name('product-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'productAnalysisSummary')->name('summary');
+                Route::post('/chart-selected-products', 'chartSelectedProducts')->name('chart-selected-products');
+                Route::post('/chart-products-trends', 'chartProductsTrends')->name('chart-selected-products-trends');
+                Route::post('/chart-products-stay-times', 'chartProductsStayTimes')->name('chart-products-stay-times');
+                Route::post('/chart-products-rakuten-ranking', 'chartProductsRakutenRanking')->name('chart-products-rakuten-ranking');
+                Route::post('/chart-products-reviews-trends', 'chartProductsReviewsTrends')->name('chart-products-reviews-trends');
+            });
+
+            Route::prefix('category-analysis')
+            ->name('category-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'categoryAnalysisSummary')->name('summary');
+                Route::post('/chart-selected-categories', 'chartSelectedCategories')->name('chart-selected-categories');
+                Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
+                Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
+                Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
+            });
+
+            Route::prefix('review-analysis')
+            ->name('review-analysis.')
+            ->group(function () {
+                Route::get('/summary/{storeId}', 'reviewAnalysisSummary')->name('summary');
+                Route::get('/chart-reviews-trends/{storeId}', 'chartReviewsTrends')->name('chart-reviews-trends');
+            });
+        });
+
+    Route::prefix('shop-settings')
+        ->name('shop-settings.')
+        ->controller(ShopSettingController::class)
+        ->group(function () {
+           Route::prefix('mq-accounting')
+               ->name('mq-accounting.')
+               ->group(function () {
+                   Route::get('/', 'getMQAccountingSettings')->name('list');
+                   Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
+                   Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+               });
+
+           Route::prefix('rankings')
+               ->name('rankings.')
+               ->group(function () {
+                   Route::get('/', 'getRankingsSettings')->name('list');
+                   Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
+                   Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
+               });
+            Route::prefix('award-points')
+                ->name('award-points.')
+                ->group(function () {
+                    Route::get('/', 'getAwardPointSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateAwardPointCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadAwardPointCsv')->name('upload-csv');
+                });
         });
 });

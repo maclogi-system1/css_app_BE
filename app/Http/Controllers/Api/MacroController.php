@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Constants\MacroConstant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetQueryConditionsResultsRequest;
+use App\Http\Requests\GetQueryResultsRequest;
 use App\Http\Requests\MacroConfigurationRequest;
 use App\Http\Resources\MacroConfigurationResource;
 use App\Models\MacroConfiguration;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
 
 class MacroController extends Controller
 {
@@ -42,9 +44,11 @@ class MacroController extends Controller
     public function getListTable(): JsonResponse
     {
         $tables = $this->macroConfigurationRepository->getListTable();
+        $tableLabels = $this->macroConfigurationRepository->getTableLabels();
 
         return response()->json([
             'tables' => $tables,
+            'table_labels' => $tableLabels,
         ], Response::HTTP_OK);
     }
 
@@ -59,17 +63,18 @@ class MacroController extends Controller
     /**
      * Store macro configuration.
      */
-    public function store(MacroConfigurationRequest $request): JsonResource|JsonResponse
+    public function store(Request $request): JsonResource|JsonResponse
     {
-        $data = $request->validated() + [
+        $validation = $this->validationMultipleData($request, $request->all());
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = Arr::get($validation, 'validated', []) + [
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
-        $errors = $this->validationMultipleData($data);
-
-        if (! empty($errors)) {
-            return response()->json($errors, Response::HTTP_BAD_REQUEST);
-        }
 
         $macroConfiguration = $this->macroConfigurationRepository->create($data);
 
@@ -84,17 +89,20 @@ class MacroController extends Controller
      * Update macro configuration.
      */
     public function update(
-        MacroConfigurationRequest $request,
+        Request $request,
         MacroConfiguration $macroConfiguration
     ): JsonResource|JsonResponse {
-        $data = $request->validated() + [
+        $validation = $this->validationMultipleData($request, $request->all() + [
+            'macro_type' => $macroConfiguration->macro_type,
+        ]);
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = Arr::get($validation, 'validated', []) + [
             'updated_by' => $request->user()->id,
         ];
-        $errors = $this->validationMultipleData($data + ['macro_type' => $macroConfiguration->macro_type]);
-
-        if (! empty($errors)) {
-            return response()->json($errors, Response::HTTP_BAD_REQUEST);
-        }
 
         $macroConfiguration = $this->macroConfigurationRepository->update($data, $macroConfiguration);
 
@@ -108,15 +116,45 @@ class MacroController extends Controller
     /**
      * Handle multi-data validation by type.
      */
-    private function validationMultipleData(array $data): array
+    private function validationMultipleData(Request $request, array $data): array
     {
+        $validator = Validator::make(
+            $data,
+            MacroConfigurationRequest::getInstance($request->route(), $data)->rules()
+        );
+
+        $bagErrors = [
+            'message' => 'There are a few failures.',
+        ];
+
+        if ($validator->fails()) {
+            $bagErrors = array_merge($bagErrors, [
+                'errors' => $validator->errors()->toArray(),
+            ]);
+        }
+
         $errors = [];
-        $numberFailures = 0;
+        $key = 'errors';
 
         $macroType = Arr::get($data, 'macro_type');
 
-        if ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
+        if ($macroType == MacroConstant::MACRO_TYPE_AI_POLICY_RECOMMENDATION) {
+            $validated = $this->policyRepository->handleValidationSimulationStore(
+                $request,
+                Arr::get(
+                    $data,
+                    'simulation',
+                    []
+                ) + ['store_id' => Arr::get($data, 'store_ids')],
+            );
+            $key = 'simulation';
+
+            if (isset($validated['error'])) {
+                $errors = $validated['error'];
+            }
+        } elseif ($macroType == MacroConstant::MACRO_TYPE_POLICY_REGISTRATION) {
             $policies = Arr::get($data, 'policies', []);
+            $key = 'policies';
 
             foreach ($policies as $index => $policy) {
                 $validated = $this->policyRepository->handleValidation(
@@ -126,31 +164,34 @@ class MacroController extends Controller
 
                 if (isset($validated['error'])) {
                     $errors[] = $validated['error'];
-                    $numberFailures++;
                 }
             }
         } elseif ($macroType == MacroConstant::MACRO_TYPE_TASK_ISSUE) {
             $tasks = Arr::get($data, 'tasks', []);
+            $key = 'tasks';
 
             foreach ($tasks as $index => $task) {
                 $validated = $this->taskRepository->handleValidation($task, $index);
 
                 if (isset($validated['error'])) {
                     $errors[] = $validated['error'];
-                    $numberFailures++;
                 }
             }
         }
 
-        if ($numberFailures) {
-            return [
-                'message' => 'There are a few failures.',
-                'number_of_failures' => $numberFailures,
-                'errors' => $errors,
-            ];
+        if (! empty($errors)) {
+            if ($key == 'simulation') {
+                $bagErrors['errors'][$key] = $errors;
+            } else {
+                $bagErrors['errors'] = array_merge(Arr::get($bagErrors, 'errors', []), [$key => $errors]);
+            }
         }
 
-        return [];
+        return ! Arr::has($bagErrors, 'errors') ? [
+            'validated' => $validator->validated(),
+        ] : [
+            'errors' => $bagErrors,
+        ];
     }
 
     /**
@@ -178,13 +219,26 @@ class MacroController extends Controller
     /**
      * Get the query results obtained from the conditions of the macro configuration.
      */
-    public function getQueryResults(MacroConfiguration $macroConfiguration): JsonResponse
+    public function getQueryResults(Request $request, MacroConfiguration $macroConfiguration): JsonResponse
     {
+        $validation = Validator::make(
+            $macroConfiguration->conditions_decode,
+            GetQueryResultsRequest::getInstance($request->route(), $macroConfiguration->conditions_decode)->rules()
+        );
+
+        if ($validation->fails()) {
+            return response()->json(
+                [
+                    'message' => trans('validation.required'),
+                    'errors' => $validation->errors()->toArray(),
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
         $result = $this->macroConfigurationRepository->getQueryResults($macroConfiguration);
 
-        return response()->json([
-            'result' => $result,
-        ]);
+        return response()->json($result);
     }
 
     public function run(MacroConfiguration $macroConfiguration): JsonResponse
@@ -215,6 +269,15 @@ class MacroController extends Controller
      */
     public function getQueryConditionsResults(GetQueryConditionsResultsRequest $request)
     {
+        $validation = Validator::make(
+            $request->all(),
+            GetQueryConditionsResultsRequest::getInstance($request->route(), $request->all())->rules()
+        );
+
+        if (! empty(Arr::get($validation, 'errors', []))) {
+            return response()->json(Arr::get($validation, 'errors'), Response::HTTP_BAD_REQUEST);
+        }
+
         $conditions = json_decode($request->getContent(), true);
         $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions);
 
