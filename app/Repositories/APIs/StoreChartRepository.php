@@ -31,8 +31,25 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->storeChartService->getDataChartComparisonConversionRate($filters);
+        $data = $result->get('data');
 
-        return $this->storeChartService->getDataChartComparisonConversionRate($filters);
+        // Get compared data product analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->storeChartService->getDataChartComparisonConversionRate($filters)->get('data'));
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -61,7 +78,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => ['table_conversion_rate_analysis' => $data],
+            'data' => $data,
         ]);
     }
 
@@ -73,7 +90,24 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
+        $result = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
+        $data[] = $result->get('data');
 
-        return $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
+        // Get compared data product analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data[] = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters)->get('data');
+        }
+
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }
