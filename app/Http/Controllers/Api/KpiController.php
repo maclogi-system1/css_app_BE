@@ -15,9 +15,11 @@ use App\Repositories\Contracts\SalesAmntPerUserAnalysisRepository;
 use App\Repositories\Contracts\StoreChartRepository;
 use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
+use App\Support\KpiAccessCategoryReportCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class KpiController extends Controller
 {
@@ -33,7 +35,8 @@ class KpiController extends Controller
         protected SalesAmntPerUserAnalysisRepository $salesAmntPerUserAnalysisRepository,
         protected ProductAnalysisRepository $productAnalysisRepository,
         protected CategoryAnalysisRepository $categoryAnalysisRepository,
-        protected ReviewAnalysisRepository $reviewAnalysisRepository
+        protected ReviewAnalysisRepository $reviewAnalysisRepository,
+        protected KpiAccessCategoryReportCsv $kpiAccessCategoryReportCsv,
     ) {
     }
 
@@ -218,6 +221,20 @@ class KpiController extends Controller
         $result = $this->accessAnalysisRepository->getDataTableAccessAnalysis($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get detail data table for access analysis screen from AI.
+     */
+    public function downloadtableAccessAnalysisCsv(Request $request, string $storeId): StreamedResponse
+    {
+        return response()->stream(callback: $this->kpiAccessCategoryReportCsv->streamCsvFile($storeId, $request->query()), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=カテゴリ別アクセス分析.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
     }
 
     /**
