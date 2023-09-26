@@ -22,8 +22,9 @@ class CategoryAnalysisService extends Service
         }
 
         $this->categories = collect();
-        foreach ($this->categoryIds as $categoryId) {
+        foreach ($this->categoryIds as $index => $categoryId) {
             $this->categories->add([
+                'rank' => $index + 1,
                 'item_id' => $categoryId,
                 'item_name' => 'カテゴリ名'.$categoryId.'テキス',
                 'sales_all' => rand(10000000, 99999999),

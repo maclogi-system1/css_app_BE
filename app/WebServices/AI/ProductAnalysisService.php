@@ -24,6 +24,7 @@ class ProductAnalysisService extends Service
         $this->products = collect();
         foreach ($this->productIds as $index => $productId) {
             $this->products->add([
+                'rank' => $index + 1,
                 'item_id' => $productId,
                 'management_number' => 'pakupaku_vege22_'.rand(10, 90),
                 'item_name' => '商品名'.$productId.'テキス',
