@@ -280,7 +280,9 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('conversion-rate-analysis.')
             ->group(function () {
                 Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
-                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('chart-comparison');
+                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('summary-table');
+                Route::get('/download-csv', 'downloadtableConversionRateCsv')
+                ->name('download-csv');
                 Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
                     ->name('chart-relation-PV-and-conversion-rate');
             });
@@ -290,6 +292,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->group(function () {
                 Route::get('/summary-graph/{storeId}', 'chartSummarySaleAmountPerUser')->name('summary');
                 Route::get('/table-comparison/{storeId}', 'tableSaleAmountPerUserComparison')->name('table-comparison');
+                Route::get('/download-csv/{storeId}', 'downloadtableSalesAmntPerUserCsv')
+                ->name('download-csv');
                 Route::get('/chart-pv-and-sales/{storeId}', 'chartPVSaleAmountPerUser')->name('chart-pv-and-sales');
             });
 
@@ -297,6 +301,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('product-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'productAnalysisSummary')->name('summary');
+                Route::get('/download-csv/{storeId}', 'downloadtableProductsCsv')
+                ->name('download-csv');
                 Route::post('/chart-selected-products', 'chartSelectedProducts')->name('chart-selected-products');
                 Route::post('/chart-products-trends', 'chartProductsTrends')->name('chart-selected-products-trends');
                 Route::post('/chart-products-stay-times', 'chartProductsStayTimes')->name('chart-products-stay-times');
@@ -308,6 +314,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('category-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'categoryAnalysisSummary')->name('summary');
+                Route::get('/download-csv/{storeId}', 'downloadtableCategoriesCsv')
+                ->name('download-csv');
                 Route::post('/chart-selected-categories', 'chartSelectedCategories')->name('chart-selected-categories');
                 Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');

@@ -16,6 +16,10 @@ use App\Repositories\Contracts\StoreChartRepository;
 use App\Repositories\Contracts\UserAccessRepository;
 use App\Repositories\Contracts\UserTrendRepository;
 use App\Support\KpiAccessCategoryReportCsv;
+use App\Support\KpiCategoriesAnalysisCsv;
+use App\Support\KpiConversionRateReportCsv;
+use App\Support\KpiProductsAnalysisCsv;
+use App\Support\KpiSalesAmntPerUserReportCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -37,6 +41,10 @@ class KpiController extends Controller
         protected CategoryAnalysisRepository $categoryAnalysisRepository,
         protected ReviewAnalysisRepository $reviewAnalysisRepository,
         protected KpiAccessCategoryReportCsv $kpiAccessCategoryReportCsv,
+        protected KpiConversionRateReportCsv $kpiConversionRateReportCsv,
+        protected KpiSalesAmntPerUserReportCsv $kpiSalesAmntPerUserReportCsv,
+        protected KpiProductsAnalysisCsv $kpiProductsAnalysisCsv,
+        protected KpiCategoriesAnalysisCsv $kpiCategoriesAnalysisCsv,
     ) {
     }
 
@@ -278,6 +286,20 @@ class KpiController extends Controller
     }
 
     /**
+     * Get data table conversion rate analysis from AI.
+     */
+    public function downloadtableConversionRateCsv(Request $request): StreamedResponse
+    {
+        return response()->stream(callback: $this->kpiConversionRateReportCsv->streamCsvFile($request->query()), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=転換率比較.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
+    }
+
+    /**
      * Get data relation between number of PV and conversion rate from AI.
      */
     public function chartRelationPVAndConversionRate(Request $request): JsonResponse
@@ -308,6 +330,20 @@ class KpiController extends Controller
     }
 
     /**
+     * Get data table compare sales amount per user with last year data.
+     */
+    public function downloadtableSalesAmntPerUserCsv(Request $request, string $storeId): StreamedResponse
+    {
+        return response()->stream(callback: $this->kpiSalesAmntPerUserReportCsv->streamCsvFile($request->query()), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=客単価比較.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
+    }
+
+    /**
      * Get data chart PV sale amount per user from AI.
      */
     public function chartPVSaleAmountPerUser(Request $request, string $storeId): JsonResponse
@@ -325,6 +361,20 @@ class KpiController extends Controller
         $result = $this->productAnalysisRepository->getProductSummary($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data summary product analysis from AI.
+     */
+    public function downloadtableProductsCsv(Request $request, string $storeId): StreamedResponse
+    {
+        return response()->stream(callback: $this->kpiProductsAnalysisCsv->streamCsvFile($storeId, $request->query()), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=商品別分析.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
     }
 
     /**
@@ -390,6 +440,20 @@ class KpiController extends Controller
         $result = $this->categoryAnalysisRepository->getCategorySummary($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get data summary category analysis from AI.
+     */
+    public function downloadtableCategoriesCsv(Request $request, string $storeId): StreamedResponse
+    {
+        return response()->stream(callback: $this->kpiCategoriesAnalysisCsv->streamCsvFile($storeId, $request->query()), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=カテゴリ別分析.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
     }
 
     /**
