@@ -298,4 +298,12 @@ class PolicyController extends Controller
     {
         return new PolicyResource($policySimulation);
     }
+
+    /**
+     * Get data to add policies from simulation.
+     */
+    public function getPolicyDataFromSimulation(Policy $policySimulation)
+    {
+        return response()->json($this->policyRepository->makeDataPolicyFromSimulation($policySimulation));
+    }
 }

@@ -24,7 +24,7 @@ class RunPolicySimulation implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public Policy $policy,
+        public Policy $simulation,
     ) {
     }
 
@@ -44,7 +44,7 @@ class RunPolicySimulation implements ShouldQueue
             }
 
             $policySimulationHistoryRepository->create([
-                'policy_id' => $this->policy->id,
+                'policy_id' => $this->simulation->id,
                 'manager' => Arr::get($result, 'manager'),
                 'title' =>  Arr::get($result, 'policy_name'),
                 'job_title' => Arr::get($result, 'job_title'),
@@ -54,16 +54,16 @@ class RunPolicySimulation implements ShouldQueue
                 'sale_effect' => Arr::get($result, 'sale_effect'),
             ]);
 
-            $this->policy->processing_status = Policy::DONE_PROCESSING_STATUS;
-            $this->policy->save();
+            $this->simulation->processing_status = Policy::DONE_PROCESSING_STATUS;
+            $this->simulation->save();
 
             DB::commit();
         } catch (\Throwable $e) {
             logger()->error('Run policy simulation: '.$e->getMessage());
             DB::rollBack();
 
-            $this->policy->processing_status = Policy::ERROR_PROCESSING_STATUS;
-            $this->policy->save();
+            $this->simulation->processing_status = Policy::ERROR_PROCESSING_STATUS;
+            $this->simulation->save();
         }
     }
 
@@ -71,7 +71,7 @@ class RunPolicySimulation implements ShouldQueue
     {
         return [
             'creation_date' => now(),
-            'policy_name' => $this->policy->name,
+            'policy_name' => $this->simulation->name,
             'manager' => 'User name',
             'start_date' => '2023-07-01 20:00:00',
             'end_date' => '2023-07-01 23:59:00',

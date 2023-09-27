@@ -107,4 +107,9 @@ interface PolicyRepository extends Repository
      * Get list of work breakdown structure.
      */
     public function workBreakdownStructure(string $storeId, array $filters);
+
+    /**
+     * Generate data to add policies from simulation.
+    */
+    public function makeDataPolicyFromSimulation(Policy $simulation): array;
 }
