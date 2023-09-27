@@ -25,6 +25,7 @@ class MqSheetResource extends JsonResource
             'id' => $this->resource->id,
             'store_id' => $this->resource->store_id,
             'name' => $this->resource->name,
+            'is_default' => $this->resource->isDefault(),
         ];
     }
 }

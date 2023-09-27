@@ -11,9 +11,16 @@ class MqSheet extends Model
 {
     use HasFactory, HasUuids;
 
+    public const DEFAULT_NAME = 'AI売上予測MQ会計';
+
     protected $fillable = [
-        'id', 'store_id', 'name', 'created_at', 'updated_at',
+        'id', 'store_id', 'name', 'is_default', 'created_at', 'updated_at',
     ];
+
+    public function isDefault(): bool
+    {
+        return $this->is_default;
+    }
 
     public function mqAccountings(): HasMany
     {

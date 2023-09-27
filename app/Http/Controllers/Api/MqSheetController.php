@@ -93,6 +93,12 @@ class MqSheetController extends Controller
      */
     public function destroy(MqSheet $mqSheet): JsonResource|JsonResponse
     {
+        if ($mqSheet->isDefault()) {
+            return response()->json([
+                'message' => __('You cannot delete a default sheet.'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         $mqSheet = $this->mqSheetRepository->delete($mqSheet);
 
         return $mqSheet
