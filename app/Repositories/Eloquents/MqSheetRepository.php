@@ -6,6 +6,7 @@ use App\Models\MqSheet;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository as MqSheetRepositoryContract;
 use App\Repositories\Repository;
+use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -24,6 +25,14 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
      */
     public function getListByStore(string $storeId, array $filters = []): Collection
     {
+        if (! $this->model()->where('store_id', $storeId)->exists()) {
+            $this->create([
+                'name' => MqSheet::DEFAULT_NAME,
+                'store_id' => $storeId,
+                'is_default' => true,
+            ]);
+        }
+
         $query = $this->getWithFilter($this->queryBuilder(), $filters)
             ->where('store_id', $storeId);
 
@@ -67,6 +76,10 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
     public function delete(MqSheet $mqSheet): ?MqSheet
     {
         return $this->handleSafely(function () use ($mqSheet) {
+            if ($mqSheet->isDefault()) {
+                throw new Exception('Cannot delete a default sheet.');
+            }
+
             $mqSheet->mqAccountings()->delete();
             $mqSheet->delete();
 
