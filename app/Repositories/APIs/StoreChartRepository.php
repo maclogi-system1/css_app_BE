@@ -29,7 +29,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataChartComparisonConversionRate(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
         }
         $result = $this->storeChartService->getDataChartComparisonConversionRate($filters);
         $data = $result->get('data');
@@ -58,7 +58,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataTableConversionRateAnalysis(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
         }
 
         $data = collect($this->storeChartService->getDataTableConversionRateAnalysis($filters));
@@ -69,7 +69,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
             $filters['to_date'] = Arr::get($filters, 'compared_to_date');
 
             if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-                $filters['to_date'] = now()->format('Y-m');
+                $filters['to_date'] = now()->format('Y-m-d');
             }
 
             $data = $data->merge($this->storeChartService->getDataTableConversionRateAnalysis($filters));
@@ -88,7 +88,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataChartRelationPVAndConversionRate(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
         }
         $result = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
         $data[] = $result->get('data');
