@@ -65,8 +65,8 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
             ->selectRaw('
                 SUM(mk.sales_amnt) as sales_amnt,
                 SUM(mk.access_num) as access_num,
-                SUM(mk.conversion_rate) as conversion_rate,
-                SUM(mk.sales_amnt_per_user) as sales_amnt_per_user
+                AVG(mk.conversion_rate) as conversion_rate,
+                AVG(mk.sales_amnt_per_user) as sales_amnt_per_user
             ')
             ->first()
             ->toArray();
