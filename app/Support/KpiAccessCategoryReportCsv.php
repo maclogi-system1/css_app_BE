@@ -36,9 +36,10 @@ class KpiAccessCategoryReportCsv
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile(string $storeId, array $filters = []): Closure
+    public function streamCsvFile(array $filters = []): Closure
     {
         $header = $this->getFields('title');
+        $storeId = Arr::get($filters, 'store_id');
         $result = $this->accessAnalysisService->getDataTableAccessAnalysis($storeId, $filters);
         $accessResults = collect();
         if (! is_null($result->get('data'))) {
