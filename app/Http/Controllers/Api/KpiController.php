@@ -234,9 +234,10 @@ class KpiController extends Controller
     /**
      * Get detail data table for access analysis screen from AI.
      */
-    public function downloadtableAccessAnalysisCsv(Request $request, string $storeId): StreamedResponse
+    public function downloadtableAccessAnalysisCsv(Request $request): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiAccessCategoryReportCsv->streamCsvFile($storeId, $request->query()), headers: [
+        $conditions = json_decode($request->getContent(), true);
+        return response()->stream(callback: $this->kpiAccessCategoryReportCsv->streamCsvFile($conditions), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=カテゴリ別アクセス分析.csv',
             'Pragma' => 'no-cache',

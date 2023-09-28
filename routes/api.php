@@ -271,7 +271,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('access-analysis.')
             ->group(function () {
                 Route::get('/summary-table/{storeId}', 'tableAccessAnalysis')->name('summary-table');
-                Route::get('/download-csv/{storeId}', 'downloadtableAccessAnalysisCsv')
+                Route::post('/download-csv', 'downloadtableAccessAnalysisCsv')
                 ->name('download-csv');
                 Route::get('/chart-new-user-access/{storeId}', 'chartNewUserAccess')->name('chart-new-user-access');
                 Route::get('/chart-exist-user-access/{storeId}', 'chartExistUserAccess')
