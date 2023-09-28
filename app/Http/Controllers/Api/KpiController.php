@@ -237,6 +237,7 @@ class KpiController extends Controller
     public function downloadtableAccessAnalysisCsv(Request $request): StreamedResponse
     {
         $conditions = json_decode($request->getContent(), true);
+
         return response()->stream(callback: $this->kpiAccessCategoryReportCsv->streamCsvFile($conditions), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=カテゴリ別アクセス分析.csv',
@@ -367,9 +368,11 @@ class KpiController extends Controller
     /**
      * Get data summary product analysis from AI.
      */
-    public function downloadtableProductsCsv(Request $request, string $storeId): StreamedResponse
+    public function downloadtableProductsCsv(Request $request): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiProductsAnalysisCsv->streamCsvFile($storeId, $request->query()), headers: [
+        $conditions = json_decode($request->getContent(), true);
+
+        return response()->stream(callback: $this->kpiProductsAnalysisCsv->streamCsvFile($conditions), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=商品別分析.csv',
             'Pragma' => 'no-cache',
@@ -446,9 +449,11 @@ class KpiController extends Controller
     /**
      * Get data summary category analysis from AI.
      */
-    public function downloadtableCategoriesCsv(Request $request, string $storeId): StreamedResponse
+    public function downloadtableCategoriesCsv(Request $request): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiCategoriesAnalysisCsv->streamCsvFile($storeId, $request->query()), headers: [
+        $conditions = json_decode($request->getContent(), true);
+
+        return response()->stream(callback: $this->kpiCategoriesAnalysisCsv->streamCsvFile($conditions), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=カテゴリ別分析.csv',
             'Pragma' => 'no-cache',
