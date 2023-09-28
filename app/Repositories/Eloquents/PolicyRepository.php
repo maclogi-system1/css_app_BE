@@ -643,7 +643,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'store_id' => $simulation->store_id,
             'category' => Policy::MEASURES_CATEGORY,
             'immediate_reflection' => 0,
-            'status' => -10,
+            'status' => -5,
             'job_group_code' => null,
             'job_group_title' => $simulation->name,
             'job_group_explanation' => null,

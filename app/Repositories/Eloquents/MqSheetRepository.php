@@ -40,6 +40,23 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
     }
 
     /**
+     * Find a default mq sheet by storeId.
+     */
+    public function getDefaultByStore(string $storeId, array $filters = []): ?MqSheet
+    {
+        $mqSheet = $this->queryBuilder()
+            ->where('store_id', $storeId)
+            ->where('is_default', true)
+            ->first();
+
+        if (is_null($mqSheet)) {
+            return null;
+        }
+
+        return $mqSheet;
+    }
+
+    /**
      * Handle create a new mq sheet.
      */
     public function create(array $data): ?MqSheet
