@@ -305,7 +305,7 @@ class PolicyController extends Controller
             $filters = $request->query() + [
                 'from_date' => now()->firstOfYear()->format('Y-m'),
                 'to_date' => now()->format('Y-m'),
-                'mq_sheet_id' => $mqSheet->id
+                'mq_sheet_id' => $mqSheet->id,
             ];
             $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
                 $policySimulation->store_id,
