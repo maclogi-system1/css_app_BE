@@ -13,6 +13,11 @@ interface MqSheetRepository extends Repository
     public function getListByStore(string $storeId, array $filters = []): Collection;
 
     /**
+     * Find a default mq sheet by storeId.
+     */
+    public function getDefaultByStore(string $storeId, array $filters = []): ?MqSheet;
+
+    /**
      * Handle create a new mq sheet.
      */
     public function create(array $data): ?MqSheet;

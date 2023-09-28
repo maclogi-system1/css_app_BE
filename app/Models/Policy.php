@@ -55,6 +55,11 @@ class Policy extends Model
         'simulation_end_date' => 'datetime',
     ];
 
+    public function isProcessDone(): bool
+    {
+        return $this->processing_status == static::DONE_PROCESSING_STATUS;
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(PolicyAttachment::class);

@@ -9,6 +9,8 @@ use App\Http\Requests\UpdatePolicySimulationRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
 use App\Repositories\Contracts\JobGroupRepository;
+use App\Repositories\Contracts\MqAccountingRepository;
+use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +26,8 @@ class PolicyController extends Controller
         protected PolicyRepository $policyRepository,
         protected JobGroupRepository $jobGroupRepository,
         protected PolicyCsv $policyCsv,
+        protected MqSheetRepository $mqSheetRepository,
+        protected MqAccountingRepository $mqAccountingRepository,
     ) {
     }
 
@@ -294,9 +298,25 @@ class PolicyController extends Controller
     /**
      * Display the specified simulation.
      */
-    public function showSimulation(Policy $policySimulation)
+    public function showSimulation(Request $request, Policy $policySimulation)
     {
-        return new PolicyResource($policySimulation);
+        if ($policySimulation->isProcessDone()) {
+            $mqSheet = $this->mqSheetRepository->getDefaultByStore($policySimulation->store_id);
+            $filters = $request->query() + [
+                'from_date' => now()->firstOfYear()->format('Y-m'),
+                'to_date' => now()->format('Y-m'),
+                'mq_sheet_id' => $mqSheet->id
+            ];
+            $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
+                $policySimulation->store_id,
+                $filters,
+            );
+        }
+
+        $policyResource = (new PolicyResource($policySimulation))
+            ->additional(['mq_accountings' => $mqAccountingActualsAndExpected ?? []]);
+
+        return $policyResource;
     }
 
     /**
