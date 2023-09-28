@@ -36,9 +36,10 @@ class KpiProductsAnalysisCsv
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile($storeId, array $filters = []): Closure
+    public function streamCsvFile(array $filters = []): Closure
     {
         $header = $this->getFields('title');
+        $storeId = Arr::get($filters, 'store_id');
         $result = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
         $productResults = collect();
         if (! is_null($result)) {

@@ -303,7 +303,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('product-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'productAnalysisSummary')->name('summary');
-                Route::get('/download-csv/{storeId}', 'downloadtableProductsCsv')
+                Route::post('/download-csv', 'downloadtableProductsCsv')
                 ->name('download-csv');
                 Route::post('/chart-selected-products', 'chartSelectedProducts')->name('chart-selected-products');
                 Route::post('/chart-products-trends', 'chartProductsTrends')->name('chart-selected-products-trends');
@@ -316,7 +316,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('category-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'categoryAnalysisSummary')->name('summary');
-                Route::get('/download-csv/{storeId}', 'downloadtableCategoriesCsv')
+                Route::post('/download-csv', 'downloadtableCategoriesCsv')
                 ->name('download-csv');
                 Route::post('/chart-selected-categories', 'chartSelectedCategories')->name('chart-selected-categories');
                 Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');

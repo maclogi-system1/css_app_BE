@@ -43,6 +43,15 @@ class CategoryAnalysisService extends Service
         $activeNum = rand(1000, 5000);
         $unActiveNum = rand(1000, $activeNum);
         $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $categoryIds = Arr::get($filters, 'category_ids');
+        $categoryIdsArr = explode(',', $categoryIds);
+
+        $categories = $this->categories;
+        if (! empty($categoryIds)) {
+            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
+            });
+        }
         $dataFake = [
             'from_date' => Arr::get($filters, 'from_date'),
             'to_date' => Arr::get($filters, 'to_date'),
@@ -50,7 +59,7 @@ class CategoryAnalysisService extends Service
             'unactive_category_count_all' => $unActiveNum,
             'active_ratio' => round($activeNum / ($activeNum + $unActiveNum), 2) * 100,
             'zero_inventory_num' => rand(10, 1000),
-            'categories' => $this->categories,
+            'categories' => $categories,
         ];
 
         return collect([
@@ -115,9 +124,12 @@ class CategoryAnalysisService extends Service
 
         $dataFake = collect();
 
-        $categories = $this->categories->filter(function ($item) use ($categoryIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-        });
+        $categories = $this->categories;
+        if (! empty($categoryIds)) {
+            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
+            });
+        }
 
         $dailySales = collect();
         $dailyAccess = collect();
@@ -184,9 +196,12 @@ class CategoryAnalysisService extends Service
         $categoryIds = Arr::get($filters, 'category_ids');
         $categoryIdsArr = explode(',', $categoryIds);
 
-        $categories = $this->categories->filter(function ($item) use ($categoryIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-        });
+        $categories = $this->categories;
+        if (! empty($categoryIds)) {
+            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
+            });
+        }
 
         $dataFake = collect();
         foreach ($categories as $category) {
@@ -221,9 +236,12 @@ class CategoryAnalysisService extends Service
             'Y/m'
         );
 
-        $categories = $this->categories->filter(function ($item) use ($categoryIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-        });
+        $categories = $this->categories;
+        if (! empty($categoryIds)) {
+            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
+            });
+        }
 
         $dataFake = collect();
         foreach ($dateTimeRange as $date) {

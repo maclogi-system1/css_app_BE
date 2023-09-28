@@ -636,7 +636,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
     /**
      * Generate data to add policies from simulation.
-    */
+     */
     public function makeDataPolicyFromSimulation(Policy $simulation): array
     {
         return [
