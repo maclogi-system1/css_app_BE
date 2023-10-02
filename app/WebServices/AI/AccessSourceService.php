@@ -148,7 +148,7 @@ class AccessSourceService extends Service
             'status' => 200,
             'data' => collect([
                 'store_id' => $storeId,
-                'chart_access_source' => $chartAccessSource->sortByDesc('value'),
+                'chart_access_source' => $chartAccessSource->sortByDesc('value')->values(),
             ]),
         ]);
     }
