@@ -28,8 +28,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 {
     public function __construct(
         protected PolicyR2Service $policyR2Service,
-        protected SingleJobRepository $singleJobRepository,
-        protected JobGroupRepository $jobGroupRepository,
     ) {
     }
 
@@ -65,7 +63,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         }
 
-        $singleJobs = $this->singleJobRepository->getListByStore($storeId, [
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $singleJobs = $singleJobRepository->getListByStore($storeId, [
             'filters' => [
                 'single_jobs.id' => implode(',', $singleJobIds),
             ],
@@ -119,7 +120,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
     {
-        $result = $this->singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $result = $singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
         if ($result->get('success')) {
@@ -182,7 +186,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         if (! is_null($policy->single_job_id)) {
-            $singleJob = $this->singleJobRepository->find(
+            /** @var \App\Repositories\Contracts\SingleJobRepository */
+            $singleJobRepository = app(SingleJobRepository::class);
+
+            $singleJob = $singleJobRepository->find(
                 id: $policy->single_job_id,
                 filters: ['store_id' => $policy->store_id]
             );
@@ -217,7 +224,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return $this->singleJobRepository->getOptions()->merge([
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        return $singleJobRepository->getOptions()->merge([
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
             'policy_rule_services' => $policyRuleServices,
@@ -237,7 +247,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
 
             if (! is_null($policy->single_job_id)) {
-                $this->singleJobRepository->delete($policy->single_job_id);
+                /** @var \App\Repositories\Contracts\SingleJobRepository */
+                $singleJobRepository = app(SingleJobRepository::class);
+
+                $singleJobRepository->delete($policy->single_job_id);
             }
 
             $policy->delete();
@@ -273,7 +286,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
-        $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        /** @var \App\Repositories\Contracts\JobGroupRepository */
+        $jobGroupRepository = app(JobGroupRepository::class);
+
+        $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -403,7 +419,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     ->update(['policy_id' => $policy->id]);
             }
 
-            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
+            /** @var \App\Repositories\Contracts\JobGroupRepository */
+            $jobGroupRepository = app(JobGroupRepository::class);
+
+            $jobGroup = $jobGroupRepository->create($data['job_group']);
             $singleJobs = Arr::get($jobGroup, 'single_jobs');
             $singleJob = Arr::first($singleJobs);
             $jobGroupId = Arr::get($jobGroup, 'job_group_id');
@@ -475,8 +494,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $policy->fill($policyData);
             $policy->save();
 
+            /** @var \App\Repositories\Contracts\JobGroupRepository */
+            $jobGroupRepository = app(JobGroupRepository::class);
             $jobGroupData = $data['job_group'];
-            $this->jobGroupRepository->updateByCode($jobGroupData, $jobGroupData['job_group_code']);
+
+            $jobGroupRepository->updateByCode($jobGroupData, $jobGroupData['job_group_code']);
 
             return true;
         }, 'Update policy');
@@ -551,7 +573,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         $this->model()
-            ->where('processing_status', Policy::NEW_PROCESSING_STATUS)
+            ->whereIn('processing_status', [Policy::NEW_PROCESSING_STATUS, Policy::DONE_PROCESSING_STATUS])
             ->where('category', Policy::SIMULATION_CATEGORY)
             ->where('store_id', $data['store_id'])
             ->get()
@@ -593,7 +615,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             }
         }
 
-        $result = $this->singleJobRepository->getSchedule($filters + [
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $result = $singleJobRepository->getSchedule($filters + [
             'store_id' => $storeId,
             'job_group_ids' => $jobGroupIds,
         ]);
@@ -689,5 +714,54 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'description_for_sp' => null,
             'description_by_sales_method' => null,
         ];
+    }
+
+    /**
+     * Get a list of policies whose start and end times match a store's simulations.
+     */
+    public function getMatchesSimulation(string $storeId): Collection
+    {
+        $simulations = $this->getListByStore($storeId, [
+            'category' => 'simulation',
+            'per_page' => -1,
+        ]);
+
+        $fromDate = $simulations->min('simulation_start_date')->format('Y-m-d');
+        $endDate = $simulations->max('simulation_start_date')->format('Y-m-d');
+
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+        $singleJobResult = $singleJobRepository->getListByStore($storeId, [
+            'store_id' => $storeId,
+            'per_page' => -1,
+            'from_date' => $fromDate,
+            'end_date' => $endDate,
+        ]);
+
+        if (! $singleJobResult->get('success')) {
+            return [];
+        }
+
+        $singleJobs = collect($singleJobResult->get('data')->get('single_jobs'));
+        $singleJobMatches = collect();
+
+        foreach ($simulations as $simulation) {
+            $singleJobMatches->add($singleJobs->where('execution_time', $simulation->simulation_start_date)
+                ->where('undo_time', $simulation->simulation_end_date)
+                ->first());
+        }
+
+        $policies = $this->model()
+            ->where('store_id', $storeId)
+            ->whereIn('single_job_id', $singleJobMatches->pluck('id'))
+            ->whereIn('category', [Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY])
+            ->get()
+            ->map(function ($policy) use ($singleJobMatches) {
+                $policy->single_job = $singleJobMatches->where('id', $policy->single_job_id)->first();
+
+                return $policy;
+            });
+
+        return $policies;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetMatchesSimulationRequest;
 use App\Http\Requests\RunSimulationRequest;
 use App\Http\Requests\StorePolicySimulationRequest;
 use App\Http\Requests\UpdatePolicySimulationRequest;
@@ -322,8 +323,21 @@ class PolicyController extends Controller
     /**
      * Get data to add policies from simulation.
      */
-    public function getPolicyDataFromSimulation(Policy $policySimulation)
+    public function getPolicyDataFromSimulation(Policy $policySimulation): JsonResponse
     {
         return response()->json($this->policyRepository->makeDataPolicyFromSimulation($policySimulation));
+    }
+
+    /**
+     * Get a list of policies whose start and end times match a store's simulations.
+     */
+    public function matchesSimulation(GetMatchesSimulationRequest $request): JsonResource
+    {
+        $simulations = PolicyResource::collection($this->policyRepository->getMatchesSimulation(
+            $request->query('store_id'),
+        ));
+        $simulations->wrap('policies');
+
+        return $simulations;
     }
 }
