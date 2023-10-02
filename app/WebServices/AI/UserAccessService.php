@@ -2,8 +2,10 @@
 
 namespace App\WebServices\AI;
 
+use App\Models\KpiRealData\MqAccounting;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class UserAccessService extends Service
@@ -13,54 +15,58 @@ class UserAccessService extends Service
     public function getListUserAccess(string $storeId, array $filters = []): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            'Y/m'
-        );
 
-        $dataFake = collect();
-
-        foreach ($dateTimeRange as $date) {
-            $dataFake->add([
-                'store_id' => $storeId,
-                'date' => $date,
-                'user_access_num' => rand(1000000, 2500000),
-                'user_access_rate' => rand(-40, 100),
-            ]);
-        }
+        $realAccessData = MqAccounting::where('store_id', $storeId)
+            ->where('year', '>=', $dateRangeFilter['from_date']->year)
+            ->where('month', '>=', $dateRangeFilter['from_date']->month)
+            ->where('year', '<=', $dateRangeFilter['to_date']->year)
+            ->where('month', '<=', $dateRangeFilter['to_date']->month)
+            ->join('mq_access_num as ma', 'ma.mq_access_num_id', '=', 'mq_accounting.mq_access_num_id')
+            ->selectRaw('
+                store_id,
+                CONCAT(year,"/",LPAD(month, 2, "0")) as date,
+                ma.access_flow_sum
+            ')
+            ->get()->toArray();
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $realAccessData,
         ]);
     }
 
     public function getListUserAccessAds(string $storeId, array $filters = []): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            'Y/m'
-        );
 
-        $dataFake = collect();
-
-        foreach ($dateTimeRange as $date) {
-            $dataFake->add([
+        $data = collect();
+        $result = MqAccounting::where('store_id', $storeId)
+            ->where('year', '>=', $dateRangeFilter['from_date']->year)
+            ->where('month', '>=', $dateRangeFilter['from_date']->month)
+            ->where('year', '<=', $dateRangeFilter['to_date']->year)
+            ->where('month', '<=', $dateRangeFilter['to_date']->month)
+            ->join('mq_access_num as ma', 'ma.mq_access_num_id', '=', 'mq_accounting.mq_access_num_id')
+            ->selectRaw('
+                store_id,
+                CONCAT(year,"/",LPAD(month, 2, "0")) as date,
+                ma.access_flow_sum,
+                ma.cpc_num
+            ')
+            ->get()->toArray();
+        foreach ($result as $item) {
+            $data->add([
                 'store_id' => $storeId,
-                'date' => $date,
-                'access_flow_sum' => rand(2000, 10000),
-                'cpc_num' => rand(3000, 15000),
+                'date' => Arr::get($item, 'date'),
+                'access_flow_sum' => Arr::get($item, 'access_flow_sum'),
+                'cpc_num' => Arr::get($item, 'cpc_num'),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $data,
         ]);
     }
 }
