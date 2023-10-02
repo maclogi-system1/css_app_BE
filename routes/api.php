@@ -177,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/simulation', 'storeSimulation')->name('store-simulation');
             Route::get('/simulation/{policySimulation}/policy-data', 'getPolicyDataFromSimulation')
                 ->name('simulation.policy-data');
+            Route::get('/matches-simulation', 'matchesSimulation');
         });
 
     Route::prefix('policy-simulation-histories')
