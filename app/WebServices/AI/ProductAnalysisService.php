@@ -24,8 +24,9 @@ class ProductAnalysisService extends Service
         $this->products = collect();
         foreach ($this->productIds as $index => $productId) {
             $this->products->add([
+                'rank' => $index + 1,
                 'item_id' => $productId,
-                'management_number' => 'pakupaku_vege22_'.rand(10, 90),
+                'management_number' => 'pakupaku_vege22_'.$index,
                 'item_name' => '商品名'.$productId.'テキス',
                 'sales_all' => rand(10000000, 99999999),
                 'visit_all' => rand(10000, 99999),
@@ -40,7 +41,23 @@ class ProductAnalysisService extends Service
      */
     public function getProductSummary($storeId, array $filters = []): Collection
     {
+        $productIds = Arr::get($filters, 'product_ids');
+        $productIdsArr = explode(',', $productIds);
+        $managementNums = Arr::get($filters, 'management_nums');
+        $managementNumsArr = explode(',', $managementNums);
+
         $products = $this->products;
+        if (! empty($productIds)) {
+            $products = $products->filter(function ($item) use ($productIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $productIdsArr);
+            });
+        }
+
+        if (! empty($managementNums)) {
+            $products = $products->filter(function ($item) use ($managementNumsArr) {
+                return in_array(Arr::get($item, 'management_number'), $managementNumsArr);
+            });
+        }
 
         $activeNum = rand(1000, 5000);
         $unActiveNum = rand(1000, $activeNum);
@@ -103,6 +120,8 @@ class ProductAnalysisService extends Service
         $storeId = Arr::get($filters, 'store_id');
         $productIds = Arr::get($filters, 'product_ids');
         $productIdsArr = explode(',', $productIds);
+        $managementNums = Arr::get($filters, 'management_nums');
+        $managementNumsArr = explode(',', $managementNums);
 
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateTimeRange = $this->getDateTimeRange(
@@ -116,9 +135,18 @@ class ProductAnalysisService extends Service
 
         $dataFake = collect();
 
-        $products = $this->products->filter(function ($item) use ($productIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $productIdsArr);
-        });
+        $products = $this->products;
+        if (! empty($productIds)) {
+            $products = $products->filter(function ($item) use ($productIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $productIdsArr);
+            });
+        }
+
+        if (! empty($managementNums)) {
+            $products = $products->filter(function ($item) use ($managementNumsArr) {
+                return in_array(Arr::get($item, 'management_number'), $managementNumsArr);
+            });
+        }
 
         $dailySales = collect();
         $dailyAccess = collect();
@@ -184,10 +212,21 @@ class ProductAnalysisService extends Service
         $storeId = Arr::get($filters, 'store_id');
         $productIds = Arr::get($filters, 'product_ids');
         $productIdsArr = explode(',', $productIds);
+        $managementNums = Arr::get($filters, 'management_nums');
+        $managementNumsArr = explode(',', $managementNums);
 
-        $products = $this->products->filter(function ($item) use ($productIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $productIdsArr);
-        });
+        $products = $this->products;
+        if (! empty($productIds)) {
+            $products = $products->filter(function ($item) use ($productIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $productIdsArr);
+            });
+        }
+
+        if (! empty($managementNums)) {
+            $products = $products->filter(function ($item) use ($managementNumsArr) {
+                return in_array(Arr::get($item, 'management_number'), $managementNumsArr);
+            });
+        }
 
         $dataFake = collect();
         foreach ($products as $product) {
@@ -215,6 +254,8 @@ class ProductAnalysisService extends Service
         $storeId = Arr::get($filters, 'store_id');
         $productIds = Arr::get($filters, 'product_ids');
         $productIdsArr = explode(',', $productIds);
+        $managementNums = Arr::get($filters, 'management_nums');
+        $managementNumsArr = explode(',', $managementNums);
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateTimeRange = $this->getDateTimeRange(
             $dateRangeFilter['from_date'],
@@ -225,9 +266,18 @@ class ProductAnalysisService extends Service
             ]
         );
 
-        $products = $this->products->filter(function ($item) use ($productIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $productIdsArr);
-        });
+        $products = $this->products;
+        if (! empty($productIds)) {
+            $products = $products->filter(function ($item) use ($productIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $productIdsArr);
+            });
+        }
+
+        if (! empty($managementNums)) {
+            $products = $products->filter(function ($item) use ($managementNumsArr) {
+                return in_array(Arr::get($item, 'management_number'), $managementNumsArr);
+            });
+        }
 
         $dataFake = collect();
         foreach ($dateTimeRange as $date) {
@@ -265,6 +315,8 @@ class ProductAnalysisService extends Service
         $storeId = Arr::get($filters, 'store_id');
         $productIds = Arr::get($filters, 'product_ids');
         $productIdsArr = explode(',', $productIds);
+        $managementNums = Arr::get($filters, 'management_nums');
+        $managementNumsArr = explode(',', $managementNums);
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $dateTimeRange = $this->getDateTimeRange(
             $dateRangeFilter['from_date'],
@@ -272,9 +324,18 @@ class ProductAnalysisService extends Service
             'Y/m'
         );
 
-        $products = $this->products->filter(function ($item) use ($productIdsArr) {
-            return in_array(Arr::get($item, 'item_id'), $productIdsArr);
-        });
+        $products = $this->products;
+        if (! empty($productIds)) {
+            $products = $products->filter(function ($item) use ($productIdsArr) {
+                return in_array(Arr::get($item, 'item_id'), $productIdsArr);
+            });
+        }
+
+        if (! empty($managementNums)) {
+            $products = $products->filter(function ($item) use ($managementNumsArr) {
+                return in_array(Arr::get($item, 'management_number'), $managementNumsArr);
+            });
+        }
 
         $dataFake = collect();
         foreach ($dateTimeRange as $date) {

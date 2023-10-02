@@ -113,7 +113,7 @@ class UserController extends Controller
 
         if ($request->user()->id == $user->id) {
             return response()->json([
-                'message' => __('You can not delete yourself.'),
+                'message' => __('You cannot delete yourself.'),
             ], Response::HTTP_BAD_REQUEST);
         }
 

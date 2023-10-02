@@ -5,11 +5,14 @@ namespace App\Repositories\Eloquents;
 use App\Models\ShopSettingAwardPoint;
 use App\Repositories\Contracts\ShopSettingAwardPointRepository as ShopSettingAwardPointRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
 class ShopSettingAwardPointRepository extends Repository implements ShopSettingAwardPointRepositoryContract
 {
+    use ShopSettingUpdateRepository;
+
     /**
      * Get full name of model.
      */
@@ -25,7 +28,7 @@ class ShopSettingAwardPointRepository extends Repository implements ShopSettingA
     {
         return $this->handleSafely(function () use ($data) {
             return $this->model()->create($data);
-        }, 'Create Shop Setting Ranking');
+        }, 'Create Shop Setting Award Point');
     }
 
     /**
@@ -40,8 +43,14 @@ class ShopSettingAwardPointRepository extends Repository implements ShopSettingA
     protected function getWithFilter(Builder $builder, array $filters = []): Builder
     {
         $storeId = Arr::pull($filters, 'store_id');
+        $fromDate = Arr::pull($filters, 'from_date');
+        $toDate = Arr::pull($filters, 'to_date');
         if ($storeId) {
             $builder->where('store_id', $storeId);
+        }
+
+        if ($fromDate && $toDate) {
+            $builder->whereBetween('purchase_date', [$fromDate, $toDate]);
         }
 
         return parent::getWithFilter($builder, $filters);

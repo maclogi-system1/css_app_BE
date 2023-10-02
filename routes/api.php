@@ -175,6 +175,9 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::post('/', 'storeMultiple')->name('store-multiple');
             Route::post('/simulation', 'storeSimulation')->name('store-simulation');
+            Route::get('/simulation/{policySimulation}/policy-data', 'getPolicyDataFromSimulation')
+                ->name('simulation.policy-data');
+            Route::get('/matches-simulation', 'matchesSimulation');
         });
 
     Route::prefix('policy-simulation-histories')
@@ -269,6 +272,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('access-analysis.')
             ->group(function () {
                 Route::get('/summary-table/{storeId}', 'tableAccessAnalysis')->name('summary-table');
+                Route::post('/download-csv', 'downloadtableAccessAnalysisCsv')
+                ->name('download-csv');
                 Route::get('/chart-new-user-access/{storeId}', 'chartNewUserAccess')->name('chart-new-user-access');
                 Route::get('/chart-exist-user-access/{storeId}', 'chartExistUserAccess')
                     ->name('chart-exist-user-access');
@@ -278,7 +283,9 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('conversion-rate-analysis.')
             ->group(function () {
                 Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
-                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('chart-comparison');
+                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('summary-table');
+                Route::get('/download-csv', 'downloadtableConversionRateCsv')
+                ->name('download-csv');
                 Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
                     ->name('chart-relation-PV-and-conversion-rate');
             });
@@ -288,6 +295,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->group(function () {
                 Route::get('/summary-graph/{storeId}', 'chartSummarySaleAmountPerUser')->name('summary');
                 Route::get('/table-comparison/{storeId}', 'tableSaleAmountPerUserComparison')->name('table-comparison');
+                Route::get('/download-csv/{storeId}', 'downloadtableSalesAmntPerUserCsv')
+                ->name('download-csv');
                 Route::get('/chart-pv-and-sales/{storeId}', 'chartPVSaleAmountPerUser')->name('chart-pv-and-sales');
             });
 
@@ -295,6 +304,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('product-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'productAnalysisSummary')->name('summary');
+                Route::post('/download-csv', 'downloadtableProductsCsv')
+                ->name('download-csv');
                 Route::post('/chart-selected-products', 'chartSelectedProducts')->name('chart-selected-products');
                 Route::post('/chart-products-trends', 'chartProductsTrends')->name('chart-selected-products-trends');
                 Route::post('/chart-products-stay-times', 'chartProductsStayTimes')->name('chart-products-stay-times');
@@ -306,6 +317,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('category-analysis.')
             ->group(function () {
                 Route::get('/summary/{storeId}', 'categoryAnalysisSummary')->name('summary');
+                Route::post('/download-csv', 'downloadtableCategoriesCsv')
+                ->name('download-csv');
                 Route::post('/chart-selected-categories', 'chartSelectedCategories')->name('chart-selected-categories');
                 Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
@@ -324,27 +337,38 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('shop-settings.')
         ->controller(ShopSettingController::class)
         ->group(function () {
-           Route::prefix('mq-accounting')
-               ->name('mq-accounting.')
-               ->group(function () {
-                   Route::get('/', 'getMQAccountingSettings')->name('list');
-                   Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
-                   Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
-               });
+            Route::prefix('mq-accounting')
+                ->name('mq-accounting.')
+                ->group(function () {
+                    Route::get('/', 'getMQAccountingSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateMQAccountingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadMQAccountingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateMQAccounting')->name('update');
+                });
 
-           Route::prefix('rankings')
-               ->name('rankings.')
-               ->group(function () {
-                   Route::get('/', 'getRankingsSettings')->name('list');
-                   Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
-                   Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
-               });
+            Route::prefix('rankings')
+                ->name('rankings.')
+                ->group(function () {
+                    Route::get('/', 'getRankingsSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateRankingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadRankingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateRankingSettings')->name('update');
+                });
             Route::prefix('award-points')
                 ->name('award-points.')
                 ->group(function () {
                     Route::get('/', 'getAwardPointSettings')->name('list');
                     Route::get('/download-template', 'downloadTemplateAwardPointCsv')->name('download-template');
                     Route::post('/upload-csv/{storeId}', 'uploadAwardPointCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateAwardPoint')->name('update');
+                });
+            Route::prefix('search-rankings')
+                ->name('search-rankings.')
+                ->group(function () {
+                    Route::get('/', 'getSearchRankingsSettings')->name('list');
+                    Route::get('/download-template', 'downloadTemplateSearchRankingCsv')->name('download-template');
+                    Route::post('/upload-csv/{storeId}', 'uploadSearchRankingCsv')->name('upload-csv');
+                    Route::put('/update/{storeId}', 'updateSearchRankingSettings')->name('update');
                 });
         });
 });

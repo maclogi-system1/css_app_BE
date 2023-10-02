@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\MqSheet;
+use Closure;
 use Illuminate\Validation\Rule;
 
 class UpdateMqSheetRequest extends FormRequest
@@ -32,6 +34,15 @@ class UpdateMqSheetRequest extends FormRequest
                         $query->where('store_id', $this->input('store_id'))
                             ->where('id', '=', $this->route('mqSheet'));
                     }),
+                function (string $attribute, mixed $value, Closure $fail) {
+                    $mqSheet = is_string($this->route('mqSheet'))
+                        ? MqSheet::findOrFail($this->route('mqSheet'))
+                        : $this->route('mqSheet');
+
+                    if ($mqSheet->isDefault() && $value != $mqSheet->name) {
+                        $fail('You cannot update a default sheet.');
+                    }
+                },
             ],
         ];
     }

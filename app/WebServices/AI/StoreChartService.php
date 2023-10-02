@@ -4,6 +4,7 @@ namespace App\WebServices\AI;
 
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class StoreChartService extends Service
@@ -25,70 +26,24 @@ class StoreChartService extends Service
         $dataFake = collect();
 
         foreach ($dateTimeRange as $date) {
+            $listStoreValues = collect();
+            for ($i = 0; $i < 10; $i++) {
+                $listStoreValues->add([
+                    'display_name' => '店舗'.$i + 1,
+                    'store_id' => 'store_'.$i + 1,
+                    'conversion_rate' => rand(0, 50) / 10,
+                ]);
+            }
             $dataFake->add([
                 'date' => $date,
-                [
-                    'display_name' => '店舗1',
-                    'store_id' => 'store_1',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗2',
-                    'store_id' => 'store_2',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗3',
-                    'store_id' => 'store_3',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗4',
-                    'store_id' => 'store_4',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗5',
-                    'store_id' => 'store_5',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗5',
-                    'store_id' => 'store_5',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗6',
-                    'store_id' => 'store_6',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗7',
-                    'store_id' => 'store_7',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗8',
-                    'store_id' => 'store_8',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗9',
-                    'store_id' => 'store_9',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
-                [
-                    'display_name' => '店舗10',
-                    'store_id' => 'store_10',
-                    'conversion_rate' => rand(0, 50) / 10,
-                ],
+                'stores_conversion_rate' => $listStoreValues,
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => ['chart_conversion_rate' => $dataFake],
+            'data' => $dataFake,
         ]);
     }
 
@@ -119,23 +74,24 @@ class StoreChartService extends Service
         return $dataFake;
     }
 
-    public function getDataChartRelationPVAndConversionRate(): Collection
+    public function getDataChartRelationPVAndConversionRate($filters): Collection
     {
-        $dataFake['data'] = [];
+        $dataFake = collect();
         for ($i = 0; $i < 30; $i++) {
-            array_push(
-                $dataFake['data'],
-                [
-                    'conversion_rate' => rand(0, 5000),
-                    'PV' => rand(0, 70000),
-                ]
-            );
+            $dataFake->add([
+                'conversion_rate' => rand(0, 5000),
+                'PV' => rand(0, 70000),
+            ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_pv' => $dataFake,
+            ]),
         ]);
     }
 }

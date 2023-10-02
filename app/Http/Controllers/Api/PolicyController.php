@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetMatchesSimulationRequest;
 use App\Http\Requests\RunSimulationRequest;
 use App\Http\Requests\StorePolicySimulationRequest;
 use App\Http\Requests\UpdatePolicySimulationRequest;
 use App\Http\Resources\PolicyResource;
 use App\Models\Policy;
 use App\Repositories\Contracts\JobGroupRepository;
+use App\Repositories\Contracts\MqAccountingRepository;
+use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +27,8 @@ class PolicyController extends Controller
         protected PolicyRepository $policyRepository,
         protected JobGroupRepository $jobGroupRepository,
         protected PolicyCsv $policyCsv,
+        protected MqSheetRepository $mqSheetRepository,
+        protected MqAccountingRepository $mqAccountingRepository,
     ) {
     }
 
@@ -294,8 +299,45 @@ class PolicyController extends Controller
     /**
      * Display the specified simulation.
      */
-    public function showSimulation(Policy $policySimulation)
+    public function showSimulation(Request $request, Policy $policySimulation)
     {
-        return new PolicyResource($policySimulation);
+        if ($policySimulation->isProcessDone()) {
+            $mqSheet = $this->mqSheetRepository->getDefaultByStore($policySimulation->store_id);
+            $filters = $request->query() + [
+                'from_date' => now()->firstOfYear()->format('Y-m'),
+                'to_date' => now()->format('Y-m'),
+                'mq_sheet_id' => $mqSheet->id,
+            ];
+            $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
+                $policySimulation->store_id,
+                $filters,
+            );
+        }
+
+        $policyResource = (new PolicyResource($policySimulation))
+            ->additional(['mq_accountings' => $mqAccountingActualsAndExpected ?? []]);
+
+        return $policyResource;
+    }
+
+    /**
+     * Get data to add policies from simulation.
+     */
+    public function getPolicyDataFromSimulation(Policy $policySimulation): JsonResponse
+    {
+        return response()->json($this->policyRepository->makeDataPolicyFromSimulation($policySimulation));
+    }
+
+    /**
+     * Get a list of policies whose start and end times match a store's simulations.
+     */
+    public function matchesSimulation(GetMatchesSimulationRequest $request): JsonResource
+    {
+        $simulations = PolicyResource::collection($this->policyRepository->getMatchesSimulation(
+            $request->query('store_id'),
+        ));
+        $simulations->wrap('policies');
+
+        return $simulations;
     }
 }

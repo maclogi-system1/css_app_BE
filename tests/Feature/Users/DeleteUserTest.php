@@ -32,7 +32,7 @@ class DeleteUserTest extends TestCase
             ->deleteJson(route('api.users.destroy', $user))
             ->assertBadRequest()
             ->assertJson([
-                'message' => 'You can not delete yourself.',
+                'message' => 'You cannot delete yourself.',
             ]);
         $this->assertEmpty($user->refresh()->deleted_at);
     }

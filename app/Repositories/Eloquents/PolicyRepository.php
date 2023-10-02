@@ -28,8 +28,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 {
     public function __construct(
         protected PolicyR2Service $policyR2Service,
-        protected SingleJobRepository $singleJobRepository,
-        protected JobGroupRepository $jobGroupRepository,
     ) {
     }
 
@@ -65,7 +63,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $singleJobIds = Arr::pluck($policies->items(), 'single_job_id');
         }
 
-        $singleJobs = $this->singleJobRepository->getListByStore($storeId, [
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $singleJobs = $singleJobRepository->getListByStore($storeId, [
             'filters' => [
                 'single_jobs.id' => implode(',', $singleJobIds),
             ],
@@ -107,6 +108,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             if ($category->toString() == Policy::SIMULATION_CATEGORY) {
                 $query->where('processing_status', '!=', Policy::RUNNING_PROCESSING_STATUS);
             }
+        } else {
+            $query->whereIn('category', [Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY]);
         }
 
         return $query;
@@ -117,7 +120,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
     {
-        $result = $this->singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $result = $singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
         if ($result->get('success')) {
@@ -180,7 +186,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         if (! is_null($policy->single_job_id)) {
-            $singleJob = $this->singleJobRepository->find(
+            /** @var \App\Repositories\Contracts\SingleJobRepository */
+            $singleJobRepository = app(SingleJobRepository::class);
+
+            $singleJob = $singleJobRepository->find(
                 id: $policy->single_job_id,
                 filters: ['store_id' => $policy->store_id]
             );
@@ -215,7 +224,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
 
-        return $this->singleJobRepository->getOptions()->merge([
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        return $singleJobRepository->getOptions()->merge([
             'categories' => $categories,
             'policy_rule_classes' => $policyRuleClasses,
             'policy_rule_services' => $policyRuleServices,
@@ -235,7 +247,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
 
             if (! is_null($policy->single_job_id)) {
-                $this->singleJobRepository->delete($policy->single_job_id);
+                /** @var \App\Repositories\Contracts\SingleJobRepository */
+                $singleJobRepository = app(SingleJobRepository::class);
+
+                $singleJobRepository->delete($policy->single_job_id);
             }
 
             $policy->delete();
@@ -271,7 +286,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
-        $ossErrorMessages = $this->jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        /** @var \App\Repositories\Contracts\JobGroupRepository */
+        $jobGroupRepository = app(JobGroupRepository::class);
+
+        $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -380,32 +398,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function createByStoreId(array $data, string $storeId): ?array
     {
-        return $this->handleSafely(function () use ($data, $storeId) {
-            $policyData = $data['policy'] + ['store_id' => $storeId];
-            $policy = $this->model()->fill($policyData);
-            $policy->store_id = $storeId;
-            $policy->save();
+        Arr::set($data, 'policy.store_id', $storeId);
 
-            if ($attachmentKey = Arr::get($policyData, 'attachment_key')) {
-                PolicyAttachment::where('attachment_key', $attachmentKey)
-                    ->whereNull('policy_id')
-                    ->update(['policy_id' => $policy->id]);
-            }
-
-            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
-            $singleJobs = Arr::get($jobGroup, 'single_jobs');
-            $singleJob = Arr::first($singleJobs);
-            $jobGroupId = Arr::get($jobGroup, 'job_group_id');
-
-            $policy->job_group_id = $jobGroupId;
-            $policy->single_job_id = $singleJob['id'];
-            $policy->save();
-
-            return [
-                'policy' => $policy,
-                'job_group_id' => $jobGroupId,
-            ];
-        }, 'Create policy by store_id');
+        return $this->create($data);
     }
 
     /**
@@ -424,7 +419,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     ->update(['policy_id' => $policy->id]);
             }
 
-            $jobGroup = $this->jobGroupRepository->create($data['job_group']);
+            /** @var \App\Repositories\Contracts\JobGroupRepository */
+            $jobGroupRepository = app(JobGroupRepository::class);
+
+            $jobGroup = $jobGroupRepository->create($data['job_group']);
             $singleJobs = Arr::get($jobGroup, 'single_jobs');
             $singleJob = Arr::first($singleJobs);
             $jobGroupId = Arr::get($jobGroup, 'job_group_id');
@@ -445,33 +443,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function createSimulationByStoreId(array $data, string $storeId): ?Policy
     {
-        return $this->handleSafely(function () use ($data, $storeId) {
-            $simulationStartDate = new Carbon($data['simulation_start_date'].' '.$data['simulation_start_time']);
-            $simulationEndDate = new Carbon($data['simulation_end_date'].' '.$data['simulation_end_time']);
+        Arr::set($data, 'store_id', $storeId);
 
-            $policySimulation = $this->model()->fill([
-                'store_id' => $storeId,
-                'name' => $data['name'],
-                'category' => Policy::SIMULATION_CATEGORY,
-                'simulation_start_date' => $simulationStartDate,
-                'simulation_end_date' => $simulationEndDate,
-                'simulation_promotional_expenses' => $data['simulation_promotional_expenses'],
-                'simulation_store_priority' => $data['simulation_store_priority'],
-                'simulation_product_priority' => $data['simulation_product_priority'],
-            ]);
-            $policySimulation->save();
-
-            if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
-                foreach ($policyRules as $policyRule) {
-                    $this->handleCondition(1, $policyRule);
-                    $this->handleCondition(2, $policyRule);
-                    $this->handleCondition(3, $policyRule);
-                    $policySimulation->rules()->create($policyRule);
-                }
-            }
-
-            return $policySimulation->withAllRels();
-        }, 'Create simulation policy by store_id');
+        return $this->createSimulation($data);
     }
 
     /**
@@ -520,8 +494,11 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $policy->fill($policyData);
             $policy->save();
 
+            /** @var \App\Repositories\Contracts\JobGroupRepository */
+            $jobGroupRepository = app(JobGroupRepository::class);
             $jobGroupData = $data['job_group'];
-            $this->jobGroupRepository->updateByCode($jobGroupData, $jobGroupData['job_group_code']);
+
+            $jobGroupRepository->updateByCode($jobGroupData, $jobGroupData['job_group_code']);
 
             return true;
         }, 'Update policy');
@@ -596,7 +573,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         $this->model()
-            ->where('processing_status', Policy::NEW_PROCESSING_STATUS)
+            ->whereIn('processing_status', [Policy::NEW_PROCESSING_STATUS, Policy::DONE_PROCESSING_STATUS])
             ->where('category', Policy::SIMULATION_CATEGORY)
             ->where('store_id', $data['store_id'])
             ->get()
@@ -608,10 +585,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function runSimulation($id)
     {
-        $policy = $this->model()->find($id);
-        $policy->processing_status = Policy::RUNNING_PROCESSING_STATUS;
-        $policy->save();
-        RunPolicySimulation::dispatch($policy);
+        $simulation = $this->model()->find($id);
+        $simulation->processing_status = Policy::RUNNING_PROCESSING_STATUS;
+        $simulation->save();
+        RunPolicySimulation::dispatch($simulation);
     }
 
     /**
@@ -638,7 +615,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             }
         }
 
-        $result = $this->singleJobRepository->getSchedule($filters + [
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+
+        $result = $singleJobRepository->getSchedule($filters + [
             'store_id' => $storeId,
             'job_group_ids' => $jobGroupIds,
         ]);
@@ -677,5 +657,111 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         return [];
+    }
+
+    /**
+     * Generate data to add policies from simulation.
+     */
+    public function makeDataPolicyFromSimulation(Policy $simulation): array
+    {
+        return [
+            'store_id' => $simulation->store_id,
+            'category' => Policy::MEASURES_CATEGORY,
+            'immediate_reflection' => 0,
+            'status' => -5,
+            'job_group_code' => null,
+            'job_group_title' => $simulation->name,
+            'job_group_explanation' => null,
+            'managers' => [],
+            'template_id' => 0,
+            'job_title' => $simulation->name,
+            'execution_date' => $simulation->simulation_start_date->format('Y-m-d'),
+            'execution_time' => $simulation->simulation_start_date->format('H:i'),
+            'undo_date' => $simulation->simulation_end_date->format('Y-m-d'),
+            'undo_time' => $simulation->simulation_end_date->format('H:i'),
+            'type_item_url' => 0,
+            'item_urls' => null,
+            'has_banner' => 0,
+            'remark' => null,
+            'catch_copy_pc_text' => null,
+            'catch_copy_pc_error' => null,
+            'catch_copy_sp_text' => null,
+            'catch_copy_sp_error' => null,
+            'item_name_text' => null,
+            'item_name_text_error' => null,
+            'point_magnification' => null,
+            'point_start_date' => null,
+            'point_start_time' => null,
+            'point_end_date' => null,
+            'point_end_time' => null,
+            'point_error' => null,
+            'point_operational' => null,
+            'discount_type' => null,
+            'discount_rate' => null,
+            'discount_price' => null,
+            'discount_undo_type' => null,
+            'discount_error' => null,
+            'discount_display_price' => null,
+            'double_price_text' => null,
+            'shipping_fee' => null,
+            'stock_specify' => null,
+            'time_sale_start_date' => null,
+            'time_sale_start_time' => null,
+            'time_sale_end_date' => null,
+            'time_sale_end_time' => null,
+            'is_unavailable_for_search' => null,
+            'description_for_pc' => null,
+            'description_for_sp' => null,
+            'description_by_sales_method' => null,
+        ];
+    }
+
+    /**
+     * Get a list of policies whose start and end times match a store's simulations.
+     */
+    public function getMatchesSimulation(string $storeId): Collection
+    {
+        $simulations = $this->getListByStore($storeId, [
+            'category' => 'simulation',
+            'per_page' => -1,
+        ]);
+
+        $fromDate = $simulations->min('simulation_start_date')->format('Y-m-d');
+        $endDate = $simulations->max('simulation_start_date')->format('Y-m-d');
+
+        /** @var \App\Repositories\Contracts\SingleJobRepository */
+        $singleJobRepository = app(SingleJobRepository::class);
+        $singleJobResult = $singleJobRepository->getListByStore($storeId, [
+            'store_id' => $storeId,
+            'per_page' => -1,
+            'from_date' => $fromDate,
+            'end_date' => $endDate,
+        ]);
+
+        if (! $singleJobResult->get('success')) {
+            return [];
+        }
+
+        $singleJobs = collect($singleJobResult->get('data')->get('single_jobs'));
+        $singleJobMatches = collect();
+
+        foreach ($simulations as $simulation) {
+            $singleJobMatches->add($singleJobs->where('execution_time', $simulation->simulation_start_date)
+                ->where('undo_time', $simulation->simulation_end_date)
+                ->first());
+        }
+
+        $policies = $this->model()
+            ->where('store_id', $storeId)
+            ->whereIn('single_job_id', $singleJobMatches->pluck('id'))
+            ->whereIn('category', [Policy::MEASURES_CATEGORY, Policy::PROJECT_CATEGORY])
+            ->get()
+            ->map(function ($policy) use ($singleJobMatches) {
+                $policy->single_job = $singleJobMatches->where('id', $policy->single_job_id)->first();
+
+                return $policy;
+            });
+
+        return $policies;
     }
 }

@@ -1,10 +1,14 @@
 {
-    "You can not delete yourself.": "You can not delete yourself.",
+    "You cannot delete yourself.": "You cannot delete yourself.",
     "Delete failed. Please check your user ids!": "Delete failed. Please check your user ids!",
     "The users have been deleted successfully.": "The users have been deleted successfully.",
 
     "Bookmarking failed. Maybe your type is wrong, please check again.": "Bookmarking failed. Maybe your type is wrong, please check again.",
     "Successfully bookmarked.": "Successfully bookmarked.",
     "Unbookmarking failed. Maybe your type is wrong, please check again.": "Unbookmarking failed. Maybe your type is wrong, please check again.",
-    "Successfully unbookmarked.": "Successfully unbookmarked."
+    "Successfully unbookmarked.": "Successfully unbookmarked.",
+
+    "Something went wrong! Can't update or insert data.": "Something went wrong! Can't update or insert data.",
+    "There are a few failures.": "There are a few failures.",
+    "You cannot delete a default sheet.": "You cannot delete a default sheet."
 }

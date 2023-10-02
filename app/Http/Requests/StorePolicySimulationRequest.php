@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Policy;
 use App\Models\PolicyRule;
 use App\Rules\CompareDateValid;
 use App\Rules\DateValid;
+use Closure;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
@@ -31,7 +33,20 @@ class StorePolicySimulationRequest extends FormRequest
             ->toImmutable();
 
         return [
-            'name' => ['required', 'max:100', 'string'],
+            'name' => [
+                'required',
+                'max:100',
+                'string',
+                function (string $attributes, mixed $value, Closure $fail) {
+                    $simulationCount = Policy::where('store_id', $this->input('store_id'))
+                        ->where('category', Policy::SIMULATION_CATEGORY)
+                        ->count();
+
+                    if ($simulationCount >= 5) {
+                        $fail('A maximum of 5 simulations can only be created.');
+                    }
+                },
+            ],
             'store_id' => [Rule::requiredIf(fn () => ! $this->route('storeId')), 'max:100', 'string'],
             'simulation_start_date' => ['required', 'date_format:Y-m-d', new DateValid()],
             'simulation_start_time' => ['required', 'date_format:H:i'],

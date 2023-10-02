@@ -15,4 +15,9 @@ interface ShopSettingMqAccountingRepository extends Repository
      * Handle delete all mq setting by storeId.
      */
     public function deleteAllByStoreId(string $storeId): mixed;
+
+    /**
+     * Handle update multiply by storeId and id.
+     */
+    public function updateMultiple(string $storeId, array $settings): null|bool;
 }

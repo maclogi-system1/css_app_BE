@@ -66,14 +66,16 @@ class ShopSettingRankingCsv
         try {
             $shopSettingRankingRepo->deleteAllByStoreId($storeId, $isCompetitiveRanking);
             while (($row = fgetcsv($stream)) !== false) {
+                $row = convert_sjis_to_utf8($row);
+
                 if ($count == 0) {
-                    $header = convert_sjis_to_utf8($row);
+                    $header = $row;
                 } else {
                     $data = [];
                     $temp = array_combine($header, $row);
                     foreach ($titles as $field => $title) {
                         $data[$field] = isset($temp[$title])
-                            ? preg_replace('/[\s\%]+/', '', $temp[$title])
+                            ? trim($temp[$title])
                             : null;
                     }
 
@@ -90,7 +92,9 @@ class ShopSettingRankingCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        $results[] = $shopSettingRankingRepo->create($data + ['store_id' => $storeId])?->refresh();
+                        if ($result = $shopSettingRankingRepo->create($data + ['store_id' => $storeId])?->refresh()) {
+                            $results[] = $result;
+                        }
                     }
                 }
 

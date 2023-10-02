@@ -170,7 +170,7 @@ class MqAccountingController extends Controller
                     'store_id' => $storeId,
                     'year' => Arr::get($data, 'year'),
                     'month' => Arr::get($data, 'month'),
-                    'messages' => "Something went wrong! Can't update or insert data.",
+                    'messages' => __("Something went wrong! Can't update or insert data."),
                 ];
                 $numberFailures++;
                 $status = Response::HTTP_BAD_REQUEST;
@@ -178,7 +178,7 @@ class MqAccountingController extends Controller
         }
 
         return response()->json([
-            'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
+            'message' => $numberFailures > 0 ? __('There are a few failures.') : __('Success.'),
             'number_of_failures' => $numberFailures,
             'errors' => $errors,
         ], $status);

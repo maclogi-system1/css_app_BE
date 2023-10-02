@@ -29,10 +29,27 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataChartComparisonConversionRate(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+        $result = $this->storeChartService->getDataChartComparisonConversionRate($filters);
+        $data = $result->get('data');
+
+        // Get compared data product analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data = $data->merge($this->storeChartService->getDataChartComparisonConversionRate($filters)->get('data'));
         }
 
-        return $this->storeChartService->getDataChartComparisonConversionRate($filters);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 
     /**
@@ -41,7 +58,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataTableConversionRateAnalysis(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
         }
 
         $data = collect($this->storeChartService->getDataTableConversionRateAnalysis($filters));
@@ -52,7 +69,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
             $filters['to_date'] = Arr::get($filters, 'compared_to_date');
 
             if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-                $filters['to_date'] = now()->format('Y-m');
+                $filters['to_date'] = now()->format('Y-m-d');
             }
 
             $data = $data->merge($this->storeChartService->getDataTableConversionRateAnalysis($filters));
@@ -61,7 +78,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => ['table_conversion_rate_analysis' => $data],
+            'data' => $data,
         ]);
     }
 
@@ -71,9 +88,26 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
     public function getDataChartRelationPVAndConversionRate(array $filters = []): Collection
     {
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
-            $filters['to_date'] = now()->format('Y-m');
+            $filters['to_date'] = now()->format('Y-m-d');
+        }
+        $result = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
+        $data[] = $result->get('data');
+
+        // Get compared data product analysis
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $data[] = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters)->get('data');
         }
 
-        return $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
+        return collect([
+            'data' => $data,
+            'status' => $result->get('status'),
+        ]);
     }
 }
