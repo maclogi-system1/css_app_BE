@@ -137,7 +137,7 @@ class AccessSourceService extends Service
                         'display_name' => trans('kpi-labels.access_source.'.$key),
                         'name' => $key,
                         'value' => intval($value),
-                        'rate' => round(intval($value) / $sum, 2) * 100,
+                        'rate' => round((intval($value) / $sum) * 100, 2),
                     ]);
                 }
             }
@@ -148,7 +148,7 @@ class AccessSourceService extends Service
             'status' => 200,
             'data' => collect([
                 'store_id' => $storeId,
-                'chart_access_source' => $chartAccessSource,
+                'chart_access_source' => $chartAccessSource->sortByDesc('value'),
             ]),
         ]);
     }
