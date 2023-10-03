@@ -68,8 +68,8 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
                 AVG(mk.conversion_rate) as conversion_rate,
                 AVG(mk.sales_amnt_per_user) as sales_amnt_per_user
             ')
-            ->first()
-            ->toArray();
+            ->first();
+        $expectedMqKpi = ! is_null($expectedMqKpi) ? $expectedMqKpi->toArray() : [];
         $actualMqKpi = $this->mqAccountingService->getListMqKpiByStoreId($storeId, $filters)->toArray();
 
         $expectedSalesAmnt = Arr::get($expectedMqKpi, 'sales_amnt', 0);

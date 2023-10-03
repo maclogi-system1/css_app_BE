@@ -27,7 +27,8 @@ class UserAccessService extends Service
                 CONCAT(year,"/",LPAD(month, 2, "0")) as date,
                 ma.access_flow_sum
             ')
-            ->get()->toArray();
+            ->get();
+        $realAccessData = ! is_null($realAccessData) ? $realAccessData->toArray() : [];
 
         return collect([
             'success' => true,
@@ -53,7 +54,8 @@ class UserAccessService extends Service
                 ma.access_flow_sum,
                 ma.cpc_num
             ')
-            ->get()->toArray();
+            ->get();
+        $result = ! is_null($result) ? $result->toArray() : [];
         foreach ($result as $item) {
             $data->add([
                 'store_id' => $storeId,

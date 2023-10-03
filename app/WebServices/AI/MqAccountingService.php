@@ -151,13 +151,19 @@ class MqAccountingService extends Service
                         AVG(conversion_rate.all_rate) as conversion_rate,
                         AVG(sales_per_user.all_value) as sales_amnt_per_user
                     ')
-                    ->first()->toArray();
+                    ->first();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
+        $salesAmnt = ! is_null(Arr::get($result, 'sales_amnt', 0)) ? intval(Arr::get($result, 'sales_amnt', 0)) : 0;
+        $accessNum = ! is_null(Arr::get($result, 'access_num', 0)) ? intval(Arr::get($result, 'access_num', 0)) : 0;
+        $conversionRate = ! is_null(Arr::get($result, 'conversion_rate', 0)) ? floatval(Arr::get($result, 'conversion_rate', 0)) : 0;
+        $salesAmntPerUser = ! is_null(Arr::get($result, 'sales_amnt_per_user', 0)) ? floatval(Arr::get($result, 'sales_amnt_per_user', 0)) : 0;
 
         return collect([
-            'sales_amnt' => Arr::get($result, 'sales_amnt', 0),
-            'access_num' => Arr::get($result, 'access_num', 0),
-            'conversion_rate' => Arr::get($result, 'conversion_rate', 0),
-            'sales_amnt_per_user' => Arr::get($result, 'sales_amnt_per_user', 0),
+            'sales_amnt' => $salesAmnt,
+            'access_num' => $accessNum,
+            'conversion_rate' => $conversionRate,
+            'sales_amnt_per_user' => $salesAmntPerUser,
         ]);
     }
 
