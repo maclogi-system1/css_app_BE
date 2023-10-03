@@ -29,7 +29,7 @@ class AccessSourceService extends Service
             'data' => collect([
                 'store_id' => $storeId,
                 'date' => now()->format('Y-m-d H:i:s'),
-                'total_access' => Arr::get($result, 'access_flow_sum'),
+                'total_access' => Arr::get($result, 'access_flow_sum', 0),
             ]),
         ]);
     }
@@ -73,7 +73,8 @@ class AccessSourceService extends Service
                         twitter,
                         facebook
                     ')
-                    ->get()->toArray();
+                    ->get();
+        $result = ! is_null($result) ? $result->toArray() : [];
 
         return collect([
             'success' => true,
@@ -121,7 +122,9 @@ class AccessSourceService extends Service
                         SUM(facebook) AS facebook
                     ')
                     ->groupBy('access_source.store_id')
-                    ->first()->toArray();
+                    ->first();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
         $chartAccessSource = collect();
         if (
             ! is_null($result)
