@@ -31,7 +31,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->productAnalysisService->getProductSummary($storeId, $filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getProductSummary($storeId, $filters, $isMonthQuery);
         $data[] = $result->get('data');
 
         // Get compared data product analysis
@@ -43,7 +53,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data[] = $this->productAnalysisService->getProductSummary($storeId, $filters)->get('data');
+            $data[] = $this->productAnalysisService->getProductSummary($storeId, $filters, $isMonthQuery)->get('data');
         }
 
         return collect([
@@ -57,7 +67,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartSelectedProducts(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartSelectedProducts($filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getChartSelectedProducts($filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data product analysis
@@ -69,7 +89,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->productAnalysisService->getChartSelectedProducts($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartSelectedProducts($filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -83,7 +103,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsTrends(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsTrends($filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getChartProductsTrends($filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data product analysis
@@ -95,7 +125,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->productAnalysisService->getChartProductsTrends($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsTrends($filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -109,7 +139,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsStayTimes(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsStayTimes($filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getChartProductsStayTimes($filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -121,7 +161,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->productAnalysisService->getChartProductsStayTimes($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsStayTimes($filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -135,7 +175,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsRakutenRanking(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsRakutenRanking($filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getChartProductsRakutenRanking($filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -147,7 +197,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->productAnalysisService->getChartProductsRakutenRanking($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsRakutenRanking($filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -161,7 +211,17 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
      */
     public function getChartProductsReviewsTrends(array $filters = []): Collection
     {
-        $result = $this->productAnalysisService->getChartProductsReviewsTrends($filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $result = $this->productAnalysisService->getChartProductsReviewsTrends($filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -173,7 +233,7 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->productAnalysisService->getChartProductsReviewsTrends($filters)->get('data'));
+            $data = $data->merge($this->productAnalysisService->getChartProductsReviewsTrends($filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
