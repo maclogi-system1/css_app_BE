@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DownloadShopSettingRankingRequest;
 use App\Http\Requests\DownloadShopSettingSearchRankingRequest;
+use App\Http\Requests\GetShopSettingAwardPointRequest;
 use App\Http\Requests\GetShopSettingMQAccountingRequest;
 use App\Http\Requests\GetShopSettingRankingRequest;
 use App\Http\Requests\GetShopSettingSearchRankingRequest;
@@ -25,7 +26,6 @@ use App\Support\ShopSettingMqAccountingCsv;
 use App\Support\ShopSettingRankingCsv;
 use App\Support\ShopSettingSearchRankingCsv;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -211,7 +211,7 @@ class ShopSettingController extends Controller
         ], ResponseAlias::HTTP_BAD_REQUEST);
     }
 
-    public function getAwardPointSettings(Request $request): JsonResponse
+    public function getAwardPointSettings(GetShopSettingAwardPointRequest $request): JsonResponse
     {
         return response()->json([
             'shop_award_point_settings' => $this->shopSettingAwardPointRepository->getList($request->all(), ['shop_setting_award_points.*']),
