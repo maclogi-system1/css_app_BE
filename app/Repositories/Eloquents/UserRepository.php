@@ -9,7 +9,9 @@ use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\ChatworkService;
+use App\WebServices\OSS\UserService;
 use App\WebServices\UploadFileService;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -22,7 +24,9 @@ use LogicException;
 class UserRepository extends Repository implements UserRepositoryContract
 {
     public function __construct(
-        private UploadFileService $uploadFileService
+        private UploadFileService $uploadFileService,
+        private UserService $userService,
+        private \App\Repositories\Contracts\LinkedUserInfoRepository $linkedUserInfoRepository,
     ) {
     }
 
@@ -122,6 +126,24 @@ class UserRepository extends Repository implements UserRepositoryContract
             if (isset($data['chatwork_account_id'])) {
                 $this->linkUserToChatwork($user, $data['chatwork_account_id']);
             }
+
+            $paramAPI = [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'image_path' => $data['profile_photo_path'] ?? null,
+                'is_css' => 1,
+            ];
+
+            $result = $this->userService->create($paramAPI);
+            if (! $result->get('success')) {
+                throw new Exception('Create user at task-management failed.');
+            }
+
+            $this->linkedUserInfoRepository->create([
+                'user_id' => $user->id,
+                'service_id' => 2,
+                'linked_service_user_id' => $result->get('data')->get('data'),
+            ]);
 
             $this->sendEmailVerificationNotification($user, $password);
 
