@@ -67,6 +67,7 @@ return [
             ],
             'users' => [
                 'shop_users' => '/users/oss',
+                'create' => '/users/insert',
             ],
             'schema' => [
                 'get_columns' => '/schema/column',
