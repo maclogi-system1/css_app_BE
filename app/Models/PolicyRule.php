@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\Traits\ModelDateTimeFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PolicyRule extends Model
 {
-    use HasFactory;
+    use HasFactory, ModelDateTimeFormatter;
 
     public const COUPON_CLASS = 1;
     public const POINT_CLASS = 2;

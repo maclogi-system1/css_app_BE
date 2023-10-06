@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Traits\ModelDateTimeFormatter;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PolicyAttachment extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, ModelDateTimeFormatter;
 
     public const IMAGE_TYPE = 'image';
     public const IMAGE_PATH = 'images/policy_attachment';
