@@ -2,6 +2,8 @@
 
 namespace App\Support\Traits;
 
+use Illuminate\Support\Carbon;
+
 trait ModelDateTimeFormatter
 {
     /**
@@ -9,6 +11,10 @@ trait ModelDateTimeFormatter
      */
     protected function asDateTime($value)
     {
-        return parent::asDateTime($value)->format('Y-m-d H:i:s');
+        if ($value instanceof Carbon) {
+            return $value;
+        }
+
+        return Carbon::parse($value)->format('Y-m-d H:i:s');
     }
 }
