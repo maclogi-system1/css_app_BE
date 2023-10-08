@@ -58,28 +58,29 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function getUsers(array $filters = [])
     {
+        $data = ['users' => []];
+
         if (Cache::has('oss_shop_users')) {
-            return Cache::get('oss_shop_users');
+            $ossShopUser = Cache::get('oss_shop_users');
+        } else {
+            $result = $this->userService->getShopUsers($filters);
+            $ossShopUser = collect(Arr::get($result->get('data'), 'users'));
+            Cache::put('oss_shop_users', $ossShopUser, 300);
         }
 
-        $cssUsers = app(UserRepository::class)->getList(['per_page' => -1], ['name', 'email']);
-        $result = $this->userService->getShopUsers($filters);
-        $data = $result->get('data');
+        if (! empty($ossShopUser)) {
+            $ossShopUserEmail = Arr::pluck($ossShopUser, 'email');
 
-        if ($result->get('success')) {
-            $data['users'] = collect(Arr::get($data, 'users'))
-                ->whereIn('email', $cssUsers->pluck('email'))
-                ->map(function ($user) use ($cssUsers) {
-                    $name = $cssUsers->where('email', $user['email'])->first()?->name;
-
-                    return ['label' => $name, 'value' => $user['id']];
+            $data['users'] = app(UserRepository::class)
+                ->getList(['per_page' => -1], ['name', 'email', 'id'])
+                ->filter(function ($user) use ($ossShopUserEmail) {
+                    return in_array($user->email, $ossShopUserEmail);
+                })
+                ->map(function ($user) {
+                    return ['value' => $user->id, 'label' => $user->name];
                 })
                 ->values()
                 ->toArray();
-
-            if (! empty($data['users'])) {
-                Cache::put('oss_shop_users', $data, 300);
-            }
         }
 
         return $data;
