@@ -7,6 +7,7 @@ use App\Repositories\Contracts\TaskRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class TaskController extends Controller
 {
@@ -32,6 +33,7 @@ class TaskController extends Controller
     {
         $errors = [];
         $status = Response::HTTP_OK;
+        $results = [];
 
         foreach ($request->post() as $index => $data) {
             if (! is_array($data)) {
@@ -40,7 +42,7 @@ class TaskController extends Controller
 
             $result = $this->taskRepository->create($data, $storeId);
 
-            if ($result->has('errors')) {
+            if ($result?->has('errors')) {
                 $status = $result->get('status');
                 $errors[] = [
                     'index' => $index,
@@ -48,14 +50,18 @@ class TaskController extends Controller
                     'messages' => $result->get('errors'),
                 ];
             }
+
+            if ($result instanceof Collection && ! $result->has('errors')) {
+                $results[] = $result->first();
+            }
         }
 
         if (! empty($errors)) {
             return response()->json($errors, $status);
         }
 
-        return $result
-            ? response()->json($result->get('data'), $status)
+        return ! empty($results)
+            ? response()->json(['tasks' => $results], $status)
             : response()->json([
                 'message' => __('Created failure.'),
             ]);
@@ -68,6 +74,7 @@ class TaskController extends Controller
     {
         $errors = [];
         $status = Response::HTTP_OK;
+        $results = [];
 
         foreach ($request->post() as $index => $data) {
             if (! is_array($data)) {
@@ -84,14 +91,18 @@ class TaskController extends Controller
                     'messages' => $result->get('errors'),
                 ];
             }
+
+            if ($result instanceof Collection && ! $result->has('errors')) {
+                $results[] = $result->first();
+            }
         }
 
         if (! empty($errors)) {
             return response()->json($errors, $status);
         }
 
-        return $result
-            ? response()->json($result->get('data'), $status)
+        return ! empty($results)
+            ? response()->json(['tasks' => $results], $status)
             : response()->json([
                 'message' => __('Updated failure.'),
             ]);
