@@ -6,27 +6,16 @@ use Illuminate\Support\Carbon;
 
 trait ModelDateTimeFormatter
 {
-    /**
-     * Set default datetime format.
-     */
-    protected function asDateTime($value)
+    public function getAttributeValue($key)
     {
-        if ($value instanceof Carbon) {
-            return $value;
+        $castsDateTime = array_filter(parent::getCasts(), function ($value) {
+            return str_contains($value, 'datetime');
+        });
+
+        if (in_array($key, array_keys($castsDateTime))) {
+            return Carbon::parse(parent::getAttributeValue($key))->format('Y-m-d H:i:s');
         }
 
-        return Carbon::parse($value)->format('Y-m-d H:i:s');
-    }
-
-    /**
-     * Set default serializeDate format.
-     */
-    protected function serializeDate($date): ?string
-    {
-        if ($date instanceof Carbon) {
-            return $date->format('Y-m-d H:i:s');
-        }
-
-        return ($date != null) ? Carbon::parse($date)->format('Y-m-d H:i:s') : null;
+        return parent::getAttributeValue($key);
     }
 }

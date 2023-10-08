@@ -127,4 +127,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(MacroConfiguration::class, 'created_by', 'id');
     }
+
+    public function ossUser(): HasOne
+    {
+        return $this->hasOne(LinkedUserInfo::class);
+    }
 }

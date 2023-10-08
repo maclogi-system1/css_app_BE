@@ -54,6 +54,8 @@ class Policy extends Model
     protected $casts = [
         'simulation_start_date' => 'datetime',
         'simulation_end_date' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function isProcessDone(): bool
