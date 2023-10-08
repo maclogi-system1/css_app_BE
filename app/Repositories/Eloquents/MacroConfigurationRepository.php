@@ -61,7 +61,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ->join(',');
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
-            'filters' => ['shop_credentials.shop_url' => $storeIds],
+            'filters' => ['shop_url' => $storeIds],
         ]);
 
         if ($shopResponse->get('success')) {
