@@ -12,6 +12,7 @@ use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Contracts\SingleJobRepository;
+use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
@@ -50,7 +51,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $perPage = Arr::get($filters, 'per_page', 10);
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
-        if (Arr::hasAny($filters, ['keyword', 'from_date', 'to_date', 'status', 'maanger'])) {
+        if (Arr::hasAny($filters, ['keyword', 'from_date', 'to_date', 'status', 'manager'])) {
             return $this->getListBySingleJob($storeId, $filters);
         }
 
@@ -121,24 +122,39 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
     {
+        if ($user = Arr::pull($filters, 'manager')) {
+            $users = str($user)->contains(',') ? array_filter(explode(',', $user)) : [$user];
+
+            /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
+            $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+            $ossUserIds = $linkedUserInfoRepository->getListByUserIds($users)
+                ->pluck('linked_service_user_id')
+                ->join(',');
+
+            Arr::set($filters, 'filters.manager', $ossUserIds);
+        }
+
         /** @var \App\Repositories\Contracts\SingleJobRepository */
         $singleJobRepository = app(SingleJobRepository::class);
-        $user = Arr::get($filters, 'manager');
-        $users = str($user)->contains(',') ? array_filter(explode(',', $user)) : $user;
-
-        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
-        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-        $ossUserIds = $linkedUserInfoRepository->getListByUserIds($users)
-            ->pluck('linked_service_user_id')
-            ->join(',');
-
-        Arr::set($filters, 'manager', $ossUserIds);
-
-        $result = $singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
+        $result = $singleJobRepository->getListByStore(
+            $storeId,
+            $filters + ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]
+        );
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
         if ($result->get('success')) {
-            $singleJobs = collect($result->get('data')->get('single_jobs'));
+            $singleJobs = collect($result->get('data')->get('single_jobs'))
+                ->map(function ($item) {
+                    $managers = Arr::get($item, 'job_group.managers');
+                    $managerIds = Arr::pluck($managers, 'id');
+
+                    /** @var \App\Repositories\Contracts\UserRepository */
+                    $userRepository = app(UserRepository::class);
+                    $cssUsers = $userRepository->getListByLinkedUserIds($managerIds);
+                    Arr::set($item, 'job_group.managers', $cssUsers->toArray());
+
+                    return $item;
+                });
             $singleJobIds = $singleJobs->pluck('id')->unique();
 
             $policies = $this->handleFilterCategory($this->queryBuilder(), $category)

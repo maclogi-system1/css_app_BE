@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Mail\VerifyEmailRegistered;
 use App\Models\Bookmark;
 use App\Models\Company;
+use App\Models\LinkedUserInfo;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
@@ -13,10 +14,10 @@ use App\WebServices\OSS\UserService;
 use App\WebServices\UploadFileService;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use LogicException;
@@ -374,5 +375,20 @@ class UserRepository extends Repository implements UserRepositoryContract
         });
 
         return $company;
+    }
+
+    /**
+     * Get a list of the user by linked service user ids.
+     */
+    public function getListByLinkedUserIds(array $linkedUserIds): Collection
+    {
+        /** @var \App\Models\LinkedUserInfo */
+        $linkedServiceUser = app(LinkedUserInfo::class);
+        $users = $linkedServiceUser->with(['cssUser'])
+            ->whereIn('linked_service_user_id', $linkedUserIds)
+            ->get()
+            ->pluck('cssUser');
+
+        return $users;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Repositories\APIs;
 use App\Repositories\Contracts\SingleJobRepository as SingleJobRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\OSS\SingleJobService;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class SingleJobRepository extends Repository implements SingleJobRepositoryContract
@@ -28,6 +29,10 @@ class SingleJobRepository extends Repository implements SingleJobRepositoryContr
     public function getListByStore(string $storeId, array $filters = []): Collection
     {
         $filters['store_id'] = $storeId;
+
+        if ($status = Arr::pull($filters, 'status')) {
+            Arr::set($filters, 'filter.status', $status);
+        }
 
         return $this->singleJobService->getList($filters);
     }
