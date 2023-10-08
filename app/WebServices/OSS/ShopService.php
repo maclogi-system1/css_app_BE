@@ -23,4 +23,20 @@ class ShopService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId)));
     }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions()
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.options')));
+    }
+
+    /**
+     * update shop.
+     */
+    public function update(array $data)
+    {
+        return $this->toResponse(Http::oss()->put(OSSService::getApiUri('shops.update'), $data));
+    }
 }

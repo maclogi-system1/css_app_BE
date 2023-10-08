@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('shops')->name('shops.')->controller(ShopController::class)->group(function () {
     Route::get('/', 'index')->name('index');
+    Route::get('/shop-options', 'getOptions')->name('shop-options');
     Route::get('/{storeId}', 'show')->name('show');
+    Route::put('/{storeId}', 'update')->name('update');
 });
 
 Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->group(function () {
