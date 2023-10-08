@@ -5,8 +5,8 @@ namespace App\Repositories\Contracts;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 
 interface UserRepository extends Repository
 {
@@ -79,4 +79,9 @@ interface UserRepository extends Repository
      * Get the user's company.
      */
     public function getUsersCompany(User $user): Company;
+
+    /**
+     * Get a list of the user by linked service user ids.
+     */
+    public function getListByLinkedUserIds(array $linkedUserIds): Collection;
 }
