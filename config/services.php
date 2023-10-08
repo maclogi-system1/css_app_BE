@@ -38,6 +38,8 @@ return [
             'shops' => [
                 'list' => '/shops',
                 'detail' => '/shops/{storeId}',
+                'options' => '/shops/shop-options',
+                'update' => '/shops',
             ],
             'alerts' => [
                 'list' => '/alerts',

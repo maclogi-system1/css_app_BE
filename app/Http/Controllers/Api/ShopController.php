@@ -34,4 +34,28 @@ class ShopController extends Controller
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
+
+    /**
+     * Get a list of options for select.
+     */
+    public function getOptions()
+    {
+        $options = $this->shopRepository->getOptions();
+
+        return response()->json($options);
+    }
+
+    public function update(string $storeId, Request $request)
+    {
+        $result = $this->shopRepository->update($storeId, $request->all());
+
+        if (! empty($result->get('errors'))) {
+            return response()->json([
+                'message' => 'There are a few failures.',
+                'errors' => $result->get('errors'),
+            ], $result->get('status'));
+        }
+
+        return response()->json($result);
+    }
 }

@@ -7,7 +7,9 @@ use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\WebServices\OSS\ShopService;
 use App\WebServices\OSS\UserService;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class ShopRepository extends Repository implements ShopRepositoryContract
@@ -81,5 +83,38 @@ class ShopRepository extends Repository implements ShopRepositoryContract
         }
 
         return $data;
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $result = $this->shopService->getOptions();
+
+        if (! $result->get('success')) {
+            return [];
+        }
+
+        return $result->get('data')->toArray();
+    }
+
+    /**
+     * update shop.
+     */
+    public function update(string $storeId, array $data): Collection
+    {
+        $result = $this->shopService->update($data + ['store_id' => $storeId]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        return $result->get('data');
     }
 }
