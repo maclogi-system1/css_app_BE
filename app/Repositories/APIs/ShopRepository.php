@@ -60,13 +60,8 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     {
         $data = ['users' => []];
 
-        if (Cache::has('oss_shop_users')) {
-            $ossShopUser = Cache::get('oss_shop_users');
-        } else {
-            $result = $this->userService->getShopUsers($filters);
-            $ossShopUser = collect(Arr::get($result->get('data'), 'users'));
-            Cache::put('oss_shop_users', $ossShopUser, 300);
-        }
+        $result = $this->userService->getShopUsers($filters);
+        $ossShopUser = collect(Arr::get($result->get('data'), 'users'));
 
         if (! empty($ossShopUser)) {
             $ossShopUserEmail = Arr::pluck($ossShopUser, 'email');
