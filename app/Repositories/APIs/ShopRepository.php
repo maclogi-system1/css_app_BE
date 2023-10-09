@@ -10,7 +10,6 @@ use App\WebServices\OSS\UserService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 class ShopRepository extends Repository implements ShopRepositoryContract
 {
