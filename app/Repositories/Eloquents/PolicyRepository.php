@@ -607,12 +607,15 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             return $this->runSimulation($policyId);
         }
 
-        $this->model()
+        $simulation = $this->model()
+            ->with(['rules'])
             ->whereIn('processing_status', [Policy::NEW_PROCESSING_STATUS, Policy::DONE_PROCESSING_STATUS])
             ->where('category', Policy::SIMULATION_CATEGORY)
             ->where('store_id', $data['store_id'])
             ->get()
-            ->each(fn ($simulation) => $this->runSimulation($simulation->id));
+            ->toArray();
+
+        RunPolicySimulation::dispatch($data['store_id'], $simulation);
     }
 
     /**
@@ -620,10 +623,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function runSimulation($id)
     {
-        $simulation = $this->model()->find($id);
-        $simulation->processing_status = Policy::RUNNING_PROCESSING_STATUS;
-        $simulation->save();
-        RunPolicySimulation::dispatch($simulation);
+        $simulation = $this->model()->where('id', $id)->with('rules')->first();
+
+        RunPolicySimulation::dispatch($simulation->store_id, [$simulation->toArray()]);
     }
 
     /**
@@ -765,7 +767,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         ]);
 
         $fromDate = $simulations->min('simulation_start_date')->format('Y-m-d');
-        $endDate = $simulations->max('simulation_start_date')->format('Y-m-d');
+        $endDate = $simulations->max('simulation_start_date')->addMonths(2)->format('Y-m-d');
 
         /** @var \App\Repositories\Contracts\SingleJobRepository */
         $singleJobRepository = app(SingleJobRepository::class);
