@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\TaskRepository;
+use App\Support\TaskCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -12,7 +13,8 @@ use Illuminate\Support\Collection;
 class TaskController extends Controller
 {
     public function __construct(
-        private TaskRepository $taskRepository
+        private TaskRepository $taskRepository,
+        private TaskCsv $taskCsv,
     ) {
     }
 
@@ -133,5 +135,16 @@ class TaskController extends Controller
         $options = $this->taskRepository->getOptions();
 
         return response()->json($options);
+    }
+
+    public function downloadTemplateCsv()
+    {
+        return response()->stream(callback: $this->taskCsv->streamCsvFile(), headers: [
+            'Content-Type' => 'text/csv; charset=shift_jis',
+            'Content-Disposition' => 'attachment; filename=task_template.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => 0,
+        ]);
     }
 }

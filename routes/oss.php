@@ -19,6 +19,7 @@ Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->gr
 Route::prefix('tasks')->name('tasks.')->controller(TaskController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/options', 'getOptions')->name('get-options');
+    Route::get('/download-template', 'downloadTemplateCsv')->name('download-template');
     Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
     Route::put('/{storeId}', 'updateMultiple')->name('update-multiple');
     Route::delete('/{storeId}/{taskId}', 'delete')->name('delete');
