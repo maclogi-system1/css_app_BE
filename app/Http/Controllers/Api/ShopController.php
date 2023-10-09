@@ -32,6 +32,10 @@ class ShopController extends Controller
     {
         $result = $this->shopRepository->find($storeId);
 
+        if (! $result?->get('success')) {
+            return response()->json(['message' => __('Shop not found')], Response::HTTP_NOT_FOUND);
+        }
+
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
 
