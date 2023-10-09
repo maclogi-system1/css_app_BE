@@ -23,7 +23,7 @@ class UserTrendService extends Service
                     ->whereRaw('date >= ? AND date <= ?', [$fromDateStr, $toDateStr])
                     ->selectRaw('
                             store_id,
-                            CONCAT(LEFT(date, 4), "-", RIGHT(date, 2)) AS date,
+                            CONCAT(LEFT(date, 4), "/", RIGHT(date, 2)) AS date,
                             new_sales_amnt,
                             re_sales_amnt,
                             sales_amnt_per_new_user,
