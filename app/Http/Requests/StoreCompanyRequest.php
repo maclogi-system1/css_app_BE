@@ -22,7 +22,7 @@ class StoreCompanyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => ['required', 'string', 'max:150', 'unique:companies'],
+            'company_id' => ['required', 'string', 'max:32', 'regex:/^[a-zA-Z0-9-_\ \.]+$/', 'unique:companies'],
             'name' => ['required', 'string', 'max:150'],
             'team_names' => ['nullable', 'array'],
         ];
