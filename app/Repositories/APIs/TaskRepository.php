@@ -100,7 +100,8 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         }
 
         if ($assignees = Arr::get($data, 'assignees')) {
-            $data['assignees'] = $this->getLinkedUserInfoRepository()->getListByUserIds($assignees);
+            $data['assignees'] = $this->getLinkedUserInfoRepository()
+                ->getListByUserIds($assignees)->pluck('id')->toArray();
         }
 
         return $data;
