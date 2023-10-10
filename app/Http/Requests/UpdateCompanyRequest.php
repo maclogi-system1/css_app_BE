@@ -22,7 +22,13 @@ class UpdateCompanyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => ['required', 'string', 'max:150', Rule::unique('companies')->ignore($this->route('company'))],
+            'company_id' => [
+                'required',
+                'string',
+                'max:32',
+                'regex:/^[a-zA-Z0-9-_\ \.]+$/',
+                Rule::unique('companies')->ignore($this->route('company'))
+            ],
             'name' => ['required', 'string', 'max:150'],
             'team_names' => ['nullable', 'array'],
         ];
