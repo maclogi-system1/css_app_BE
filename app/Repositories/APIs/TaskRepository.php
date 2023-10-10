@@ -2,6 +2,7 @@
 
 namespace App\Repositories\APIs;
 
+use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\TaskRepository as TaskRepositoryContract;
 use App\Repositories\Repository;
 use App\Rules\DateValid;
@@ -98,6 +99,10 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             $data['due_date'] = $dueDateTime;
         }
 
+        if ($assignees = Arr::get($data, 'assignees')) {
+            $data['assignees'] = $this->getLinkedUserInfoRepository()->getListByUserIds($assignees);
+        }
+
         return $data;
     }
 
@@ -185,5 +190,10 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         }
 
         return null;
+    }
+
+    public function getLinkedUserInfoRepository(): LinkedUserInfoRepository
+    {
+        return app(LinkedUserInfoRepository::class);
     }
 }

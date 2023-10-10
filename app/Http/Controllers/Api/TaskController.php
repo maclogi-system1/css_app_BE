@@ -66,7 +66,7 @@ class TaskController extends Controller
             ? response()->json(['tasks' => $results], $status)
             : response()->json([
                 'message' => __('Created failure.'),
-            ]);
+            ], Response::HTTP_BAD_REQUEST);
     }
 
     /**
@@ -107,7 +107,7 @@ class TaskController extends Controller
             ? response()->json(['tasks' => $results], $status)
             : response()->json([
                 'message' => __('Updated failure.'),
-            ]);
+            ],Response::HTTP_BAD_REQUEST);
     }
 
     /**
