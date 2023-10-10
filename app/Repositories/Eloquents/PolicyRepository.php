@@ -127,9 +127,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
             $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-            $ossUserIds = $linkedUserInfoRepository->getListByUserIds($users)
-                ->pluck('linked_service_user_id')
-                ->join(',');
+            $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($users);
 
             Arr::set($filters, 'filters.manager', $ossUserIds);
         }
@@ -361,9 +359,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
         $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-        $ossUserIds = $linkedUserInfoRepository->getListByUserIds(Arr::get($data, 'managers', []))
-            ->pluck('linked_service_user_id')
-            ->toArray();
+        $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds(Arr::get($data, 'managers', []));
 
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),

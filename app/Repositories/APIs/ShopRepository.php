@@ -99,6 +99,13 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function update(string $storeId, array $data): Collection
     {
+        $assignees = Arr::get($data, 'assignees', []);
+        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
+        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+        $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($assignees);
+
+        Arr::set($data, 'assignees', $ossUserIds);
+
         $result = $this->shopService->update($data + ['store_id' => $storeId]);
 
         if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
