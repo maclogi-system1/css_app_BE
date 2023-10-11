@@ -132,4 +132,16 @@ class User extends Authenticatable
     {
         return $this->hasOne(LinkedUserInfo::class);
     }
+
+    public function getFieldForOSS(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'image_path' => Storage::url($this->profile_photo_path),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
 }

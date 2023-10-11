@@ -380,7 +380,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     /**
      * Get a list of the user by linked service user ids.
      */
-    public function getListByLinkedUserIds(array $linkedUserIds): Collection
+    public function getListByLinkedUserIds(array|Collection $linkedUserIds): Collection
     {
         /** @var \App\Models\LinkedUserInfo */
         $linkedServiceUser = app(LinkedUserInfo::class);
@@ -390,5 +390,13 @@ class UserRepository extends Repository implements UserRepositoryContract
             ->pluck('cssUser');
 
         return $users;
+    }
+
+    /**
+     * Get a list of css_user_ids by oss_user_ids.
+     */
+    public function getCssUserIdsByOssUserIds(array|Collection $linkedUserIds): array
+    {
+        return $this->getListByLinkedUserIds($linkedUserIds)->pluck('id')->toArray();
     }
 }

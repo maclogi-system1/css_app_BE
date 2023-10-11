@@ -27,7 +27,7 @@ class UpdateCompanyRequest extends FormRequest
                 'string',
                 'max:32',
                 'regex:/^[a-zA-Z0-9-_\ \.]+$/',
-                Rule::unique('companies')->ignore($this->route('company'))
+                Rule::unique('companies')->ignore($this->route('company')),
             ],
             'name' => ['required', 'string', 'max:150'],
             'team_names' => ['nullable', 'array'],

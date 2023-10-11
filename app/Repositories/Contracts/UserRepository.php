@@ -83,5 +83,10 @@ interface UserRepository extends Repository
     /**
      * Get a list of the user by linked service user ids.
      */
-    public function getListByLinkedUserIds(array $linkedUserIds): Collection;
+    public function getListByLinkedUserIds(array|Collection $linkedUserIds): Collection;
+
+    /**
+     * Get a list of css_user_ids by oss_user_ids.
+     */
+    public function getCssUserIdsByOssUserIds(array|Collection $linkedUserIds): array;
 }
