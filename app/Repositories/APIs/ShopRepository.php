@@ -2,6 +2,8 @@
 
 namespace App\Repositories\APIs;
 
+use App\Models\User;
+use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\ShopRepository as ShopRepositoryContract;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
@@ -33,15 +35,23 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     public function getList(array $filters = [], array $columns = ['*'])
     {
         $filters = ['with' => [
-            'shopCredential',
-            'projectDirectors',
-            'projectDesigners',
-            'projectConsultants',
-            'projectManagers',
-            'createdUser',
-        ]] + $filters;
+                'shopCredential',
+                'projectDirectors',
+                'projectDesigners',
+                'projectConsultants',
+                'projectManagers',
+                'projectPersonInCharges',
+                'createdUser',
+            ]] + $filters;
 
-        return $this->shopService->getList($filters);
+        $result = $this->shopService->getList($filters);
+
+        if ($result->get('success')) {
+            $shops = $this->convertCssUserByOssUser(collect($result->get('data')->get('shops')));
+            $result->get('data')->put('shops', $shops);
+        }
+
+        return $result;
     }
 
     /**
@@ -99,12 +109,7 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function update(string $storeId, array $data): Collection
     {
-        $assignees = Arr::get($data, 'assignees', []);
-        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
-        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-        $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($assignees);
-
-        Arr::set($data, 'assignees', $ossUserIds);
+        $data = $this->convertOssUserByCssUser($data);
 
         $result = $this->shopService->update($data + ['store_id' => $storeId]);
 
@@ -117,6 +122,60 @@ class ShopRepository extends Repository implements ShopRepositoryContract
             ]);
         }
 
-        return $result->get('data');
+        return $this->convertCssUserByOssUser($result->get('data'));
+    }
+
+    protected function convertOssUserByCssUser(array $data): array
+    {
+        $assignees = Arr::get($data, 'assignees', []);
+        $convertUser = [
+            'consultant',
+            'director_contact',
+            'designer_contact',
+            'person_in_charge_contact',
+        ];
+
+        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
+        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+        $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($assignees);
+
+        Arr::set($data, 'assignees', $ossUserIds);
+
+        foreach ($convertUser as $value) {
+            $userId = Arr::get($data, $value);
+            if ($userId) {
+                $convertUserId = $linkedUserInfoRepository->getOssUserIdsByCssUserIds([$userId]);
+                if (! empty($convertUserId)) {
+                    Arr::set($data, $value, $convertUserId[0]);
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    protected function convertCssUserByOssUser(Collection $data): Collection
+    {
+        return $data->map(function ($shop) {
+            $listConvert = ['directors', 'designers', 'consultants', 'managers', 'person_in_charges'];
+
+            if (! empty($shop['is_css'])) {
+                foreach ($listConvert as $item) {
+                    if (! empty($shop[$item])) {
+                        $userIds = collect($shop[$item])->pluck('id')->toArray();
+                        $shop[$item] = $this->getUserRepository()->getListByLinkedUserIds($userIds)->map(function (User $user) {
+                            return $user->getFieldForOSS();
+                        })->toArray();
+                    }
+                }
+            }
+
+            return $shop;
+        });
+    }
+
+    public function getUserRepository(): UserRepository
+    {
+        return app(UserRepository::class);
     }
 }
