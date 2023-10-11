@@ -268,18 +268,18 @@ class AdsAnalysisService extends Service
 
             case KpiConstant::ADS_TYPE_COUPON_ADVANCE:
                 if ($isMonthQuery) {
-                    return $this->getYearMonthRppSalesAndAccess($storeId, $filters);
+                    return $this->getYearMonthCouponSalesAndAccess($storeId, $filters);
                 }
 
-                return $this->getRppSalesAndAccess($storeId, $filters);
+                return $this->getCouponSalesAndAccess($storeId, $filters);
                 break;
 
             case KpiConstant::ADS_TYPE_RAKUTEN_GROUP_ADS:
                 if ($isMonthQuery) {
-                    return $this->getYearMonthRppSalesAndAccess($storeId, $filters);
+                    return $this->getYearMonthRakutenGroupSalesAndAccess($storeId, $filters);
                 }
 
-                return $this->getRppSalesAndAccess($storeId, $filters);
+                return $this->getRakutenGroupSalesAndAccess($storeId, $filters);
                 break;
 
             default:
@@ -1177,6 +1177,207 @@ class AdsAnalysisService extends Service
         ]);
     }
 
+    /**
+     * Query Ads detail conversion of coupon strategy id.
+     */
+    private function getCouponSalesAndAccess($storeId, $filters): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m-d');
+        $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
+
+        $adsResult = CouponAdviceAd::where('store_id', $storeId)
+        ->where('date', '>=', $fromDateStr)
+        ->where('date', '<=', $toDateStr)
+        ->select(
+            'date',
+            DB::raw('SUM(sales_amnt) AS sales_amnt_total'),
+            DB::raw('SUM(sales_amnt_with_dscnt) AS ads_sales_amnt')
+        )
+        ->groupBy('date', 'store_id')
+        ->get();
+
+        $adsResult = ! is_null($adsResult) ? $adsResult->groupBy('date')->toArray() : [];
+        $data = collect();
+        foreach ($adsResult as $date => $dailyItem) {
+            $salesAmntTotal = Arr::get($dailyItem[0], 'sales_amnt_total', 0);
+            $adsSalesAmnt = Arr::get($dailyItem[0], 'ads_sales_amnt', 0);
+            $actualSumAmnt = Arr::get($dailyItem[0], 'act_sum', 0);
+            $actualNewAmnt = Arr::get($dailyItem[0], 'act_new', 0);
+
+            $data->add([
+                'store_id' => $storeId,
+                'date' => substr($date, 0, 4).'/'.substr($date, 4, 2).'/'.substr($date, 6, 2),
+                'ads_revenue' => intval($adsSalesAmnt),
+                'total_revenue' => round(floatval($salesAmntTotal), 2),
+                'increase_rate' => $actualSumAmnt > 0 ? round($actualNewAmnt / $actualSumAmnt * 100, 2) : 0,
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_sales_and_acess_total' => $data,
+                'chart_sales_and_acess_detail' => $this->getSalesAndAccessDetail($storeId, $filters),
+            ]),
+        ]);
+    }
+
+    /**
+     * Query Ads detail conversion of coupon strategy id by year-month.
+     */
+    private function getYearMonthCouponSalesAndAccess($storeId, $filters): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
+
+        $adsResult = CouponAdviceAd::where('store_id', $storeId)
+        ->where(DB::raw('SUBSTRING(date, 1, 6)'), '>=', $fromDateStr)
+        ->where(DB::raw('SUBSTRING(date, 1, 6)'), '<=', $toDateStr)
+        ->select(
+            DB::raw('SUBSTRING(date, 1, 6) as date'),
+            DB::raw('SUM(sales_amnt) AS sales_amnt_total'),
+            DB::raw('SUM(sales_amnt_with_dscnt) AS ads_sales_amnt')
+        )
+        ->groupBy(DB::raw('SUBSTRING(date, 1, 6)'), 'store_id')
+        ->get();
+
+        $adsResult = ! is_null($adsResult) ? $adsResult->groupBy('date')->toArray() : [];
+        $data = collect();
+        foreach ($adsResult as $date => $dailyItem) {
+            $salesAmntTotal = Arr::get($dailyItem[0], 'sales_amnt_total', 0);
+            $adsSalesAmnt = Arr::get($dailyItem[0], 'ads_sales_amnt', 0);
+            $actualSumAmnt = Arr::get($dailyItem[0], 'act_sum', 0);
+            $actualNewAmnt = Arr::get($dailyItem[0], 'act_new', 0);
+
+            $data->add([
+                'store_id' => $storeId,
+                'date' => substr($date, 0, 4).'/'.substr($date, 4, 2),
+                'ads_revenue' => intval($adsSalesAmnt),
+                'total_revenue' => round(floatval($salesAmntTotal), 2),
+                'increase_rate' => $actualSumAmnt > 0 ? round($actualNewAmnt / $actualSumAmnt * 100, 2) : 0,
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_sales_and_acess_total' => $data,
+                'chart_sales_and_acess_detail' => $this->getYearMonthSalesAndAccessDetail($storeId, $filters),
+            ]),
+        ]);
+    }
+
+    /**
+     * Query Ads detail conversion of rakuten group strategy id.
+     */
+    private function getRakutenGroupSalesAndAccess($storeId, $filters): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m-d');
+        $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
+
+        $adsResult = RgroupAd::where('store_id', $storeId)
+        ->where('date', '>=', $fromDateStr)
+        ->where('date', '<=', $toDateStr)
+        ->join('rgroup_ad_sales_amnt as rgroup_sales_amnt', 'rgroup_sales_amnt.sales_amnt_id', '=', 'rgroup_ad.sales_amnt_id')
+        ->select(
+            'date',
+            DB::raw('SUM(rgroup_sales_amnt.sales_amnt) AS sales_amnt_total'),
+            DB::raw('SUM(rgroup_sales_amnt.new_user_sales_amnt) AS ads_sales_amnt')
+        )
+        ->groupBy('date', 'store_id')
+        ->get();
+
+        $adsResult = ! is_null($adsResult) ? $adsResult->groupBy('date')->toArray() : [];
+        $data = collect();
+        foreach ($adsResult as $date => $dailyItem) {
+            $salesAmntTotal = Arr::get($dailyItem[0], 'sales_amnt_total', 0);
+            $adsSalesAmnt = Arr::get($dailyItem[0], 'ads_sales_amnt', 0);
+            $actualSumAmnt = Arr::get($dailyItem[0], 'act_sum', 0);
+            $actualNewAmnt = Arr::get($dailyItem[0], 'act_new', 0);
+
+            $data->add([
+                'store_id' => $storeId,
+                'date' => substr($date, 0, 4).'/'.substr($date, 4, 2).'/'.substr($date, 6, 2),
+                'ads_revenue' => intval($adsSalesAmnt),
+                'total_revenue' => round(floatval($salesAmntTotal), 2),
+                'increase_rate' => $actualSumAmnt > 0 ? round($actualNewAmnt / $actualSumAmnt * 100, 2) : 0,
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_sales_and_acess_total' => $data,
+                'chart_sales_and_acess_detail' => $this->getSalesAndAccessDetail($storeId, $filters),
+            ]),
+        ]);
+    }
+
+    /**
+     * Query Ads detail conversion of rakuten group strategy id by year-month.
+     */
+    private function getYearMonthRakutenGroupSalesAndAccess($storeId, $filters): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
+
+        $adsResult = RgroupAd::where('store_id', $storeId)
+        ->where(DB::raw('SUBSTRING(date, 1, 6)'), '>=', $fromDateStr)
+        ->where(DB::raw('SUBSTRING(date, 1, 6)'), '<=', $toDateStr)
+        ->join('rgroup_ad_sales_amnt as rgroup_sales_amnt', 'rgroup_sales_amnt.sales_amnt_id', '=', 'rgroup_ad.sales_amnt_id')
+        ->select(
+            DB::raw('SUBSTRING(date, 1, 6) as date'),
+            DB::raw('SUM(rgroup_sales_amnt.sales_amnt) AS sales_amnt_total'),
+            DB::raw('SUM(rgroup_sales_amnt.new_user_sales_amnt) AS ads_sales_amnt')
+        )
+        ->groupBy(DB::raw('SUBSTRING(date, 1, 6)'), 'store_id')
+        ->get();
+
+        $adsResult = ! is_null($adsResult) ? $adsResult->groupBy('date')->toArray() : [];
+        $data = collect();
+        foreach ($adsResult as $date => $dailyItem) {
+            $salesAmntTotal = Arr::get($dailyItem[0], 'sales_amnt_total', 0);
+            $adsSalesAmnt = Arr::get($dailyItem[0], 'ads_sales_amnt', 0);
+            $actualSumAmnt = Arr::get($dailyItem[0], 'act_sum', 0);
+            $actualNewAmnt = Arr::get($dailyItem[0], 'act_new', 0);
+
+            $data->add([
+                'store_id' => $storeId,
+                'date' => substr($date, 0, 4).'/'.substr($date, 4, 2),
+                'ads_revenue' => intval($adsSalesAmnt),
+                'total_revenue' => round(floatval($salesAmntTotal), 2),
+                'increase_rate' => $actualSumAmnt > 0 ? round($actualNewAmnt / $actualSumAmnt * 100, 2) : 0,
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'chart_sales_and_acess_total' => $data,
+                'chart_sales_and_acess_detail' => $this->getYearMonthSalesAndAccessDetail($storeId, $filters),
+            ]),
+        ]);
+    }
+
+    /**
+     * Query ads sales and access detail.
+     */
     private function getSalesAndAccessDetail($storeId, $filters): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
@@ -1262,6 +1463,9 @@ class AdsAnalysisService extends Service
         return $result;
     }
 
+    /**
+     * Query ads sales and access detail by year-month.
+     */
     private function getYearMonthSalesAndAccessDetail($storeId, $filters): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
