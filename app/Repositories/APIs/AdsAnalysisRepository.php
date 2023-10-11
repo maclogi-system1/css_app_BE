@@ -28,10 +28,21 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
      */
     public function getAdsAnalysisSummary(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters);
+        $result = $this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -43,7 +54,7 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters)->get('data'));
+            $data = $data->merge($this->adsAnalysisService->getAdsAnalysisSummary($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -57,10 +68,21 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
      */
     public function getListAdsConversion(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->adsAnalysisService->getListAdsConversion($storeId, $filters);
+        $result = $this->adsAnalysisService->getListAdsConversion($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -72,7 +94,7 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->adsAnalysisService->getListAdsConversion($storeId, $filters)->get('data'));
+            $data = $data->merge($this->adsAnalysisService->getListAdsConversion($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -115,10 +137,21 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
      */
     public function getDataChartSalesAndAccess(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters);
+        $result = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters, $isMonthQuery);
         $data[] = $result->get('data');
 
         // Get compared data category analysis
@@ -130,7 +163,7 @@ class AdsAnalysisRepository extends Repository implements AdsAnalysisRepositoryC
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data[] = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters)->get('data');
+            $data[] = $this->adsAnalysisService->getDataChartSalesAndAccess($storeId, $filters, $isMonthQuery)->get('data');
         }
 
         return collect([
