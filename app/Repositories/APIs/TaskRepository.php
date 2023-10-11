@@ -2,8 +2,10 @@
 
 namespace App\Repositories\APIs;
 
+use App\Models\User;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\TaskRepository as TaskRepositoryContract;
+use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\Rules\DateValid;
 use App\WebServices\OSS\TaskService;
@@ -33,7 +35,13 @@ class TaskRepository extends Repository implements TaskRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
-        return $this->taskService->getList($filters);
+        $result = $this->taskService->getList($filters);
+        if ($result->get('success')) {
+            $tasks = $this->handleTaskAssignees(collect($result->get('data')->get('tasks')));
+            $result->get('data')->put('tasks', $tasks);
+        }
+
+        return $result;
     }
 
     /**
@@ -125,7 +133,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         }
 
         if ($result->get('success')) {
-            return $result->get('data');
+            return $this->handleTaskAssignees(collect($result->get('data')));
         }
 
         return null;
@@ -150,10 +158,24 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         }
 
         if ($result->get('success')) {
-            return $result->get('data');
+            return $this->handleTaskAssignees(collect($result->get('data')));
         }
 
         return null;
+    }
+
+    protected function handleTaskAssignees(Collection $data): Collection
+    {
+        return $data->map(function ($task) {
+            if (! empty($task['assignees'])) {
+                $assigneeIds = collect($task['assignees'])->pluck('id')->toArray();
+                $task['assignees'] = $this->getUserRepository()->getListByLinkedUserIds($assigneeIds)->map(function (User $user) {
+                    return $user->getFieldForOSS();
+                });
+            }
+
+            return $task;
+        });
     }
 
     /**
@@ -196,5 +218,10 @@ class TaskRepository extends Repository implements TaskRepositoryContract
     public function getLinkedUserInfoRepository(): LinkedUserInfoRepository
     {
         return app(LinkedUserInfoRepository::class);
+    }
+
+    public function getUserRepository(): UserRepository
+    {
+        return app(UserRepository::class);
     }
 }
