@@ -10,6 +10,7 @@ Route::prefix('shops')->name('shops.')->controller(ShopController::class)->group
     Route::get('/shop-options', 'getOptions')->name('shop-options');
     Route::get('/{storeId}', 'show')->name('show');
     Route::put('/{storeId}', 'update')->name('update');
+    Route::post('/', 'create')->name('create');
 });
 
 Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->group(function () {

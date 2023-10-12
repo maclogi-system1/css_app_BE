@@ -40,6 +40,7 @@ return [
                 'detail' => '/shops/{storeId}',
                 'options' => '/shops/shop-options',
                 'update' => '/shops',
+                'create' => '/shops',
             ],
             'alerts' => [
                 'list' => '/alerts',
