@@ -11,7 +11,7 @@ class StoreCompanyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create_company');
+        return $this->user()->can('edit_all_companies');
     }
 
     /**
