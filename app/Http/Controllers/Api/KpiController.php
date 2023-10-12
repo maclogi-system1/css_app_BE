@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\KpiCategoryAnalysisRequest;
 use App\Http\Requests\KpiProductPerformanceRequest;
 use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
@@ -473,7 +474,7 @@ class KpiController extends Controller
     /**
      * Get data summary category analysis from AI.
      */
-    public function categoryAnalysisSummary(Request $request, string $storeId): JsonResponse
+    public function categoryAnalysisSummary(KpiCategoryAnalysisRequest $request, string $storeId): JsonResponse
     {
         $result = $this->categoryAnalysisRepository->getCategorySummary($storeId, $request->query());
 
@@ -499,7 +500,7 @@ class KpiController extends Controller
     /**
      * Get chart selected categories sales per month from AI.
      */
-    public function chartSelectedCategories(Request $request): JsonResponse
+    public function chartSelectedCategories(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartSelectedCategories($conditions);
@@ -510,7 +511,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's trends from AI.
      */
-    public function chartCategoriesTrends(Request $request): JsonResponse
+    public function chartCategoriesTrends(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesTrends($conditions);
@@ -521,7 +522,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's stay times from AI.
      */
-    public function chartCategoriesStayTimes(Request $request): JsonResponse
+    public function chartCategoriesStayTimes(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesStayTimes($conditions);
@@ -532,7 +533,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's reviews trends from AI.
      */
-    public function chartCategoriesReviewsTrends(Request $request): JsonResponse
+    public function chartCategoriesReviewsTrends(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->chartCategoriesReviewsTrends($conditions);
