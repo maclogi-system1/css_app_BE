@@ -59,7 +59,13 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function find($storeId)
     {
-        return $this->shopService->find($storeId);
+        $result = $this->shopService->find($storeId);
+        if ($result->get('success')) {
+            $shops = $this->convertCssUserByOssUser(collect($result->get('data')));
+            $result->put('data', $shops);
+        }
+
+        return $result;
     }
 
     /**
