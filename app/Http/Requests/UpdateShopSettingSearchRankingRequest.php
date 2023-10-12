@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ShopSettingSearchRanking;
 use App\Support\ShopSettingSearchRankingCsv;
 use App\Support\Traits\ShopSettingUpdateRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -26,12 +27,12 @@ class UpdateShopSettingSearchRankingRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->getProperties(ShopSettingSearchRankingCsv::HEADING, 'validation')
+        return $this->getProperties(ShopSettingSearchRankingCsv::HEADING, 'validation', ShopSettingSearchRanking::getModel()->getTable())
             + ['is_competitive_ranking' => ['nullable', Rule::in([0, 1])]];
     }
 
     public function attributes()
     {
-        return $this->getProperties(ShopSettingSearchRankingCsv::HEADING, 'title');
+        return $this->getProperties(ShopSettingSearchRankingCsv::HEADING, 'title', ShopSettingSearchRanking::getModel()->getTable());
     }
 }
