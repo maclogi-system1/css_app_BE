@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ShopSettingAwardPoint;
 use App\Support\ShopSettingAwardPointCsv;
 use App\Support\Traits\ShopSettingUpdateRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -25,11 +26,11 @@ class UpdateShopSettingAwardPointRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->getProperties(ShopSettingAwardPointCsv::HEADING, 'validation');
+        return $this->getProperties(ShopSettingAwardPointCsv::HEADING, 'validation', ShopSettingAwardPoint::getModel()->getTable());
     }
 
     public function attributes()
     {
-        return $this->getProperties(ShopSettingAwardPointCsv::HEADING, 'title');
+        return $this->getProperties(ShopSettingAwardPointCsv::HEADING, 'title', ShopSettingAwardPoint::getModel()->getTable());
     }
 }

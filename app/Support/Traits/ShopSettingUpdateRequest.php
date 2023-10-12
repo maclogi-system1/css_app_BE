@@ -12,7 +12,7 @@ trait ShopSettingUpdateRequest
      * @param string $paramName
      * @return array
      */
-    protected function getProperties(array $fields, string $keyName, string $paramName = 'settings'): array
+    protected function getProperties(array $fields, string $keyName, string $table, string $paramName = 'settings'): array
     {
         $properties = [];
         foreach ($fields as $key => $field) {
@@ -25,7 +25,7 @@ trait ShopSettingUpdateRequest
 
         if ($keyName == 'validation') {
             $properties[$paramName] = ['required'];
-            $properties["$paramName.*.id"] = ['required'];
+            $properties["$paramName.*.id"] = ['nullable', "exists:$table,id"];
         }
 
         return $properties;

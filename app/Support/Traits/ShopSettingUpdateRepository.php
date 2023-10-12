@@ -16,10 +16,14 @@ trait ShopSettingUpdateRepository
     {
         return $this->handleSafely(function () use ($storeId, $settings) {
             foreach ($settings as $setting) {
+                $id = $setting['id'] ?? null;
+                if (is_null($id)) {
+                    $setting = array_merge($setting, ['store_id' => $storeId]);
+                }
+
                 $this->model()->newQuery()
-                    ->where('id', '=', $setting['id'])
                     ->where('store_id', $storeId)
-                    ->update($setting);
+                    ->updateOrCreate(['id' => $id], $setting);
             }
 
             return true;
