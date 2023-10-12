@@ -62,4 +62,18 @@ class ShopController extends Controller
 
         return response()->json($result);
     }
+
+    public function create(Request $request)
+    {
+        $result = $this->shopRepository->create($request->all());
+
+        if (! empty($result->get('errors'))) {
+            return response()->json([
+                'message' => 'There are a few failures.',
+                'errors' => $result->get('errors'),
+            ], $result->get('status'));
+        }
+
+        return response()->json($result);
+    }
 }

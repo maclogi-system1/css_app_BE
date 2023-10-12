@@ -131,6 +131,24 @@ class ShopRepository extends Repository implements ShopRepositoryContract
         return $this->convertCssUserByOssUser($result->get('data'));
     }
 
+    public function create(array $data)
+    {
+        $data = $this->convertOssUserByCssUser($data);
+
+        $result = $this->shopService->create(array_merge($data, ['is_css' => 1]));
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        return $this->convertCssUserByOssUser($result->get('data'));
+    }
+
     protected function convertOssUserByCssUser(array $data): array
     {
         $assignees = Arr::get($data, 'assignees', []);
@@ -151,9 +169,7 @@ class ShopRepository extends Repository implements ShopRepositoryContract
             $userId = Arr::get($data, $value);
             if ($userId) {
                 $convertUserId = $linkedUserInfoRepository->getOssUserIdsByCssUserIds([$userId]);
-                if (! empty($convertUserId)) {
-                    Arr::set($data, $value, $convertUserId[0]);
-                }
+                Arr::set($data, $value, $convertUserId[0] ?? 0);
             }
         }
 

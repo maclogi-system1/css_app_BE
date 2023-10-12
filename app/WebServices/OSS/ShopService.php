@@ -39,4 +39,12 @@ class ShopService extends Service
     {
         return $this->toResponse(Http::oss()->put(OSSService::getApiUri('shops.update'), $data));
     }
+
+    /**
+     * create shop.
+     */
+    public function create(array $data)
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('shops.create'), $data));
+    }
 }
