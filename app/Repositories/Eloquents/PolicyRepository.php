@@ -173,11 +173,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Get a list of AI recommendations.
      */
-    public function getAiRecommendation($storeId, array $filters = []): Collection
+    public function getAiRecommendation($storeId, array $filters = [])
     {
-        return $this->policyR2Service
-            ->getListRecommendByStore($storeId)
-            ->map(fn ($policy) => new PolicyAdapter($policy));
+        return $this->policyR2Service->getListRecommendByStore($storeId);
     }
 
     /**
@@ -702,7 +700,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
         return [
             'store_id' => $simulation->store_id,
-            'category' => Policy::MEASURES_CATEGORY,
+            'category' => Policy::AI_RECOMMENDATION_CATEGORY,
             'immediate_reflection' => 0,
             'status' => -5,
             'job_group_code' => null,
