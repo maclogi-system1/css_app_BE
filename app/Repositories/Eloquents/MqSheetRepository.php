@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Models\MqSheet;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository as MqSheetRepositoryContract;
+use App\Repositories\Contracts\ShopSettingMqAccountingRepository;
 use App\Repositories\Repository;
 use Exception;
 use Illuminate\Support\Arr;
@@ -66,9 +67,13 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
             $mqSheet->save();
             $storeId = Arr::get($data, 'store_id');
 
+            /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
+            $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
+            $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
+
             /** @var \App\Repositories\Contracts\MqAccountingRepository */
             $mqAccountingRepository = app(MqAccountingRepository::class);
-            $mqAccountingRepository->makeEmptyData($storeId, $mqSheet->refresh());
+            $mqAccountingRepository->makeDefaultData($storeId, $mqSheet->refresh(), $shopSettingMqAccounting->toArray());
 
             return $mqSheet;
         }, 'Create mq_sheets');

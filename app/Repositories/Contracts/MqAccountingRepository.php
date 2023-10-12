@@ -69,7 +69,7 @@ interface MqAccountingRepository extends Repository
     public function handleValidationUpdate($data, $storeId): array;
 
     /**
-     * Handle creating empty mq_accounting.
+     * Handle creating default mq_accounting.
      */
-    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void;
+    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $defaultData = []): void;
 }
