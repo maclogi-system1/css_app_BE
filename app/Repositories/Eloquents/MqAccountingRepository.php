@@ -252,11 +252,11 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $tmpData = [
                 'year' => intval(str_replace('年', '', $rows[0][$column])),
                 'month' => intval(str_replace('月', '', $rows[1][$column])),
-                'store_opening_fee' => $this->removeStrangeCharacters($rows[46][$column]),
-                'csv_usage_fee' => $this->removeStrangeCharacters($rows[47][$column]),
-                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[52][$column]),
-                'lim_cpa' => $this->removeStrangeCharacters($rows[53][$column]),
-                'cpo_via_ad' => $this->removeStrangeCharacters($rows[54][$column]),
+                'store_opening_fee' => $this->removeStrangeCharacters($rows[44][$column]),
+                'csv_usage_fee' => $this->removeStrangeCharacters($rows[45][$column]),
+                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[50][$column]),
+                'lim_cpa' => $this->removeStrangeCharacters($rows[51][$column]),
+                'cpo_via_ad' => $this->removeStrangeCharacters($rows[52][$column]),
             ];
             if (! empty($mqKpi)) {
                 $tmpData = array_merge($tmpData, $mqKpi);
@@ -323,9 +323,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
             $cost = $this->updateOrCreateMqCost($rows['mq_cost'], $mqAccounting?->mq_cost_id);
 
-            Arr::set($rows, 'fixed_cost', $cost->cost_sum
-                + Arr::get($rows, 'csv_usage_fee', $mqAccounting?->csv_usage_fee ?? 0)
-                + Arr::get($rows, 'store_opening_fee', $mqAccounting?->store_opening_fee ?? 0));
+            Arr::set($rows, 'fixed_cost', $cost->cost_sum);
 
             if (is_null($mqAccounting)) {
                 $mqAccounting = new MqAccounting();
@@ -360,20 +358,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     private function updateOrCreateMqCost(array $data, ?string $mqCostId = null): MqCost
     {
-        if (! is_null($mqCostId)) {
-            $cost = MqCost::find($mqCostId);
-        }
-
-        $variableCostSum = Arr::get($data, 'coupon_points_cost', $cost?->coupon_points_cost ?? 0)
-            + Arr::get($data, 'ad_cost', $cost?->ad_cost ?? 0)
-            + Arr::get($data, 'cost_price', $cost?->cost_price ?? 0)
-            + Arr::get($data, 'postage', $cost?->postage ?? 0)
-            + Arr::get($data, 'commision', $cost?->commision ?? 0);
-        $costSum = Arr::get($data, 'management_agency_fee', $cost?->management_agency_fee ?? 0)
-            + Arr::get($data, 'reserve1', $cost?->reserve1 ?? 0)
-            + Arr::get($data, 'reserve2', $cost?->reserve2 ?? 0);
-        Arr::set($data, 'variable_cost_sum', $variableCostSum);
-        Arr::set($data, 'cost_sum', $costSum);
+        Arr::set($data, 'reserve1', Arr::get($data, 'store_opening_fee', 0));
+        Arr::set($data, 'reserve2', Arr::get($data, 'csv_usage_fee', 0));
 
         return MqCost::updateOrCreate([
             'id' => $mqCostId,

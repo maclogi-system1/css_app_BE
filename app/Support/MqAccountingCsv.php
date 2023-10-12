@@ -81,12 +81,10 @@ class MqAccountingCsv
             'gross_profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "41.{$column}")),
             'gross_profit_rate' => $this->removeStrangeCharacters(Arr::get($this->rows, "42.{$column}")),
             'management_agency_fee' => $this->removeStrangeCharacters(Arr::get($this->rows, "43.{$column}")),
-            'reserve1' => $this->removeStrangeCharacters(Arr::get($this->rows, "44.{$column}")),
-            'reserve2' => $this->removeStrangeCharacters(Arr::get($this->rows, "45.{$column}")),
-            'management_agency_fee_rate' => $this->removeStrangeCharacters(Arr::get($this->rows, "48.{$column}")),
-            'cost_sum' => $this->removeStrangeCharacters(Arr::get($this->rows, "49.{$column}")),
-            'profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "50.{$column}")),
-            'sum_profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "51.{$column}")),
+            'management_agency_fee_rate' => $this->removeStrangeCharacters(Arr::get($this->rows, "46.{$column}")),
+            'cost_sum' => $this->removeStrangeCharacters(Arr::get($this->rows, "47.{$column}")),
+            'profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "48.{$column}")),
+            'sum_profit' => $this->removeStrangeCharacters(Arr::get($this->rows, "49.{$column}")),
         ];
     }
 
@@ -343,16 +341,6 @@ class MqAccountingCsv
         if (in_array('management_agency_fee', $options)) {
             $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['固定費', '運営代行費'], function ($month, $year) use ($mqAccounting) {
                 return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->management_agency_fee;
-            }, $dateRange));
-        }
-        if (in_array('reserve1', $options)) {
-            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '予備'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->reserve1;
-            }, $dateRange));
-        }
-        if (in_array('reserve2', $options)) {
-            $this->rows[] = convert_fields_to_sjis($this->makeRowCsvFile(['', '予備'], function ($month, $year) use ($mqAccounting) {
-                return $mqAccounting->where('month', $month)->where('year', $year)->first()?->mqCost?->reserve2;
             }, $dateRange));
         }
         if (in_array('store_opening_fee', $options)) {
