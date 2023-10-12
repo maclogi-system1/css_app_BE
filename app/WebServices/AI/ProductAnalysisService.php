@@ -1133,9 +1133,9 @@ class ProductAnalysisService extends Service
 
         $result = ItemsSales::where('item_management_number', $managementNum)
             ->whereRaw(
-                'SUBSTRING(items_sales.date, 1, 6) = ?
+                '(SUBSTRING(items_sales.date, 1, 6) = ?
                 OR SUBSTRING(items_sales.date, 1, 6) = ?
-                OR SUBSTRING(items_sales.date, 1, 6) = ?',
+                OR SUBSTRING(items_sales.date, 1, 6) = ?)',
                 [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
             )
             ->rightJoin('items_data as item', 'item.item_id', '=', 'items_sales.item_no')
