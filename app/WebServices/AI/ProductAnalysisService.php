@@ -8,6 +8,7 @@ use App\Models\KpiRealData\ItemsSales;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -1113,6 +1114,52 @@ class ProductAnalysisService extends Service
             'success' => true,
             'status' => 200,
             'data' => $data,
+        ]);
+    }
+
+    /**
+     * Get products's sales info from AI.
+     */
+    public function getProductSalesInfo(string $managementNum, array $filters = []): Collection
+    {
+        $currentDate = Carbon::now();
+        $currentYearMonth = sprintf('%04d%02d', $currentDate->year, $currentDate->month);
+
+        $previousDate = $currentDate->subMonth();
+        $previousYearMonth = sprintf('%04d%02d', $previousDate->year, $previousDate->month);
+
+        $monthBeforePreviousDate = $previousDate->subMonth();
+        $monthBeforePreviousYearMonth = sprintf('%04d%02d', $monthBeforePreviousDate->year, $monthBeforePreviousDate->month);
+
+        $result = ItemsSales::where('item_management_number', $managementNum)
+            ->whereRaw(
+                'SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->rightJoin('items_data as item', 'item.item_id', '=', 'items_sales.item_no')
+            ->selectRaw(
+                'item.item_name,
+                    SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as current_month_sales,
+                    SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as previous_month_sales,
+                    SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as month_before_previous_sales
+            ',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->groupBy('items_sales.item_no', 'item.item_name')
+            ->first();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'item_name' => Arr::get($result, 'item_name', ''),
+                'current_month_sales' => intval(Arr::get($result, 'current_month_sales', 0)),
+                'previous_month_sales' => intval(Arr::get($result, 'previous_month_sales', 0)),
+                'month_before_previous_sales' => intval(Arr::get($result, 'month_before_previous_sales', 0)),
+            ]),
         ]);
     }
 }

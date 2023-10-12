@@ -241,4 +241,12 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
             'status' => $result->get('status'),
         ]);
     }
+
+    /**
+     * Get products's sales info from AI.
+     */
+    public function getProductSalesInfo(string $managementNum, array $filters = []): Collection
+    {
+        return $this->productAnalysisService->getProductSalesInfo($managementNum, $filters);
+    }
 }
