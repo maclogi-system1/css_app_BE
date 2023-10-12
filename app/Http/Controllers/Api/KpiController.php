@@ -439,9 +439,9 @@ class KpiController extends Controller
     /**
      * Get products's sales info from AI.
      */
-    public function getProductSalesInfo(Request $request, string $managementNum): JsonResponse
+    public function getProductSalesInfo(Request $request): JsonResponse
     {
-        $result = $this->productAnalysisRepository->getProductSalesInfo($managementNum, $request->query());
+        $result = $this->productAnalysisRepository->getProductSalesInfo($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
