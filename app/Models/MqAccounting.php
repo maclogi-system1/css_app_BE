@@ -63,7 +63,7 @@ class MqAccounting extends Model
         return $this->belongsTo(MqSheet::class);
     }
 
-    public function scopeDateRange(Builder $query, Carbon $fromDate, Carbon $toDate): Builder
+    public function scopeDateRange(Builder $query, Carbon $fromDate, Carbon $toDate)
     {
         if ($fromDate <= $toDate) {
             $query->where(function ($query) use ($fromDate, $toDate) {
@@ -76,15 +76,13 @@ class MqAccounting extends Model
                 $to = "{$toYear}-{$toMonth}-01";
 
                 $query->whereRaw("
-                        STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') >= DATE('".$from."')
-                    ")
+                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') >= DATE('".$from."')
+                ")
                 ->whereRaw("
-                        STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') <= DATE('".$to."')
-                    ");
+                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') <= DATE('".$to."')
+                ");
             });
         }
-
-        return $query;
     }
 
     protected static function booted()
