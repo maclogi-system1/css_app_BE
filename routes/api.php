@@ -311,7 +311,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-products-stay-times', 'chartProductsStayTimes')->name('chart-products-stay-times');
                 Route::post('/chart-products-rakuten-ranking', 'chartProductsRakutenRanking')->name('chart-products-rakuten-ranking');
                 Route::post('/chart-products-reviews-trends', 'chartProductsReviewsTrends')->name('chart-products-reviews-trends');
-                Route::get('/get-product-sales-info/{managementNum}', 'getProductSalesInfo')->name('get-product-sales-info');
+                Route::get('/get-product-sales-info', 'getProductSalesInfo')->name('get-product-sales-info');
             });
 
             Route::prefix('category-analysis')

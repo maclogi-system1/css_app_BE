@@ -245,8 +245,8 @@ class ProductAnalysisRepository extends Repository implements ProductAnalysisRep
     /**
      * Get products's sales info from AI.
      */
-    public function getProductSalesInfo(string $managementNum, array $filters = []): Collection
+    public function getProductSalesInfo(array $filters = []): Collection
     {
-        return $this->productAnalysisService->getProductSalesInfo($managementNum, $filters);
+        return $this->productAnalysisService->getProductSalesInfo($filters);
     }
 }

@@ -39,5 +39,5 @@ interface ProductAnalysisRepository extends Repository
     /**
      * Get products's sales info from AI.
      */
-    public function getProductSalesInfo(string $managementNum, array $filters = []): Collection;
+    public function getProductSalesInfo(array $filters = []): Collection;
 }
