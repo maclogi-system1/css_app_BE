@@ -25,8 +25,6 @@ class CompanyController extends Controller
      */
     public function index(Request $request): JsonResource|JsonResponse
     {
-        $this->authorize('view_company');
-
         $companies = CompanyResource::collection($this->companyRepository->getList($request->query()));
         $companies->wrap('companies');
 
@@ -67,8 +65,6 @@ class CompanyController extends Controller
      */
     public function show(Company $company): JsonResource|JsonResponse
     {
-        $this->authorize('view_company');
-
         return new CompanyResource($company);
     }
 
@@ -89,8 +85,6 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company): JsonResource|JsonResponse
     {
-        $this->authorize('delete_company');
-
         $company = $this->companyRepository->delete($company);
 
         return $company ? new CompanyResource($company) : response()->json([

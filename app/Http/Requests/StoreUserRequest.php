@@ -14,7 +14,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create_user');
+        return $this->user()->can('edit_all_user_info');
     }
 
     /**

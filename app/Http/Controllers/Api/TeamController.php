@@ -64,8 +64,6 @@ class TeamController extends Controller
      */
     public function show(Team $team): JsonResource|JsonResponse
     {
-        $this->authorize('view_team');
-
         return new TeamResource($team);
     }
 
@@ -86,8 +84,6 @@ class TeamController extends Controller
      */
     public function destroy(Team $team): JsonResource|JsonResponse
     {
-        $this->authorize('delete', $team);
-
         $team = $this->teamRepository->delete($team);
 
         return $team ? new TeamResource($team) : response()->json([
