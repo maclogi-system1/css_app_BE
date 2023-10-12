@@ -5,13 +5,15 @@ namespace App\Repositories\Eloquents;
 use App\Models\ShopSettingMqAccounting;
 use App\Repositories\Contracts\ShopSettingMqAccountingRepository as ShopSettingMqAccountingRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\HasMqDateTimeHandler;
 use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class ShopSettingMqAccountingRepository extends Repository implements ShopSettingMqAccountingRepositoryContract
 {
-    use ShopSettingUpdateRepository;
+    use HasMqDateTimeHandler, ShopSettingUpdateRepository;
 
     /**
      * Get full name of model.
@@ -47,5 +49,23 @@ class ShopSettingMqAccountingRepository extends Repository implements ShopSettin
         }
 
         return parent::getWithFilter($builder, $filters);
+    }
+
+    /**
+     * Get a list of the shop setting mq accounting by storeId.
+     */
+    public function getListByStore(string $storeId, array $filters = []): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date'];
+        $toDate = $dateRangeFilter['to_date'];
+
+        return $this->model()
+            ->where('store_id', $storeId)
+            ->when(! empty($filters), function ($query) use ($fromDate, $toDate) {
+                $query->where('date', '>=', $fromDate)
+                    ->where('date', '<=', $toDate);
+            })
+            ->get();
     }
 }

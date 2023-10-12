@@ -5,9 +5,11 @@ namespace App\WebServices\AI;
 use App\Models\KpiRealData\MqAccounting;
 use App\Models\KpiRealData\ShopAnalyticsDaily;
 use App\Models\KpiRealData\ShopAnalyticsMonthly;
+use App\Repositories\Contracts\ShopSettingMqAccountingRepository;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class MqAccountingService extends Service
@@ -17,12 +19,29 @@ class MqAccountingService extends Service
     public function getListByStore(string $storeId, array $filters = [])
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
+        /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
+        $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
+        $settings = $shopSettingMqAccountingRepository->getListByStore($storeId, $filters);
 
-        return MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
+        $mqAccountings = MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->where('store_id', $storeId)
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($settings) {
+                if ($settings->isNotEmpty()) {
+                    $setting = $settings->where(function ($shopSetting) use ($item) {
+                        return $shopSetting->date->year == $item->year && $shopSetting->date->month == $item->month;
+                    })->first();
+
+                    if ($setting) {
+                        $item->mqCost->opening_fee = $setting->actual_store_opening_fee;
+                        $item->mqCost->csv_usage_fee = $setting->actual_csv_usage_fee;
+                        $item->mqCost->commision_rate = $setting->actual_commission_rate;
+                        $item->mqCost->cost_price_rate = $setting->actual_cost_rate;
+                        $item->mqCost->management_agency_fee = $setting->actual_management_agency_expenses;
+                    }
+                }
+
                 $item->store_opening_fee = $item->mqCost->opening_fee;
                 $item->csv_usage_fee = $item->mqCost->csv_usage_fee;
                 $item->ltv_2y_amnt = $item->mqCost->ltv_2y_amnt;
@@ -33,6 +52,85 @@ class MqAccountingService extends Service
                 return $item;
             })
             ->toArray();
+
+        return empty($mqAccountings) ? $settings->map(function ($setting) use ($storeId) {
+            $fixedCost = $setting->actual_management_agency_expenses
+                + $setting->actual_csv_usage_fee
+                + $setting->actual_store_opening_fee;
+
+            return [
+                'store_id' => $storeId,
+                'year' => Carbon::create($setting->date)->year,
+                'month' => Carbon::create($setting->date)->month,
+                'csv_usage_fee' => $setting->actual_csv_usage_fee,
+                'store_opening_fee' => $setting->actual_store_opening_fee,
+                'ltv_2y_amnt'=> 0,
+                'lim_cpa'=> 0,
+                'cpo_via_ad'=> 0,
+                'fixed_cost'=> $fixedCost,
+                'mq_kpi' => [
+                    'sales_amnt' => 0,
+                    'sales_num' => 0,
+                    'access_num' => 0,
+                    'conversion_rate' => 0,
+                    'sales_amnt_per_user' => 0,
+                ],
+                'mq_access_num' => [
+                    'access_flow_sum' => 0,
+                    'search_flow_num' => 0,
+                    'ranking_flow_num' => 0,
+                    'instagram_flow_num' => 0,
+                    'google_flow_num' => 0,
+                    'cpc_num' => 0,
+                    'display_num' => 0,
+                ],
+                'mq_ad_sales_amnt' => [
+                    'sales_amnt_via_ad' => 0,
+                    'sales_amnt_seasonal' => 0,
+                    'sales_amnt_event' => 0,
+                    'tda_access_num' => 0,
+                    'tda_v_sales_amnt' => 0,
+                    'tda_v_roas' => 0,
+                ],
+                'mq_user_trends' => [
+                    'new_sales_amnt' => 0,
+                    'new_sales_num' => 0,
+                    'new_price_per_user' => 0,
+                    're_sales_amnt' => 0,
+                    're_sales_num' => 0,
+                    're_price_per_user' => 0,
+                ],
+                'mq_cost' =>[
+                    'coupon_points_cost' => 0,
+                    'coupon_points_cost_rate' => 0,
+                    'ad_cost' => 0,
+                    'ad_cpc_cost' => 0,
+                    'ad_season_cost' => 0,
+                    'ad_event_cost' => 0,
+                    'ad_tda_cost' => 0,
+                    'ad_cost_rate' => 0,
+                    'cost_price' => 0,
+                    'cost_price_rate' => $setting->actual_cost_rate,
+                    'postage' => 0,
+                    'postage_rate' => 0,
+                    'commision' => 0,
+                    'commision_rate' => $setting->actual_commission_rate,
+                    'variable_cost_sum' => 0,
+                    'gross_profit' => 0,
+                    'gross_profit_rate' => 0,
+                    'management_agency_fee' => $setting->actual_management_agency_expenses,
+                    'opening_fee' => $setting->actual_store_opening_fee,
+                    'csv_usage_fee' => $setting->actual_csv_usage_fee,
+                    'management_agency_fee_rate' => 0,
+                    'cost_sum' => $fixedCost,
+                    'profit' => 0,
+                    'sum_profit' => 0,
+                    'ltv_2y_amnt' => 0,
+                    'lim_cpa' => 0,
+                    'cpo_via_ad' => 0,
+                ],
+            ];
+        })->toArray() : $mqAccountings;
     }
 
     public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filters = [])
