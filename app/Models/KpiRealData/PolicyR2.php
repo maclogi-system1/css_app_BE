@@ -11,7 +11,6 @@ class PolicyR2 extends Model
     protected $primaryKey = 'policy_id';
     public $incrementing = false;
 
-
     public function rule1()
     {
         return $this->belongsTo(Rule::class, 'rule_1_id', 'rule_id');
