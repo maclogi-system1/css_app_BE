@@ -56,6 +56,8 @@ class ShopSettingAwardPointRepository extends Repository implements ShopSettingA
             $builder->whereBetween('purchase_date', [$fromDate, $toDate]);
         }
 
+        $builder->whereNotNull('purchase_date');
+
         return parent::getWithFilter($builder, $filters);
     }
 }
