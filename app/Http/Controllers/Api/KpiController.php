@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\KpiProductPerformanceRequest;
 use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\CategoryAnalysisRepository;
+use App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ProductAnalysisRepository;
@@ -45,6 +47,7 @@ class KpiController extends Controller
         protected KpiSalesAmntPerUserReportCsv $kpiSalesAmntPerUserReportCsv,
         protected KpiProductsAnalysisCsv $kpiProductsAnalysisCsv,
         protected KpiCategoriesAnalysisCsv $kpiCategoriesAnalysisCsv,
+        protected ItemsPerformanceAnalyticsRepository $itemsPerformanceAnalyticsRepository,
     ) {
     }
 
@@ -437,6 +440,16 @@ class KpiController extends Controller
     }
 
     /**
+     * Get products's performance table from AI.
+     */
+    public function getPerformanceTable(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->itemsPerformanceAnalyticsRepository->getPerformanceTable($storeId, $request->query());
+
+        return response()->json($result, Response::HTTP_OK);
+    }
+
+    /**
      * Get products's sales info from AI.
      */
     public function getProductSalesInfo(Request $request): JsonResponse
@@ -444,6 +457,17 @@ class KpiController extends Controller
         $result = $this->productAnalysisRepository->getProductSalesInfo($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Save product's sales performance table.
+     */
+    public function saveSalesPerformanceTable(KpiProductPerformanceRequest $request, string $storeId): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $result = $this->itemsPerformanceAnalyticsRepository->saveSalesPerformanceTable($storeId, $data);
+
+        return response()->json($result, Response::HTTP_OK);
     }
 
     /**
