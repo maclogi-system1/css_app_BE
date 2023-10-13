@@ -188,6 +188,7 @@ return [
         Spatie\Permission\PermissionServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Aws\Laravel\AwsServiceProvider::class,
 
         /*
          * Application Service Providers...
