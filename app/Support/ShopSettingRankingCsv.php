@@ -92,7 +92,10 @@ class ShopSettingRankingCsv
                             'messages' => $validator->getMessageBag()->toArray(),
                         ];
                     } else {
-                        if ($result = $shopSettingRankingRepo->create($data + ['store_id' => $storeId])?->refresh()) {
+                        if ($result = $shopSettingRankingRepo->create($data + [
+                                'store_id' => $storeId,
+                                'is_competitive' => (int) $isCompetitiveRanking,
+                            ])?->refresh()) {
                             $results[] = $result;
                         }
                     }
