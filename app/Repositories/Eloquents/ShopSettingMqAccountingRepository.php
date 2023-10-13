@@ -9,6 +9,7 @@ use App\Support\Traits\HasMqDateTimeHandler;
 use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class ShopSettingMqAccountingRepository extends Repository implements ShopSettingMqAccountingRepositoryContract
@@ -44,8 +45,16 @@ class ShopSettingMqAccountingRepository extends Repository implements ShopSettin
     protected function getWithFilter(Builder $builder, array $filters = []): Builder
     {
         $storeId = Arr::pull($filters, 'store_id');
+        $fromDate = Arr::pull($filters, 'from_date');
+        $toDate = Arr::pull($filters, 'to_date');
         if ($storeId) {
             $builder->where('store_id', $storeId);
+        }
+
+        if ($fromDate && $toDate) {
+            $fromDate = Carbon::createFromFormat('Y-m', $fromDate)->firstOfMonth()->toDateString();
+            $toDate = Carbon::createFromFormat('Y-m', $toDate)->endOfMonth()->toDateString();
+            $builder->whereBetween('date', [$fromDate, $toDate]);
         }
 
         return parent::getWithFilter($builder, $filters);

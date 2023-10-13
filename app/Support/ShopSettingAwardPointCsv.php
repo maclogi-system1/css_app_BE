@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class ShopSettingAwardPointCsv
 {
     public const HEADING = [
-        'purchase_date' => ['title' => '購入日付', 'validation' => ['nullable', 'date_format:Y/m/d']],
+        'purchase_date' => ['title' => '購入日付', 'validation' => ['required', 'date_format:Y/m/d']],
         'order_number' => ['title' => '注文番号', 'validation' => ['nullable', 'max:255']],
         'points_awarded' => ['title' => 'ポイント付与数', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],
     ];

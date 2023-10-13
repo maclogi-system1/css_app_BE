@@ -14,7 +14,6 @@ use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Contracts\SingleJobRepository;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
-use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
