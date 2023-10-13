@@ -57,6 +57,8 @@ class ShopSettingMqAccountingRepository extends Repository implements ShopSettin
             $builder->whereBetween('date', [$fromDate, $toDate]);
         }
 
+        $builder->whereNotNull('date');
+
         return parent::getWithFilter($builder, $filters);
     }
 
