@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\MqCostController;
 use App\Http\Controllers\Api\MqSheetController;
+use App\Http\Controllers\Api\MyPageController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
@@ -379,4 +380,13 @@ Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
                     Route::put('/update/{storeId}', 'updateSearchRankingSettings')->name('update');
                 });
         });
+
+    Route::prefix('my-page')
+        ->name('my-page.')
+        ->group(function () {
+            Route::get('/options', [MyPageController::class, 'options'])->name('options');
+            Route::get('/store-profit-reference', [MyPageController::class, 'getStoreProfitReference'])->name('store-profit-reference');
+            Route::get('/store-profit-table', [MyPageController::class, 'getStoreProfitTable'])->name('store-profit-table');
+            Route::get('/tasks', [MyPageController::class, 'getTasks'])->name('tasks');
+    });
 });

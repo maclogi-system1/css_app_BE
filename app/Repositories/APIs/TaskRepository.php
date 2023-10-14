@@ -164,7 +164,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         return null;
     }
 
-    protected function handleTaskAssignees(Collection $data): Collection
+    public function handleTaskAssignees(Collection $data): Collection
     {
         return $data->map(function ($task) {
             if (! empty($task['assignees'])) {

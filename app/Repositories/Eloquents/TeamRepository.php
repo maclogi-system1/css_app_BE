@@ -98,4 +98,19 @@ class TeamRepository extends Repository implements TeamRepositoryContract
 
         return $team;
     }
+
+    public function getTeamsWithIds(array $teamIds): Collection
+    {
+        return $this->model()->newQuery()->with(['users'])->whereIn('id', $teamIds)->get();
+    }
+
+    public function getTeamUserIdsWithTeamIds(array $teamIds): array
+    {
+        $userIds = [];
+        $this->getTeamsWithIds($teamIds)->each(function (Team $team) use (&$userIds) {
+            $userIds = array_merge($userIds, $team->users->pluck('id')->toArray());
+        });
+
+        return $userIds;
+    }
 }

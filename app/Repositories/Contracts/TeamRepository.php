@@ -39,4 +39,14 @@ interface TeamRepository extends Repository
      * Handle delete the specified team.
      */
     public function delete(Team $team): ?Team;
+
+    /**
+     * Get list team by ids.
+     */
+    public function getTeamsWithIds(array $teamIds): Collection;
+
+    /**
+     * Get list team user id by team ids.
+     */
+    public function getTeamUserIdsWithTeamIds(array $teamIds): array;
 }

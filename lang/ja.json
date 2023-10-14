@@ -10,5 +10,6 @@
 
     "Something went wrong! Can't update or insert data.": "Something went wrong! Can't update or insert data.",
     "There are a few failures.": "There are a few failures.",
-    "You cannot delete a default sheet.": "You cannot delete a default sheet."
+    "You cannot delete a default sheet.": "You cannot delete a default sheet.",
+    "Something went wrong!. Please try again": "Something went wrong!. Please try again"
 }
