@@ -145,22 +145,20 @@ class MqAccountingService extends Service
     public function getCumulativeChangeInRevenueAndProfit($storeId, array $filters = []): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
 
-        $result = [];
-
-        foreach ($dateRange as $yearMonth) {
-            [$year, $month] = explode('-', $yearMonth);
-            $result[] = [
-                'store_id' => $storeId,
-                'year' => intval($year),
-                'month' => intval($month),
-                'sales_amnt' => rand(100000, 999999),
-                'profit' => rand(100000, 999999),
-            ];
-        }
-
-        return collect($result);
+        return MqAccounting::dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->where('store_id', $storeId)
+            ->join('mq_cost as mc', 'mc.mq_cost_id', '=', 'mq_accounting.mq_cost_id')
+            ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
+            ->select(
+                'mq_accounting.store_id',
+                DB::raw("CONCAT(mq_accounting.year, '/', LPAD(mq_accounting.month, 2, '0')) as `year_month`"),
+                'mk.sales_amnt',
+                'mc.profit',
+                'mq_accounting.year',
+                'mq_accounting.month',
+            )
+            ->get();
     }
 
     public function getSalesAmountAndProfit($storeId, array $filters = []): ?MqAccounting
@@ -367,7 +365,7 @@ class MqAccountingService extends Service
             ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
                 'mq_accounting.store_id',
-                DB::raw("CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0')) as `year_month`"),
+                DB::raw("CONCAT(mq_accounting.year, '/', LPAD(mq_accounting.month, 2, '0')) as `year_month`"),
                 'mk.sales_amnt',
                 'mc.variable_cost_sum',
                 'mc.profit',

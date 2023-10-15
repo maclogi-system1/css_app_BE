@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetCumlativeChangeInRevenueAndProfitRequest;
 use App\Http\Requests\GetMqAnalysisRequest;
 use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
@@ -200,8 +201,10 @@ class MqAccountingController extends Controller
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function cumulativeChangeInRevenueAndProfit(Request $request, $storeId): JsonResponse
-    {
+    public function cumulativeChangeInRevenueAndProfit(
+        GetCumlativeChangeInRevenueAndProfitRequest $request,
+        string $storeId,
+    ): JsonResponse {
         $chartMonthly = $this->mqChartRepository->cumulativeChangeInRevenueAndProfit($storeId, $request->query());
 
         return response()->json($chartMonthly);

@@ -44,17 +44,30 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
         $dateRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
 
         $actualMqAccounting = $this->mqAccountingService->getCumulativeChangeInRevenueAndProfit($storeId, $filters);
-        $expectedMqAccounting = $this->model()
+        $query = $this->model()
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
-            ->where('store_id', $storeId)
+            ->where('mq_accounting.store_id', $storeId)
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id');
+
+        if ($mqSheetId = Arr::get($filters, 'mq_sheet_id')) {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('mq_accounting.mq_sheet_id', $mqSheetId);
+        } else {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('ms.is_default', 1);
+        }
+
+        $expectedMqAccounting = $query
             ->select(
                 'mq_accounting.store_id',
+                DB::raw("CONCAT(mq_accounting.year, '/', LPAD(mq_accounting.month, 2, '0')) as `year_month`"),
+                'mk.sales_amnt',
+                'mc.profit',
+                'mq_accounting.mq_sheet_id',
+                'ms.name',
                 'mq_accounting.year',
                 'mq_accounting.month',
-                'mk.sales_amnt',
-                'mc.profit'
             )
             ->get();
 
@@ -63,12 +76,11 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
         foreach ($dateRange as $yearMonth) {
             [$year, $month] = explode('-', $yearMonth);
             $expected = $expectedMqAccounting->where('year', $year)->where('month', intval($month))->first()?->profit ?? 1;
-            $actual = Arr::get($actualMqAccounting->where('year', $year)->where('month', intval($month))->first(), 'profit', 2);
+            $actual = $actualMqAccounting->where('year', $year)->where('month', intval($month))->first()?->profit ?? 1;
             $result = $expected != 0 ? 100 * $actual / $expected : 0;
             $profitAchievementRate[] = [
                 'store_id' => $storeId,
-                'year' => intval($year),
-                'month' => intval($month),
+                'year_month' => $year.'/'.$month,
                 'profit_rate' => round($result, 2),
             ];
         }
