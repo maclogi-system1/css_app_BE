@@ -335,7 +335,7 @@ class MqAccountingService extends Service
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filters = []): MqAccounting
+    public function getTotalParamByStore(string $storeId, array $filters = []): ?MqAccounting
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
@@ -352,5 +352,27 @@ class MqAccountingService extends Service
             )
             ->groupBy('mq_accounting.store_id')
             ->first();
+    }
+
+    /**
+     * Get monthly changes in financial indicators.
+     */
+    public function financialIndicatorsMonthly($storeId, array $filters = [])
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+
+        return MqAccounting::dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->where('store_id', $storeId)
+            ->join('mq_cost as mc', 'mc.mq_cost_id', '=', 'mq_accounting.mq_cost_id')
+            ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
+            ->select(
+                'mq_accounting.store_id',
+                DB::raw("CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0')) as `year_month`"),
+                'mk.sales_amnt',
+                'mc.variable_cost_sum',
+                'mc.profit',
+                'mc.cost_sum as fixed_cost',
+            )
+            ->get();
     }
 }
