@@ -59,6 +59,11 @@ interface MqAccountingRepository extends Repository
     public function getForecastVsActual(string $storeId, array $filters = []): array;
 
     /**
+     * Get comparative analysis.
+     */
+    public function getComparativeAnalysis(string $storeId, array $filters = []);
+
+    /**
      * Get a list of validation rules for validator.
      */
     public function getValidationRules(string $storeId): array;
