@@ -413,16 +413,26 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
-        $expected = $this->useScope([
+        $query = $this->useScope([
             'dateRange' => [
                 $dateRangeFilter['from_date'],
                 $dateRangeFilter['to_date'],
             ],
         ])
             ->queryBuilder()
-            ->where('store_id', $storeId)
+            ->where('mq_accounting.store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
-            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
+            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id');
+
+        if ($mqSheetId = Arr::get($filters, 'mq_sheet_id')) {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('mq_accounting.mq_sheet_id', $mqSheetId);
+        } else {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('ms.is_default', 1);
+        }
+
+        $expected = $query
             ->select(
                 DB::raw('SUM(CASE WHEN mk.sales_amnt IS NULL THEN 0 ELSE mk.sales_amnt END) as sales_amnt'),
                 DB::raw('SUM(CASE WHEN mc.profit IS NULL THEN 0 ELSE mc.profit END) as profit'),
