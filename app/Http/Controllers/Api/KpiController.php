@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\KpiCategoryAnalysisRequest;
+use App\Http\Requests\KpiProductPerformanceRequest;
 use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
 use App\Repositories\Contracts\CategoryAnalysisRepository;
+use App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\MqKpiRepository;
 use App\Repositories\Contracts\ProductAnalysisRepository;
@@ -45,6 +48,7 @@ class KpiController extends Controller
         protected KpiSalesAmntPerUserReportCsv $kpiSalesAmntPerUserReportCsv,
         protected KpiProductsAnalysisCsv $kpiProductsAnalysisCsv,
         protected KpiCategoriesAnalysisCsv $kpiCategoriesAnalysisCsv,
+        protected ItemsPerformanceAnalyticsRepository $itemsPerformanceAnalyticsRepository,
     ) {
     }
 
@@ -437,9 +441,40 @@ class KpiController extends Controller
     }
 
     /**
+     * Get products's performance table from AI.
+     */
+    public function getPerformanceTable(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->itemsPerformanceAnalyticsRepository->getPerformanceTable($storeId, $request->query());
+
+        return response()->json($result, Response::HTTP_OK);
+    }
+
+    /**
+     * Get products's sales info from AI.
+     */
+    public function getProductSalesInfo(Request $request): JsonResponse
+    {
+        $result = $this->productAnalysisRepository->getProductSalesInfo($request->query());
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Save product's sales performance table.
+     */
+    public function saveSalesPerformanceTable(KpiProductPerformanceRequest $request, string $storeId): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $result = $this->itemsPerformanceAnalyticsRepository->saveSalesPerformanceTable($storeId, $data);
+
+        return response()->json($result, Response::HTTP_OK);
+    }
+
+    /**
      * Get data summary category analysis from AI.
      */
-    public function categoryAnalysisSummary(Request $request, string $storeId): JsonResponse
+    public function categoryAnalysisSummary(KpiCategoryAnalysisRequest $request, string $storeId): JsonResponse
     {
         $result = $this->categoryAnalysisRepository->getCategorySummary($storeId, $request->query());
 
@@ -465,7 +500,7 @@ class KpiController extends Controller
     /**
      * Get chart selected categories sales per month from AI.
      */
-    public function chartSelectedCategories(Request $request): JsonResponse
+    public function chartSelectedCategories(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartSelectedCategories($conditions);
@@ -476,7 +511,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's trends from AI.
      */
-    public function chartCategoriesTrends(Request $request): JsonResponse
+    public function chartCategoriesTrends(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesTrends($conditions);
@@ -487,7 +522,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's stay times from AI.
      */
-    public function chartCategoriesStayTimes(Request $request): JsonResponse
+    public function chartCategoriesStayTimes(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->getChartCategoriesStayTimes($conditions);
@@ -498,7 +533,7 @@ class KpiController extends Controller
     /**
      * Get chart categories's reviews trends from AI.
      */
-    public function chartCategoriesReviewsTrends(Request $request): JsonResponse
+    public function chartCategoriesReviewsTrends(KpiCategoryAnalysisRequest $request): JsonResponse
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->chartCategoriesReviewsTrends($conditions);

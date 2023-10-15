@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Traits\ModelDateTimeFormatter;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,15 +10,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Policy extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, ModelDateTimeFormatter;
 
     public const MEASURES_CATEGORY = 1;
     public const PROJECT_CATEGORY = 2;
     public const SIMULATION_CATEGORY = 3;
+    public const AI_RECOMMENDATION_CATEGORY = 4;
     public const CATEGORIES = [
         self::MEASURES_CATEGORY => '施策一覧',
         self::PROJECT_CATEGORY => 'プロジェクト一覧',
         self::SIMULATION_CATEGORY => '施策シミュレーション',
+        self::AI_RECOMMENDATION_CATEGORY => '提案',
     ];
 
     public const NEW_PROCESSING_STATUS = 0;
@@ -53,6 +56,8 @@ class Policy extends Model
     protected $casts = [
         'simulation_start_date' => 'datetime',
         'simulation_end_date' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function isProcessDone(): bool

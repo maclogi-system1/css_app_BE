@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class ShopSettingMqAccountingCsv
 {
     public const HEADING = [
-        'date' => ['title' => '日付', 'validation' => ['nullable', 'date_format:Y/m/d']],
+        'date' => ['title' => '日付', 'validation' => ['required', 'date_format:Y/m/d']],
         'estimated_management_agency_expenses' => ['title' => '予:運営代行費', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],
         'estimated_cost_rate' => ['title' => '予:原価率', 'validation' => ['nullable', 'decimal:0,6', 'between:-999999,999999']],
         'estimated_shipping_fee' => ['title' => '予:送料', 'validation' => ['nullable', 'integer', 'between:-2000000000,2000000000']],

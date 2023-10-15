@@ -51,12 +51,17 @@ interface MqAccountingRepository extends Repository
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filters = []): Collection;
+    public function getTotalParamByStore(string $storeId, array $filters = []);
 
     /**
      * Get forecast vs actual.
      */
     public function getForecastVsActual(string $storeId, array $filters = []): array;
+
+    /**
+     * Get comparative analysis.
+     */
+    public function getComparativeAnalysis(string $storeId, array $filters = []);
 
     /**
      * Get a list of validation rules for validator.
@@ -69,7 +74,7 @@ interface MqAccountingRepository extends Repository
     public function handleValidationUpdate($data, $storeId): array;
 
     /**
-     * Handle creating empty mq_accounting.
+     * Handle creating default mq_accounting.
      */
-    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void;
+    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $defaultData = []): void;
 }

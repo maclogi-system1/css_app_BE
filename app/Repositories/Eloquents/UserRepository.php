@@ -5,16 +5,19 @@ namespace App\Repositories\Eloquents;
 use App\Mail\VerifyEmailRegistered;
 use App\Models\Bookmark;
 use App\Models\Company;
+use App\Models\LinkedUserInfo;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository as UserRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\ChatworkService;
+use App\WebServices\OSS\UserService;
 use App\WebServices\UploadFileService;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use LogicException;
@@ -22,7 +25,9 @@ use LogicException;
 class UserRepository extends Repository implements UserRepositoryContract
 {
     public function __construct(
-        private UploadFileService $uploadFileService
+        private UploadFileService $uploadFileService,
+        private UserService $userService,
+        private \App\Repositories\Contracts\LinkedUserInfoRepository $linkedUserInfoRepository,
     ) {
     }
 
@@ -122,6 +127,24 @@ class UserRepository extends Repository implements UserRepositoryContract
             if (isset($data['chatwork_account_id'])) {
                 $this->linkUserToChatwork($user, $data['chatwork_account_id']);
             }
+
+            $paramAPI = [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'image_path' => $data['profile_photo_path'] ?? null,
+                'is_css' => 1,
+            ];
+
+            $result = $this->userService->create($paramAPI);
+            if (! $result->get('success')) {
+                throw new Exception('Create user at task-management failed.');
+            }
+
+            $this->linkedUserInfoRepository->create([
+                'user_id' => $user->id,
+                'service_id' => 2,
+                'linked_service_user_id' => $result->get('data')->get('data'),
+            ]);
 
             $this->sendEmailVerificationNotification($user, $password);
 
@@ -352,5 +375,28 @@ class UserRepository extends Repository implements UserRepositoryContract
         });
 
         return $company;
+    }
+
+    /**
+     * Get a list of the user by linked service user ids.
+     */
+    public function getListByLinkedUserIds(array|Collection $linkedUserIds): Collection
+    {
+        /** @var \App\Models\LinkedUserInfo */
+        $linkedServiceUser = app(LinkedUserInfo::class);
+        $users = $linkedServiceUser->with(['cssUser'])
+            ->whereIn('linked_service_user_id', $linkedUserIds)
+            ->get()
+            ->pluck('cssUser');
+
+        return $users;
+    }
+
+    /**
+     * Get a list of css_user_ids by oss_user_ids.
+     */
+    public function getCssUserIdsByOssUserIds(array|Collection $linkedUserIds): array
+    {
+        return $this->getListByLinkedUserIds($linkedUserIds)->pluck('id')->toArray();
     }
 }

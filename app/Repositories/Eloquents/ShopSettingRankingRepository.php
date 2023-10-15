@@ -59,11 +59,7 @@ class ShopSettingRankingRepository extends Repository implements ShopSettingRank
         }
 
         if ($isCompetitiveRanking !== null) {
-            if ($isCompetitiveRanking) {
-                $builder->whereNotNull('store_competitive_id');
-            } else {
-                $builder->whereNull('store_competitive_id');
-            }
+            $builder->where('is_competitive', (int) $isCompetitiveRanking);
         }
 
         return parent::getWithFilter($builder, $filters);
@@ -71,10 +67,12 @@ class ShopSettingRankingRepository extends Repository implements ShopSettingRank
 
     public function updateMultiple(string $storeId, array $settings, bool $isCompetitiveRanking): null|bool
     {
-        if (! $isCompetitiveRanking) {
-            foreach ($settings as &$setting) {
-                unset($setting['store_competitive_id']);
+        foreach ($settings as $key => $setting) {
+            if (! $isCompetitiveRanking) {
+                unset($setting[$key]['store_competitive_id']);
             }
+
+            $settings[$key]['is_competitive'] = (int) $isCompetitiveRanking;
         }
 
         return $this->updateMultipleTrait($storeId, $settings);

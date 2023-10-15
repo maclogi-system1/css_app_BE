@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ShopSettingMqAccounting;
 use App\Support\ShopSettingMqAccountingCsv;
 use App\Support\Traits\ShopSettingUpdateRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -25,11 +26,11 @@ class UpdateShopSettingMQAccountingRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'validation');
+        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'validation', ShopSettingMqAccounting::getModel()->getTable());
     }
 
     public function attributes()
     {
-        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'title');
+        return $this->getProperties(ShopSettingMqAccountingCsv::HEADING, 'title', ShopSettingMqAccounting::getModel()->getTable());
     }
 }

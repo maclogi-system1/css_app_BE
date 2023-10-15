@@ -35,4 +35,9 @@ interface ProductAnalysisRepository extends Repository
      * Get chart products's reviews trends from AI.
      */
     public function getChartProductsReviewsTrends(array $filters = []): Collection;
+
+    /**
+     * Get products's sales info from AI.
+     */
+    public function getProductSalesInfo(array $filters = []): Collection;
 }

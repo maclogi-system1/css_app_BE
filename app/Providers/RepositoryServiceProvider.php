@@ -46,6 +46,8 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\ShopSettingAwardPointRepository::class => \App\Repositories\Eloquents\ShopSettingAwardPointRepository::class,
         \App\Repositories\Contracts\ShopSettingSearchRankingRepository::class => \App\Repositories\Eloquents\ShopSettingSearchRankingRepository::class,
         \App\Repositories\Contracts\ReviewAnalysisRepository::class => \App\Repositories\APIs\ReviewAnalysisRepository::class,
+        \App\Repositories\Contracts\LinkedUserInfoRepository::class => \App\Repositories\Eloquents\LinkedUserInfoRepository::class,
+        \App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository::class => \App\Repositories\Eloquents\ItemsPerformanceAnalyticsRepository::class,
     ];
 
     /**

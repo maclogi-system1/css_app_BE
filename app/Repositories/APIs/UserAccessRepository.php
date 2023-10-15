@@ -125,10 +125,21 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
      */
     public function getDataChartAccessSource(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->accessSourceService->getListAccessSource($storeId, $filters);
+        $result = $this->accessSourceService->getListAccessSource($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -140,7 +151,7 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->accessSourceService->getListAccessSource($storeId, $filters)->get('data'));
+            $data = $data->merge($this->accessSourceService->getListAccessSource($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -154,11 +165,21 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
      */
     public function getDataTableAccessSource(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
 
-        return $this->accessSourceService->getTableAccessSource($storeId, $filters);
+        return $this->accessSourceService->getTableAccessSource($storeId, $filters, $isMonthQuery);
     }
 
     /**

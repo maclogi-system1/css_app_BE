@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\KpiRealData\PolicyR2;
 use App\Models\Policy;
 use App\Support\DataAdapter\PolicyAdapter;
 use Illuminate\Http\Request;
@@ -24,8 +25,8 @@ class PolicyResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        if ($this->resource instanceof PolicyAdapter) {
-            return $this->resource->toArray();
+        if ($this->resource instanceof PolicyR2) {
+            return (new PolicyAdapter($this->resource))->toArray();
         }
 
         return $this->category == Policy::SIMULATION_CATEGORY

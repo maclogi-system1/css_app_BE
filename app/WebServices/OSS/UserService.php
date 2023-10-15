@@ -15,4 +15,12 @@ class UserService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('users.shop_users'), $filters));
     }
+
+    /**
+     * Handle create a new user.
+     */
+    public function create(array $data): Collection
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('users.create'), $data));
+    }
 }

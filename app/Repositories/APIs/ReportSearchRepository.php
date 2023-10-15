@@ -28,10 +28,21 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartReportSearch(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataReportSearch($storeId, $filters);
+        $result = $this->reportSearchService->getDataReportSearch($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -43,7 +54,7 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->reportSearchService->getDataReportSearch($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataReportSearch($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -57,10 +68,21 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataTableReportSearch(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getRankingReportSearch($storeId, $filters);
+        $result = $this->reportSearchService->getRankingReportSearch($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -72,7 +94,7 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->reportSearchService->getRankingReportSearch($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getRankingReportSearch($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -119,10 +141,21 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartOrganicInflows(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters);
+        $result = $this->reportSearchService->getDataChartOrganicInflows($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -134,7 +167,7 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->reportSearchService->getDataChartOrganicInflows($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataChartOrganicInflows($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -148,10 +181,21 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataChartInflowsViaSpecificWords(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters);
+        $result = $this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -163,7 +207,7 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataChartInflowsViaSpecificWords($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([

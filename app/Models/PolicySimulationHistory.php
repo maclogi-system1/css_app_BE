@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Traits\ModelDateTimeFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PolicySimulationHistory extends Model
 {
-    use HasFactory;
+    use HasFactory, ModelDateTimeFormatter;
 
     protected $fillable = [
         'policy_id',

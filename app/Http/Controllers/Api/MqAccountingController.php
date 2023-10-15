@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetCumlativeChangeInRevenueAndProfitRequest;
+use App\Http\Requests\GetMqAnalysisRequest;
 use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
 use App\Imports\MqAccountingImport;
@@ -199,8 +201,10 @@ class MqAccountingController extends Controller
     /**
      * Get the cumulative change in revenue and profit.
      */
-    public function cumulativeChangeInRevenueAndProfit(Request $request, $storeId): JsonResponse
-    {
+    public function cumulativeChangeInRevenueAndProfit(
+        GetCumlativeChangeInRevenueAndProfitRequest $request,
+        string $storeId,
+    ): JsonResponse {
         $chartMonthly = $this->mqChartRepository->cumulativeChangeInRevenueAndProfit($storeId, $request->query());
 
         return response()->json($chartMonthly);
@@ -223,7 +227,16 @@ class MqAccountingController extends Controller
      */
     public function getForecastVsActual(Request $request, $storeId): JsonResponse
     {
-        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $request->query());
+        $filters = $request->query();
+
+        if ($year = Arr::pull($filters, 'year')) {
+            $filters = [
+                'from_date' => "{$year}-01",
+                'to_date' => "{$year}-12",
+            ];
+        }
+
+        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $filters);
 
         return response()->json($result);
     }
@@ -231,14 +244,9 @@ class MqAccountingController extends Controller
     /**
      * Get comparative analysis.
      */
-    public function getComparativeAnalysis(Request $request, $storeId): JsonResponse
+    public function getComparativeAnalysis(GetMqAnalysisRequest $request, $storeId): JsonResponse
     {
-        $year = Arr::get($request->query(), 'year', now()->year);
-        $filters = [
-            'from_date' => "{$year}-01",
-            'to_date' => "{$year}-12",
-        ];
-        $result = $this->mqAccountingRepository->getForecastVsActual($storeId, $filters);
+        $result = $this->mqAccountingRepository->getComparativeAnalysis($storeId, $request->validated());
 
         return response()->json($result);
     }

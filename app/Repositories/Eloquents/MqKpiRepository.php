@@ -56,6 +56,17 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
      */
     private function getSummaryData(string $storeId, array $filters = []): array
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
         $expectedMqKpi = $this->mqAccountingRepository->model()
@@ -68,9 +79,9 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
                 AVG(mk.conversion_rate) as conversion_rate,
                 AVG(mk.sales_amnt_per_user) as sales_amnt_per_user
             ')
-            ->first()
-            ->toArray();
-        $actualMqKpi = $this->mqAccountingService->getListMqKpiByStoreId($storeId, $filters)->toArray();
+            ->first();
+        $expectedMqKpi = ! is_null($expectedMqKpi) ? $expectedMqKpi->toArray() : [];
+        $actualMqKpi = $this->mqAccountingService->getListMqKpiByStoreId($storeId, $filters, $isMonthQuery)->toArray();
 
         $expectedSalesAmnt = Arr::get($expectedMqKpi, 'sales_amnt', 0);
         $actualSalesAmnt = Arr::get($actualMqKpi, 'sales_amnt', 0);

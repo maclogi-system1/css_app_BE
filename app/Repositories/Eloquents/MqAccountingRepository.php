@@ -17,6 +17,8 @@ use App\WebServices\AI\MqAccountingService;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -252,11 +254,11 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $tmpData = [
                 'year' => intval(str_replace('年', '', $rows[0][$column])),
                 'month' => intval(str_replace('月', '', $rows[1][$column])),
-                'store_opening_fee' => $this->removeStrangeCharacters($rows[46][$column]),
-                'csv_usage_fee' => $this->removeStrangeCharacters($rows[47][$column]),
-                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[52][$column]),
-                'lim_cpa' => $this->removeStrangeCharacters($rows[53][$column]),
-                'cpo_via_ad' => $this->removeStrangeCharacters($rows[54][$column]),
+                'store_opening_fee' => $this->removeStrangeCharacters($rows[44][$column]),
+                'csv_usage_fee' => $this->removeStrangeCharacters($rows[45][$column]),
+                'ltv_2y_amnt' => $this->removeStrangeCharacters($rows[50][$column]),
+                'lim_cpa' => $this->removeStrangeCharacters($rows[51][$column]),
+                'cpo_via_ad' => $this->removeStrangeCharacters($rows[52][$column]),
             ];
             if (! empty($mqKpi)) {
                 $tmpData = array_merge($tmpData, $mqKpi);
@@ -323,9 +325,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
             $cost = $this->updateOrCreateMqCost($rows['mq_cost'], $mqAccounting?->mq_cost_id);
 
-            Arr::set($rows, 'fixed_cost', $cost->cost_sum
-                + Arr::get($rows, 'csv_usage_fee', $mqAccounting?->csv_usage_fee ?? 0)
-                + Arr::get($rows, 'store_opening_fee', $mqAccounting?->store_opening_fee ?? 0));
+            Arr::set($rows, 'fixed_cost', $cost->cost_sum);
 
             if (is_null($mqAccounting)) {
                 $mqAccounting = new MqAccounting();
@@ -360,20 +360,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     private function updateOrCreateMqCost(array $data, ?string $mqCostId = null): MqCost
     {
-        if (! is_null($mqCostId)) {
-            $cost = MqCost::find($mqCostId);
-        }
-
-        $variableCostSum = Arr::get($data, 'coupon_points_cost', $cost?->coupon_points_cost ?? 0)
-            + Arr::get($data, 'ad_cost', $cost?->ad_cost ?? 0)
-            + Arr::get($data, 'cost_price', $cost?->cost_price ?? 0)
-            + Arr::get($data, 'postage', $cost?->postage ?? 0)
-            + Arr::get($data, 'commision', $cost?->commision ?? 0);
-        $costSum = Arr::get($data, 'management_agency_fee', $cost?->management_agency_fee ?? 0)
-            + Arr::get($data, 'reserve1', $cost?->reserve1 ?? 0)
-            + Arr::get($data, 'reserve2', $cost?->reserve2 ?? 0);
-        Arr::set($data, 'variable_cost_sum', $variableCostSum);
-        Arr::set($data, 'cost_sum', $costSum);
+        Arr::set($data, 'reserve1', Arr::get($data, 'store_opening_fee', 0));
+        Arr::set($data, 'reserve2', Arr::get($data, 'csv_usage_fee', 0));
 
         return MqCost::updateOrCreate([
             'id' => $mqCostId,
@@ -413,25 +401,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filters = []): Collection
+    public function getTotalParamByStore(string $storeId, array $filters = [])
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filters);
-
-        $query = $this->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
-            ->queryBuilder()
-            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
-            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->selectRaw('
-                store_id,
-                sum(mk.sales_amnt) as sales_amnt_total,
-                sum(mq_accounting.fixed_cost) as cost_sum_total,
-                sum(mc.variable_cost_sum) as variable_cost_sum_total,
-                sum(mc.profit) as profit_total
-            ')
-            ->groupBy('mq_accounting.store_id')
-            ->where('store_id', $storeId);
-
-        return $query->get();
+        return $this->mqAccountingService->getTotalParamByStore($storeId, $filters);
     }
 
     /**
@@ -441,33 +413,39 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
-        $expected = $this->useScope([
+        $query = $this->useScope([
             'dateRange' => [
                 $dateRangeFilter['from_date'],
                 $dateRangeFilter['to_date'],
             ],
         ])
             ->queryBuilder()
-            ->where('store_id', $storeId)
+            ->where('mq_accounting.store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
-            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->select('mk.sales_amnt', 'mc.profit')
-            ->get()
-            ->reduce(function ($pre, $item) {
-                return [
-                    'sales_amnt' => $pre['sales_amnt'] + $item->sales_amnt,
-                    'profit' => $pre['profit'] + $item->profit,
-                ];
-            }, [
-                'sales_amnt' => 0,
-                'profit' => 0,
-            ]);
-        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filters);
-        $salesAmntRate = $expected['sales_amnt']
-            ? ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $expected['sales_amnt']
+            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id');
+
+        if ($mqSheetId = Arr::get($filters, 'mq_sheet_id')) {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('mq_accounting.mq_sheet_id', $mqSheetId);
+        } else {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('ms.is_default', 1);
+        }
+
+        $expected = $query
+            ->select(
+                DB::raw('SUM(CASE WHEN mk.sales_amnt IS NULL THEN 0 ELSE mk.sales_amnt END) as sales_amnt'),
+                DB::raw('SUM(CASE WHEN mc.profit IS NULL THEN 0 ELSE mc.profit END) as profit'),
+            )
+            ->first();
+        $actual = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+        $actual->sales_amnt ??= 0;
+        $actual->profit ??= 0;
+        $salesAmntRate = $expected->sales_amnt
+            ? ($actual->sales_amnt - $expected->sales_amnt) * 100 / $expected->sales_amnt
             : 0;
-        $profitRate = $expected['profit']
-            ? ($actual['profit'] - $expected['profit']) * 100 / $expected['profit']
+        $profitRate = $expected->profit
+            ? ($actual->profit - $expected->profit) * 100 / $expected->profit
             : 0;
 
         return [
@@ -479,38 +457,137 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     }
 
     /**
-     * Handle creating empty mq_accounting.
+     * Get comparative analysis.
      */
-    public function makeEmptyData(string $storeId, MqSheet $mqSheet): void
+    public function getComparativeAnalysis(string $storeId, array $filters = [])
+    {
+        $salesAmntAndProfit = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+        $salesAmntRate = 0;
+        $profitRate = 0;
+        $salesAmnt = [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
+            'sales_amnt' => $salesAmntAndProfit->sales_amnt,
+        ];
+        $profit = [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
+            'sales_amnt' => $salesAmntAndProfit->profit,
+        ];
+        $comparedSalesAmnt = [];
+        $comparedProfit = [];
+
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $comparedSalesAmntAndProfit = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+
+            $salesAmntRate = $comparedSalesAmntAndProfit->sales_amnt
+                ? ($salesAmntAndProfit->sales_amnt - $comparedSalesAmntAndProfit->sales_amnt) * 100 / $comparedSalesAmntAndProfit->sales_amnt
+                : 0;
+            $profitRate = $comparedSalesAmntAndProfit->profit
+                ? ($salesAmntAndProfit->profit - $comparedSalesAmntAndProfit->profit) * 100 / $comparedSalesAmntAndProfit->profit
+                : 0;
+
+            $comparedSalesAmnt = [
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'sales_amnt' => $comparedSalesAmntAndProfit->sales_amnt,
+            ];
+            $comparedProfit = [
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'profit' => $comparedSalesAmntAndProfit->profit,
+            ];
+        }
+
+        return [
+            'sales_amnt_rate' => round($salesAmntRate, 2),
+            'profit_rate' => round($profitRate, 2),
+            'sales_amnt' => [$salesAmnt, $comparedSalesAmnt],
+            'profit' => [$profit, $comparedProfit],
+        ];
+    }
+
+    /**
+     * Handle creating default mq_accounting.
+     */
+    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $defaultData = []): void
     {
         $dateRange = $this->getDateTimeRange(now()->firstOfYear(), now()->endOfYear());
 
         foreach ($dateRange as $yearMonth) {
-            $this->handleSafely(function () use ($yearMonth, $storeId, $mqSheet) {
-                [$year, $month] = explode('-', $yearMonth);
-                $mqKpi = MqKpi::create([]);
-                $mqAccessNum = MqAccessNum::create([]);
-                $mqAdSalesAmnt = MqAdSalesAmnt::create([]);
-                $mqUserTrends = MqUserTrend::create([]);
-                $mqCost = MqCost::create([]);
-                $mqAccounting = $this->model([
-                    'store_id' => $storeId,
-                    'year' => $year,
-                    'month' => $month,
-                    'mq_kpi_id' => $mqKpi->id,
-                    'mq_access_num_id' => $mqAccessNum->id,
-                    'mq_ad_sales_amnt_id' => $mqAdSalesAmnt->id,
-                    'mq_user_trends_id' => $mqUserTrends->id,
-                    'mq_cost_id' => $mqCost->id,
-                    'mq_sheet_id' => $mqSheet->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            $setting = Arr::first(Arr::where($defaultData, function ($item) use ($yearMonth) {
+                return Carbon::create($item['date'])->format('Y-m') == $yearMonth;
+            }));
 
-                $mqAccounting->save();
-
-                return $mqAccounting;
-            }, 'Create empty mq accounting');
+            $this->createDefaultData($yearMonth, $storeId, $mqSheet, $setting);
         }
+
+        $anotherData = Arr::where($defaultData, function ($item) {
+            return Carbon::create($item['date'])->year != now()->year;
+        });
+
+        foreach ($anotherData as $data) {
+            $this->createDefaultData(Carbon::create($data)->format('Y-m'), $storeId, $mqSheet, $data);
+        }
+    }
+
+    /**
+     * Handles the creation of a new mq_accounting along with its relationships.
+     */
+    protected function createDefaultData($yearMonth, $storeId, $mqSheet, $setting): ?MqAccounting
+    {
+        return $this->handleSafely(function () use ($yearMonth, $storeId, $mqSheet, $setting) {
+            [$year, $month] = explode('-', $yearMonth);
+            $dataMqCost = [];
+            $dataMqAccounting = [];
+
+            if (
+                ! empty($setting)
+                && $yearMonth == Carbon::create(Arr::get($setting, 'date'))->format('Y-m')
+            ) {
+                $dataMqCost = [
+                    'management_agency_fee' => Arr::get($setting, 'estimated_management_agency_expenses'),
+                    'cost_price_rate' => Arr::get($setting, 'estimated_cost_rate'),
+                    'management_agency_fee' => Arr::get($setting, 'estimated_shipping_fee'),
+                    'commision_rate' => Arr::get($setting, 'estimated_commission_rate'),
+                    'reserve1' => Arr::get($setting, 'estimated_store_opening_fee'),
+                    'reserve2' => Arr::get($setting, 'estimated_csv_usage_fee'),
+                ];
+                $dataMqAccounting = [
+                    'csv_usage_fee' => Arr::get($setting, 'estimated_csv_usage_fee'),
+                    'store_opening_fee' => Arr::get($setting, 'estimated_store_opening_fee'),
+                ];
+            }
+
+            $mqKpi = MqKpi::create([]);
+            $mqAccessNum = MqAccessNum::create([]);
+            $mqAdSalesAmnt = MqAdSalesAmnt::create([]);
+            $mqUserTrends = MqUserTrend::create([]);
+            $mqCost = MqCost::create($dataMqCost);
+            $mqAccounting = $this->model([
+                'store_id' => $storeId,
+                'year' => $year,
+                'month' => $month,
+                'mq_kpi_id' => $mqKpi->id,
+                'mq_access_num_id' => $mqAccessNum->id,
+                'mq_ad_sales_amnt_id' => $mqAdSalesAmnt->id,
+                'mq_user_trends_id' => $mqUserTrends->id,
+                'mq_cost_id' => $mqCost->id,
+                'mq_sheet_id' => $mqSheet->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ] + $dataMqAccounting);
+
+            $mqAccounting->save();
+
+            return $mqAccounting;
+        }, 'Create default mq accounting');
     }
 }

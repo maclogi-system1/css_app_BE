@@ -28,10 +28,21 @@ class SalesAmntPerUserAnalysisRepository extends Repository implements SalesAmnt
      */
     public function getChartSummarySalesAmntPerUser(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->salesAmntPerUserService->getChartSummarySalesAmntPerUser($storeId, $filters);
+        $result = $this->salesAmntPerUserService->getChartSummarySalesAmntPerUser($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -43,7 +54,7 @@ class SalesAmntPerUserAnalysisRepository extends Repository implements SalesAmnt
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->salesAmntPerUserService->getChartSummarySalesAmntPerUser($storeId, $filters)->get('data'));
+            $data = $data->merge($this->salesAmntPerUserService->getChartSummarySalesAmntPerUser($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -57,10 +68,21 @@ class SalesAmntPerUserAnalysisRepository extends Repository implements SalesAmnt
      */
     public function getTableSalesAmntPerUserComparison(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters);
+        $result = $this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -72,7 +94,7 @@ class SalesAmntPerUserAnalysisRepository extends Repository implements SalesAmnt
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters)->get('data'));
+            $data = $data->merge($this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([

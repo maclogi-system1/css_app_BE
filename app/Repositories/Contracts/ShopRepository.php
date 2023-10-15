@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Contracts;
 
+use Illuminate\Support\Collection;
+
 interface ShopRepository extends Repository
 {
     /**
@@ -18,4 +20,11 @@ interface ShopRepository extends Repository
      * Get a list of the user in a shop.
      */
     public function getUsers(array $filters = []);
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array;
+
+    public function update(string $storeId, array $data): Collection;
 }

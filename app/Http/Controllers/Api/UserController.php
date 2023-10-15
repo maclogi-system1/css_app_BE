@@ -25,8 +25,6 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResource|JsonResponse
     {
-        $this->authorize('view_user');
-
         $users = UserResource::collection($this->userRepository->getList($request->query()));
         $users->wrap('users');
 
@@ -38,8 +36,6 @@ class UserController extends Controller
      */
     public function search(Request $request): JsonResource|JsonResponse
     {
-        $this->authorize('view_user');
-
         $users = UserResource::collection($this->userRepository->search(
             ['name', 'email'],
             $request->query(),
@@ -78,8 +74,6 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResource|JsonResponse
     {
-        $this->authorize('view_user');
-
         return new UserResource($user);
     }
 
@@ -109,8 +103,6 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user): JsonResource|JsonResponse
     {
-        $this->authorize('delete_user');
-
         if ($request->user()->id == $user->id) {
             return response()->json([
                 'message' => __('You cannot delete yourself.'),
@@ -129,8 +121,6 @@ class UserController extends Controller
      */
     public function deleteMultiple(Request $request): JsonResponse
     {
-        $this->authorize('delete_user');
-
         return ! $this->userRepository->deleteMultiple($request->query('user_ids', []))
             ? response()->json([
                 'message' => __('Delete failed. Please check your user ids!'),

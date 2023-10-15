@@ -18,15 +18,16 @@ class PolicyAdapter implements Arrayable
     public function toArray()
     {
         return [
-            'id' => Arr::get($this->policy, 'policy_r2_id'),
+            'id' => Arr::get($this->policy, 'policy_id'),
             'store_id' => Arr::get($this->policy, 'store_id'),
             'job_group_id' => null,
-            'name' => Arr::get($this->policy, 'policy_name'),
-            'category' => Policy::CATEGORIES[Policy::SIMULATION_CATEGORY],
-            'template' => Arr::get($this->policy, 'policy_class'),
-            'status' => 1,
-            'simulation_start_date' => Arr::get($this->policy, 'start_date'),
-            'simulation_end_date' => Arr::get($this->policy, 'end_date'),
+            'job_group_title' => Arr::get($this->policy, 'policy_class'),
+            'single_job_title' => Arr::get($this->policy, 'policy_name'),
+            'category' => Policy::AI_RECOMMENDATION_CATEGORY,
+            'category_name' => Policy::CATEGORIES[Policy::AI_RECOMMENDATION_CATEGORY],
+            'status' => -10,
+            'execution_time' => Arr::get($this->policy, 'start_date'),
+            'undo_time' => Arr::get($this->policy, 'end_date'),
             'point_rate' => Arr::get($this->policy, 'point_rate'),
             'point_application_period' => Arr::get($this->policy, 'point_application_period'),
             'flat_rate_discount' => Arr::get($this->policy, 'end_date'),

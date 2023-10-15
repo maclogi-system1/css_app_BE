@@ -8,11 +8,12 @@ use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
 use App\Repositories\Contracts\JobGroupRepository;
+use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\PolicyAttachmentRepository;
 use App\Repositories\Contracts\PolicyRepository as PolicyRepositoryContract;
 use App\Repositories\Contracts\SingleJobRepository;
+use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
-use App\Support\DataAdapter\PolicyAdapter;
 use App\WebServices\AI\PolicyR2Service;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,7 +50,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $perPage = Arr::get($filters, 'per_page', 10);
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
-        if (Arr::hasAny($filters, ['keyword', 'from_date', 'to_date'])) {
+        if (Arr::hasAny($filters, ['keyword', 'from_date', 'to_date', 'status', 'manager'])) {
             return $this->getListBySingleJob($storeId, $filters);
         }
 
@@ -120,14 +121,37 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     private function getListBySingleJob(string $storeId, array $filters): Collection|LengthAwarePaginator
     {
+        if ($user = Arr::pull($filters, 'manager')) {
+            $users = str($user)->contains(',') ? array_filter(explode(',', $user)) : [$user];
+
+            /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
+            $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+            $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($users);
+
+            Arr::set($filters, 'filters.manager', $ossUserIds);
+        }
+
         /** @var \App\Repositories\Contracts\SingleJobRepository */
         $singleJobRepository = app(SingleJobRepository::class);
-
-        $result = $singleJobRepository->getListByStore($storeId, $filters + ['per_page' => -1]);
+        $result = $singleJobRepository->getListByStore(
+            $storeId,
+            $filters + ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]
+        );
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
         if ($result->get('success')) {
-            $singleJobs = collect($result->get('data')->get('single_jobs'));
+            $singleJobs = collect($result->get('data')->get('single_jobs'))
+                ->map(function ($item) {
+                    $managers = Arr::get($item, 'job_group.managers');
+                    $managerIds = Arr::pluck($managers, 'id');
+
+                    /** @var \App\Repositories\Contracts\UserRepository */
+                    $userRepository = app(UserRepository::class);
+                    $cssUsers = $userRepository->getListByLinkedUserIds($managerIds);
+                    Arr::set($item, 'job_group.managers', $cssUsers->toArray());
+
+                    return $item;
+                });
             $singleJobIds = $singleJobs->pluck('id')->unique();
 
             $policies = $this->handleFilterCategory($this->queryBuilder(), $category)
@@ -148,11 +172,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Get a list of AI recommendations.
      */
-    public function getAiRecommendation($storeId, array $filters = []): Collection
+    public function getAiRecommendation($storeId, array $filters = [])
     {
-        return $this->policyR2Service
-            ->getListRecommendByStore($storeId)
-            ->map(fn ($policy) => new PolicyAdapter($policy));
+        return $this->policyR2Service->getListRecommendByStore($storeId);
     }
 
     /**
@@ -332,6 +354,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     {
         $executionTime = Arr::get($data, 'execution_date').' '.Arr::get($data, 'execution_time');
 
+        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
+        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+        $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds(Arr::get($data, 'managers', []));
+
         return [
             'job_group_title' => Arr::get($data, 'job_group_title'),
             'job_group_code' => Arr::get($data, 'job_group_code'),
@@ -341,7 +367,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'job_group_end_date' => str_replace('-', '/', Arr::get($data, 'undo_date')),
             'job_group_end_time' => Arr::get($data, 'undo_time'),
             'execute_month' => (new Carbon($executionTime))->format('Y/m/01'),
-            'managers' => Arr::get($data, 'managers', []),
+            'managers' => $ossUserIds,
             'store_id' => Arr::get($data, 'store_id'),
             'status' => Arr::get($data, 'status'),
             'single_jobs' => [
@@ -510,6 +536,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function updateSimulation(array $data, Policy $policySimulation): ?Policy
     {
         return $this->handleSafely(function () use ($data, $policySimulation) {
+            $data['simulation_start_date'] = Arr::get($data, 'simulation_start_date').' '.Arr::pull($data, 'simulation_start_time');
+            $data['simulation_end_date'] = Arr::get($data, 'simulation_end_date').' '.Arr::pull($data, 'simulation_end_time');
             $policySimulation->fill($data)->save();
 
             if (! empty($policyRules = Arr::get($data, 'policy_rules', []))) {
@@ -572,12 +600,15 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             return $this->runSimulation($policyId);
         }
 
-        $this->model()
+        $simulation = $this->model()
+            ->with(['rules'])
             ->whereIn('processing_status', [Policy::NEW_PROCESSING_STATUS, Policy::DONE_PROCESSING_STATUS])
             ->where('category', Policy::SIMULATION_CATEGORY)
             ->where('store_id', $data['store_id'])
             ->get()
-            ->each(fn ($simulation) => $this->runSimulation($simulation->id));
+            ->toArray();
+
+        RunPolicySimulation::dispatch($data['store_id'], $simulation);
     }
 
     /**
@@ -585,10 +616,9 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function runSimulation($id)
     {
-        $simulation = $this->model()->find($id);
-        $simulation->processing_status = Policy::RUNNING_PROCESSING_STATUS;
-        $simulation->save();
-        RunPolicySimulation::dispatch($simulation);
+        $simulation = $this->model()->where('id', $id)->with('rules')->first();
+
+        RunPolicySimulation::dispatch($simulation->store_id, [$simulation->toArray()]);
     }
 
     /**
@@ -664,9 +694,12 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
      */
     public function makeDataPolicyFromSimulation(Policy $simulation): array
     {
+        $simulationStartDate = Carbon::create($simulation->simulation_start_date);
+        $simulationEndDate = Carbon::create($simulation->simulation_end_date);
+
         return [
             'store_id' => $simulation->store_id,
-            'category' => Policy::MEASURES_CATEGORY,
+            'category' => Policy::AI_RECOMMENDATION_CATEGORY,
             'immediate_reflection' => 0,
             'status' => -5,
             'job_group_code' => null,
@@ -675,10 +708,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'managers' => [],
             'template_id' => 0,
             'job_title' => $simulation->name,
-            'execution_date' => $simulation->simulation_start_date->format('Y-m-d'),
-            'execution_time' => $simulation->simulation_start_date->format('H:i'),
-            'undo_date' => $simulation->simulation_end_date->format('Y-m-d'),
-            'undo_time' => $simulation->simulation_end_date->format('H:i'),
+            'execution_date' => $simulationStartDate->format('Y-m-d'),
+            'execution_time' => $simulationStartDate->format('H:i'),
+            'undo_date' => $simulationEndDate->format('Y-m-d'),
+            'undo_time' => $simulationEndDate->format('H:i'),
             'type_item_url' => 0,
             'item_urls' => null,
             'has_banner' => 0,
@@ -690,10 +723,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'item_name_text' => null,
             'item_name_text_error' => null,
             'point_magnification' => null,
-            'point_start_date' => null,
-            'point_start_time' => null,
-            'point_end_date' => null,
-            'point_end_time' => null,
+            'point_start_date' => $simulationStartDate->format('Y-m-d'),
+            'point_start_time' => $simulationStartDate->hour,
+            'point_end_date' => $simulationEndDate->format('Y-m-d'),
+            'point_end_time' => $simulationEndDate->hour,
             'point_error' => null,
             'point_operational' => null,
             'discount_type' => null,
@@ -705,10 +738,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'double_price_text' => null,
             'shipping_fee' => null,
             'stock_specify' => null,
-            'time_sale_start_date' => null,
-            'time_sale_start_time' => null,
-            'time_sale_end_date' => null,
-            'time_sale_end_time' => null,
+            'time_sale_start_date' => $simulationStartDate->format('Y-m-d'),
+            'time_sale_start_time' => $simulationStartDate->format('H:i'),
+            'time_sale_end_date' => $simulationEndDate->format('Y-m-d'),
+            'time_sale_end_time' => $simulationEndDate->format('H:i'),
             'is_unavailable_for_search' => null,
             'description_for_pc' => null,
             'description_for_sp' => null,
@@ -727,7 +760,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         ]);
 
         $fromDate = $simulations->min('simulation_start_date')->format('Y-m-d');
-        $endDate = $simulations->max('simulation_start_date')->format('Y-m-d');
+        $endDate = $simulations->max('simulation_start_date')->addMonths(2)->format('Y-m-d');
 
         /** @var \App\Repositories\Contracts\SingleJobRepository */
         $singleJobRepository = app(SingleJobRepository::class);

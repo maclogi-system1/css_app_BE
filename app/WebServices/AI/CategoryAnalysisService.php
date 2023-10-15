@@ -2,10 +2,14 @@
 
 namespace App\WebServices\AI;
 
+use App\Models\KpiRealData\ItemsData;
+use App\Models\KpiRealData\ItemsSales;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class CategoryAnalysisService extends Service
 {
@@ -14,59 +18,92 @@ class CategoryAnalysisService extends Service
     private $categoryIds;
     private $categories;
 
-    public function __construct()
-    {
-        $this->categoryIds = collect();
-        for ($i = 0; $i < 30; $i++) {
-            $this->categoryIds->add(1000000 + $i);
-        }
-
-        $this->categories = collect();
-        foreach ($this->categoryIds as $index => $categoryId) {
-            $this->categories->add([
-                'rank' => $index + 1,
-                'item_id' => $categoryId,
-                'item_name' => 'カテゴリ名'.$categoryId.'テキス',
-                'sales_all' => rand(10000000, 99999999),
-                'visit_all' => rand(10000, 99999),
-                'conversion_rate' => rand(1, 99),
-                'sales_amnt_per_user' => rand(1000, 5000),
-            ]);
-        }
-    }
-
     /**
      * Get categories analysis summary by store_id.
      */
     public function getCategorySummary($storeId, array $filters = []): Collection
     {
-        $activeNum = rand(1000, 5000);
-        $unActiveNum = rand(1000, $activeNum);
-        $dateRangeFilter = $this->getDateRangeFilter($filters);
         $categoryIds = Arr::get($filters, 'category_ids');
-        $categoryIdsArr = explode(',', $categoryIds);
+        $categoryIdsArr = array_filter(explode(',', $categoryIds));
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
+        $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $categories = $this->categories;
-        if (! empty($categoryIds)) {
-            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
-                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-            });
-        }
-        $dataFake = [
-            'from_date' => Arr::get($filters, 'from_date'),
-            'to_date' => Arr::get($filters, 'to_date'),
-            'active_category_count_all' => $activeNum,
-            'unactive_category_count_all' => $unActiveNum,
-            'active_ratio' => round($activeNum / ($activeNum + $unActiveNum), 2) * 100,
-            'zero_inventory_num' => rand(10, 1000),
-            'categories' => $categories,
-        ];
+        $itemsData = DB::connection('kpi_real_data')->table('items_data as id')
+            ->where('id.store_id', $storeId)
+            ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id.items_data_all_id')
+            ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
+                $query->whereIn('id.catalog_id', $categoryIdsArr);
+            })
+            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') >= '{$fromDate}'")
+            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->selectRaw('
+                SUM(CASE WHEN ida.visit_all > 0 THEN 1 ELSE 0 END) as active_category_count_all,
+                SUM(CASE WHEN ida.visit_all = 0 THEN 1 ELSE 0 END) as unactive_category_count_all,
+                SUM(id.zero_inventory_days) as zero_inventory_num
+            ')
+            ->first();
+        $itemsData->active_ratio = round($itemsData->active_category_count_all / ($itemsData->active_category_count_all + $itemsData->unactive_category_count_all), 2) * 100;
+        $itemsData->from_date = $fromDate;
+        $itemsData->to_date = $toDate;
+        $itemsData->categories = $this->getCategories($storeId, compact('fromDate', 'toDate'), $categoryIdsArr);
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $itemsData,
         ]);
+    }
+
+    /**
+     * Get a list of the catalog in items_data and items_sales filter by storeId and dateRangeFilter.
+     */
+    public function getCategories(string $storeId, array $dateRangeFilter, array $categoryIdsArr = []): Collection
+    {
+        $fromDate = Arr::get($dateRangeFilter, 'from_date');
+        $toDate = Arr::get($dateRangeFilter, 'to_date');
+
+        return DB::connection('kpi_real_data')
+            ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+                $query->from('items_data', 'id2')
+                    ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
+                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                        $query->whereIn('id2.catalog_id', $categoryIdsArr);
+                    })
+                    ->where('id2.store_id', $storeId)
+                    ->where('id2.date', '!=', '')
+                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->groupBy('id2.catalog_id')
+                    ->select(
+                        'id2.catalog_id',
+                        DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
+                        DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
+                    );
+            }, 'id1')
+            ->joinSub(function ($query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+                $query->from('items_sales', 'is2')
+                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                        $query->whereIn('is2.catalog_id', $categoryIdsArr);
+                    })
+                    ->where('is2.store_id', $storeId)
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->groupBy('is2.catalog_id')
+                    ->select(
+                        DB::raw("CONCAT(`is2`.`catalog_id`, '.0') as catalog_id"),
+                        DB::raw('SUM(`is2`.`sales_amnt_per_user`) as sales_amnt_per_user'),
+                        DB::raw('ROUND(AVG(`is2`.`conversion_rate`), 2) * 100 as conversion_rate'),
+                    );
+            }, 'is1', 'is1.catalog_id', '=', 'id1.catalog_id')
+            ->select(
+                'id1.catalog_id',
+                'id1.visit_all',
+                'id1.sales_all',
+                'is1.sales_amnt_per_user',
+                'is1.conversion_rate',
+            )
+            ->get();
     }
 
     /**
@@ -76,30 +113,57 @@ class CategoryAnalysisService extends Service
     {
         $storeId = Arr::get($filters, 'store_id');
         $categoryIds = Arr::get($filters, 'category_ids');
-
+        $categoryIdsArr = array_filter(explode(',', $categoryIds));
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            'Y/m'
-        );
+        $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
+        $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $dataFake = collect();
-
-        foreach ($dateTimeRange as $date) {
-            $dataFake->add([
-                'date' => $date,
-                'total_sales_all' => rand(10000000, 99999999),
-                'total_visit_all' => rand(10000, 99999),
-                'conversion_rate' => rand(1, 99),
-                'sales_amnt_per_user' => rand(1000, 5000),
-            ]);
-        }
+        $data = DB::connection('kpi_real_data')
+            ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+                $query->from('items_data', 'id2')
+                    ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
+                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                        $query->whereIn('id2.catalog_id', $categoryIdsArr);
+                    })
+                    ->where('id2.store_id', $storeId)
+                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->groupBy('id2.date')
+                    ->select(
+                        'id2.date',
+                        DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
+                        DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
+                    );
+            }, 'id1')
+            ->leftjoinSub(function ($query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+                $query->from('items_sales', 'is2')
+                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                        $query->whereIn('is2.catalog_id', $categoryIdsArr);
+                    })
+                    ->where('is2.store_id', $storeId)
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->groupBy('is2.date')
+                    ->select(
+                        'is2.date',
+                        DB::raw('SUM(`is2`.`sales_amnt_per_user`) as sales_amnt_per_user'),
+                        DB::raw('ROUND(AVG(`is2`.`conversion_rate`), 2) * 100 as conversion_rate'),
+                    );
+            }, 'is1', 'is1.date', '=', 'id1.date')
+            ->select(
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`id1`.`date`, '%Y%m%d'), '%Y/%m') as date"),
+                DB::raw('SUM(`id1`.`sales_all`) as total_sales_all'),
+                DB::raw('SUM(`id1`.`visit_all`) as total_visit_all'),
+                DB::raw('ROUND(AVG(CASE WHEN `is1`.`conversion_rate` IS NULL THEN 0 ELSE `is1`.`conversion_rate` END), 2) as conversion_rate'),
+                DB::raw('SUM((CASE WHEN `is1`.`sales_amnt_per_user` IS NULL THEN 0 ELSE `is1`.`sales_amnt_per_user` END)) as sales_amnt_per_user'),
+            )
+            ->groupBy(DB::raw("DATE_FORMAT(STR_TO_DATE(`id1`.`date`, '%Y%m%d'), '%Y/%m')"))
+            ->get();
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $data,
         ]);
     }
 
@@ -110,81 +174,117 @@ class CategoryAnalysisService extends Service
     {
         $storeId = Arr::get($filters, 'store_id');
         $categoryIds = Arr::get($filters, 'category_ids');
-        $categoryIdsArr = explode(',', $categoryIds);
-
+        $categoryIdsArr = array_filter(explode(',', $categoryIds));
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            [
-                'format' => 'Y/m/d',
-                'step' => '1 day',
-            ]
-        );
+        $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
+        $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $dataFake = collect();
-
-        $categories = $this->categories;
-        if (! empty($categoryIds)) {
-            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
-                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-            });
-        }
-
-        $dailySales = collect();
-        $dailyAccess = collect();
-        $dailyConvertionRate = collect();
-        $dailySalesAmntPerUser = collect();
-        foreach ($dateTimeRange as $date) {
-            $dailySales->add([
-                'date' => $date,
-                'categories' => $categories->map(function ($item) {
-                    return [
-                        Arr::get($item, 'item_id') => rand(100000, 500000),
-                    ];
-                }),
-            ]);
-
-            $dailyAccess->add([
-                'date' => $date,
-                'categories' => $categories->map(function ($item) {
-                    return [
-                        Arr::get($item, 'item_id') => rand(100, 5000),
-                    ];
-                }),
-            ]);
-
-            $dailyConvertionRate->add([
-                'date' => $date,
-                'categories' => $categories->map(function ($item) {
-                    return [
-                        Arr::get($item, 'item_id') => rand(1, 99),
-                    ];
-                }),
-            ]);
-
-            $dailySalesAmntPerUser->add([
-                'date' => $date,
-                'categories' => $categories->map(function ($item) {
-                    return [
-                        Arr::get($item, 'item_id') => rand(1000, 5000),
-                    ];
-                }),
-            ]);
-        }
-
-        $dataFake->add([
-            'sales_all' => $dailySales,
-            'visit_all' => $dailyAccess,
-            'conversion_rate' => $dailyConvertionRate,
-            'sales_amnt_per_user' => $dailySalesAmntPerUser,
-        ]);
+        [$salesAll, $visitAll] = $this->getItemsDataTrend($storeId, $fromDate, $toDate, $categoryIdsArr);
+        [$conversionRate, $salesAmntPerUser] = $this->getItemsSalesTrend($storeId, $fromDate, $toDate, $categoryIdsArr);
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => [
+                'sales_all' => $salesAll,
+                'visit_all' => $visitAll,
+                'conversion_rate' => $conversionRate,
+                'sales_amnt_per_user' => $salesAmntPerUser,
+            ],
         ]);
+    }
+
+    protected function getItemsDataTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
+    {
+        $itemsData = DB::connection('kpi_real_data')
+            ->table('items_data', 'id1')
+            ->where('id1.store_id', $storeId)
+            ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id1.items_data_all_id')
+            ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
+                $query->whereIn('id1.catalog_id', $categoryIdsArr);
+            })
+            ->where('id1.catalog_id', '!=', '')
+            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') >= '{$fromDate}'")
+            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->select(
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`id1`.`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
+                'id1.catalog_id',
+                DB::raw('SUM(ida.sales_all) as sales_all'),
+                DB::raw('SUM(ida.visit_all) as visit_all'),
+            )
+            ->groupBy('id1.date', 'id1.catalog_id')
+            ->get()
+            ->groupBy('date');
+
+        $salesAll = $itemsData->map(fn ($item) => ([
+                    'date' => $item->first()->date,
+                    'categories' => $item->map(fn ($category) => ([$category->catalog_id => $category->sales_all]))
+                        ->collapse()
+                        ->toArray(),
+                ]))->values()->toArray();
+        $visitAll = $itemsData->map(fn ($item) => ([
+                'date' => $item->first()->date,
+                'categories' => $item->map(fn ($category) => ([$category->catalog_id => $category->visit_all]))
+                    ->collapse()
+                    ->toArray(),
+            ]))->values()->toArray();
+
+        return [$salesAll, $visitAll];
+    }
+
+    protected function getItemsSalesTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
+    {
+        $itemsSales = DB::connection('kpi_real_data')
+            ->table('items_sales', 'is1')
+            ->where('is1.store_id', $storeId)
+            ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
+                $query->whereIn('is1.catalog_id', $categoryIdsArr);
+            })
+            ->where('is1.catalog_id', '!=', '')
+            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') >= '{$fromDate}'")
+            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->select(
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`is1`.`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
+                'is1.catalog_id',
+                DB::raw('SUM(is1.sales_amnt_per_user) as sales_amnt_per_user'),
+                DB::raw('ROUND(AVG(is1.conversion_rate), 2) * 100 as conversion_rate'),
+            )
+            ->groupBy('is1.date', 'is1.catalog_id')
+            ->get()
+            ->groupBy('date');
+
+        $conversionRate = $itemsSales->map(function ($item) {
+            $values = $item->map(fn ($category) => ([$category->catalog_id => $category->conversion_rate]));
+            $categories = [];
+
+            foreach ($values as $value) {
+                foreach ($value as $key => $v) {
+                    $categories[$key] = $v;
+                }
+            }
+
+            return [
+                'date' => $item->first()->date,
+                'categories' => $categories,
+            ];
+        })->values()->toArray();
+        $salesAmntPerUser = $itemsSales->map(function ($item) {
+            $values = $item->map(fn ($category) => ([$category->catalog_id => $category->sales_amnt_per_user]));
+            $categories = [];
+
+            foreach ($values as $value) {
+                foreach ($value as $key => $v) {
+                    $categories[$key] = $v;
+                }
+            }
+
+            return [
+                'date' => $item->first()->date,
+                'categories' => $categories,
+            ];
+        })->values()->toArray();
+
+        return [$conversionRate, $salesAmntPerUser];
     }
 
     /**
@@ -194,30 +294,36 @@ class CategoryAnalysisService extends Service
     {
         $storeId = Arr::get($filters, 'store_id');
         $categoryIds = Arr::get($filters, 'category_ids');
-        $categoryIdsArr = explode(',', $categoryIds);
+        $categoryIdsArr = array_filter(explode(',', $categoryIds));
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
+        $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $categories = $this->categories;
-        if (! empty($categoryIds)) {
-            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
-                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
+        $itemsSales = ItemsSales::where('store_id', $storeId)
+            ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                $query->whereIn('catalog_id', $categoryIdsArr);
+            })
+            ->where('catalog_id', '!=', '')
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$fromDate}'")
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$toDate}'")
+            ->select(
+                'catalog_id',
+                DB::raw('SUM(`stay_duration`) as stay_duration'),
+                DB::raw('ROUND(AVG(`churn_rate`), 2) * 100 as churn_rate'),
+            )
+            ->groupBy('catalog_id')
+            ->get()
+            ->map(function ($item) use ($fromDate, $toDate) {
+                $item->from_date = $fromDate;
+                $item->to_date = $toDate;
+
+                return $item;
             });
-        }
-
-        $dataFake = collect();
-        foreach ($categories as $category) {
-            $dataFake->add([
-                'from_date' => Arr::get($filters, 'from_date'),
-                'to_date' => Arr::get($filters, 'to_date'),
-                'category_id' => Arr::get($category, 'item_id'),
-                'duration_all' => rand(30, 300),
-                'exit_rate_all' => rand(10, 90),
-            ]);
-        }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $itemsSales,
         ]);
     }
 
@@ -228,47 +334,41 @@ class CategoryAnalysisService extends Service
     {
         $storeId = Arr::get($filters, 'store_id');
         $categoryIds = Arr::get($filters, 'category_ids');
-        $categoryIdsArr = explode(',', $categoryIds);
+        $categoryIdsArr = array_filter(explode(',', $categoryIds));
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            'Y/m'
-        );
+        $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
+        $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $categories = $this->categories;
-        if (! empty($categoryIds)) {
-            $categories = $categories->filter(function ($item) use ($categoryIdsArr) {
-                return in_array(Arr::get($item, 'item_id'), $categoryIdsArr);
-            });
-        }
-
-        $dataFake = collect();
-        foreach ($dateTimeRange as $date) {
-            $categoriesReviewAll = collect();
-            $categoriesReviewWritingRate = collect();
-            foreach ($categories as $category) {
-                $allCategoryReview = rand(100, 1000);
-                $categoriesReviewAll->add([
-                    Arr::get($category, 'item_id') => $allCategoryReview,
-                ]);
-
-                $categoriesReviewWritingRate->add([
-                    Arr::get($category, 'item_id') => round(rand(10, $allCategoryReview) / $allCategoryReview, 2) * 100,
-                ]);
-            }
-
-            $dataFake->add([
-                'date' => $date,
-                'review_all' => $categoriesReviewAll,
-                'review_writing_rate' => $categoriesReviewWritingRate,
-            ]);
-        }
+        $itemsdata = ItemsData::where('store_id', $storeId)
+            ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                $query->whereIn('catalog_id', $categoryIdsArr);
+            })
+            ->where('catalog_id', '!=', '')
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$fromDate}'")
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$toDate}'")
+            ->select(
+                'catalog_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
+                DB::raw('SUM(`review_count`) as review_count'),
+                DB::raw('SUM(`review_point`) as review_point'),
+            )
+            ->groupBy('catalog_id', 'date')
+            ->get()
+            ->groupBy('date');
+        $review = $itemsdata->map(fn ($item) => ([
+            'date' => $item->first()->date,
+            'review_count' => $item->map(fn ($category) => ([$category->catalog_id => $category->review_count]))
+                ->collapse()
+                ->toArray(),
+            'review_point' => $item->map(fn ($category) => ([$category->catalog_id => $category->review_point]))
+                ->collapse()
+                ->toArray(),
+        ]))->values();
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $review,
         ]);
     }
 }
