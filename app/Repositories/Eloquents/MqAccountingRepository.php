@@ -400,25 +400,9 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(string $storeId, array $filters = []): Collection
+    public function getTotalParamByStore(string $storeId, array $filters = [])
     {
-        $dateRangeFilter = $this->getDateRangeFilter($filters);
-
-        $query = $this->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
-            ->queryBuilder()
-            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
-            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->selectRaw('
-                store_id,
-                sum(mk.sales_amnt) as sales_amnt_total,
-                sum(mq_accounting.fixed_cost) as cost_sum_total,
-                sum(mc.variable_cost_sum) as variable_cost_sum_total,
-                sum(mc.profit) as profit_total
-            ')
-            ->groupBy('mq_accounting.store_id')
-            ->where('store_id', $storeId);
-
-        return $query->get();
+        return $this->mqAccountingService->getTotalParamByStore($storeId, $filters);
     }
 
     /**
