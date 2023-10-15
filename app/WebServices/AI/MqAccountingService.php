@@ -163,12 +163,19 @@ class MqAccountingService extends Service
         return collect($result);
     }
 
-    public function getForecastVsActual($storeId, array $filters = []): Collection
+    public function getSalesAmountAndProfit($storeId, array $filters = []): ?MqAccounting
     {
-        return collect([
-            'sales_amnt' => rand(7000000, 20000000),
-            'profit' => rand(7000000, 20000000),
-        ]);
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+
+        return MqAccounting::dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->where('store_id', $storeId)
+            ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_cost as mc', 'mc.mq_cost_id', '=', 'mq_accounting.mq_cost_id')
+            ->select(
+                DB::raw('SUM(CASE WHEN mk.sales_amnt IS NULL THEN 0 ELSE mk.sales_amnt END) as sales_amnt'),
+                DB::raw('SUM(CASE WHEN mc.profit IS NULL THEN 0 ELSE mc.profit END) as profit'),
+            )
+            ->first();
     }
 
     /**

@@ -18,6 +18,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -422,23 +423,19 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->where('store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
-            ->select('mk.sales_amnt', 'mc.profit')
-            ->get()
-            ->reduce(function ($pre, $item) {
-                return [
-                    'sales_amnt' => $pre['sales_amnt'] + $item->sales_amnt,
-                    'profit' => $pre['profit'] + $item->profit,
-                ];
-            }, [
-                'sales_amnt' => 0,
-                'profit' => 0,
-            ]);
-        $actual = $this->mqAccountingService->getForecastVsActual($storeId, $filters);
-        $salesAmntRate = $expected['sales_amnt']
-            ? ($actual['sales_amnt'] - $expected['sales_amnt']) * 100 / $expected['sales_amnt']
+            ->select(
+                DB::raw('SUM(CASE WHEN mk.sales_amnt IS NULL THEN 0 ELSE mk.sales_amnt END) as sales_amnt'),
+                DB::raw('SUM(CASE WHEN mc.profit IS NULL THEN 0 ELSE mc.profit END) as profit'),
+            )
+            ->first();
+        $actual = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+        $actual->sales_amnt ??= 0;
+        $actual->profit ??= 0;
+        $salesAmntRate = $expected->sales_amnt
+            ? ($actual->sales_amnt - $expected->sales_amnt) * 100 / $expected->sales_amnt
             : 0;
-        $profitRate = $expected['profit']
-            ? ($actual['profit'] - $expected['profit']) * 100 / $expected['profit']
+        $profitRate = $expected->profit
+            ? ($actual->profit - $expected->profit) * 100 / $expected->profit
             : 0;
 
         return [
@@ -446,6 +443,64 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'profit_rate' => round($profitRate, 2),
             'actual' => $actual,
             'expected' => $expected,
+        ];
+    }
+
+    /**
+     * Get comparative analysis.
+     */
+    public function getComparativeAnalysis(string $storeId, array $filters = [])
+    {
+        $salesAmntAndProfit = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+        $salesAmntRate = 0;
+        $profitRate = 0;
+        $salesAmnt = [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
+            'sales_amnt' => $salesAmntAndProfit->sales_amnt,
+        ];
+        $profit = [
+            'from_date' => Arr::get($filters, 'from_date'),
+            'to_date' => Arr::get($filters, 'to_date'),
+            'sales_amnt' => $salesAmntAndProfit->profit,
+        ];
+        $comparedSalesAmnt = [];
+        $comparedProfit = [];
+
+        if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
+            $filters['from_date'] = Arr::get($filters, 'compared_from_date');
+            $filters['to_date'] = Arr::get($filters, 'compared_to_date');
+
+            if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
+                $filters['to_date'] = now()->format('Y-m-d');
+            }
+
+            $comparedSalesAmntAndProfit = $this->mqAccountingService->getSalesAmountAndProfit($storeId, $filters);
+
+            $salesAmntRate = $comparedSalesAmntAndProfit->sales_amnt
+                ? ($salesAmntAndProfit->sales_amnt - $comparedSalesAmntAndProfit->sales_amnt) * 100 / $comparedSalesAmntAndProfit->sales_amnt
+                : 0;
+            $profitRate = $comparedSalesAmntAndProfit->profit
+                ? ($salesAmntAndProfit->profit - $comparedSalesAmntAndProfit->profit) * 100 / $comparedSalesAmntAndProfit->profit
+                : 0;
+
+            $comparedSalesAmnt = [
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'sales_amnt' => $comparedSalesAmntAndProfit->sales_amnt,
+            ];
+            $comparedProfit = [
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'profit' => $comparedSalesAmntAndProfit->profit,
+            ];
+        }
+
+        return [
+            'sales_amnt_rate' => round($salesAmntRate, 2),
+            'profit_rate' => round($profitRate, 2),
+            'sales_amnt' => [$salesAmnt, $comparedSalesAmnt],
+            'profit' => [$profit, $comparedProfit],
         ];
     }
 
