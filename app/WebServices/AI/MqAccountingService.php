@@ -11,6 +11,7 @@ use App\WebServices\Service;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class MqAccountingService extends Service
 {
@@ -322,5 +323,27 @@ class MqAccountingService extends Service
             'conversion_rate' => $conversionRate,
             'sales_amnt_per_user' => $salesAmntPerUser,
         ]);
+    }
+
+    /**
+     * Get total sale amount, cost and profit by store id.
+     */
+    public function getTotalParamByStore(string $storeId, array $filters = []): MqAccounting
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+
+        return MqAccounting::dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->where('mq_accounting.store_id', $storeId)
+            ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_cost as mc', 'mc.mq_cost_id', '=', 'mq_accounting.mq_cost_id')
+            ->select(
+                'mq_accounting.store_id',
+                DB::raw('SUM(mk.sales_amnt) as sales_amnt_total'),
+                DB::raw('SUM(mc.cost_sum) as cost_sum_total'),
+                DB::raw('SUM(mc.variable_cost_sum) as variable_cost_sum_total'),
+                DB::raw('SUM(mc.profit) as profit_total'),
+            )
+            ->groupBy('mq_accounting.store_id')
+            ->first();
     }
 }
