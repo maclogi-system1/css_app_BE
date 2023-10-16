@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetCumlativeChangeInRevenueAndProfitRequest;
 use App\Http\Requests\GetMqAnalysisRequest;
+use App\Http\Requests\GetMqTotalParamRequest;
 use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
 use App\Imports\MqAccountingImport;
@@ -213,9 +214,9 @@ class MqAccountingController extends Controller
     /**
      * Get total sale amount, cost and profit by store id.
      */
-    public function getTotalParamByStore(Request $request, $storeId): JsonResponse
+    public function getTotalParamByStore(GetMqTotalParamRequest $request, $storeId): JsonResponse
     {
-        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->query());
+        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->validated());
 
         return response()->json([
             'total_param' => $expectedTotalParam,

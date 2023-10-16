@@ -15,6 +15,7 @@ use App\Support\MqAccountingCsv;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\MqAccountingService;
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -459,6 +460,17 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ? round((100 * $profitTotal / $lastYearProfitTotal), 2) - 100
             : 0;
 
+        $result['sales_amnt_total_this_month'] = $this->buidlQueryWithSheetId(Arr::get($filters, 'mq_sheet_id'))
+            ->where('mq_accounting.store_id', $storeId)
+            ->where('mq_accounting.month', now()->month)
+            ->where('mq_accounting.year', now()->year)
+            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
+            ->select(
+                DB::raw('SUM(mk.sales_amnt) as sales_amnt'),
+            )
+            ->first()
+            ?->sales_amnt ?? 0;
+
         return $result;
     }
 
@@ -469,26 +481,16 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
 
-        $query = $this->useScope([
+        $expected = $this->useScope([
             'dateRange' => [
                 $dateRangeFilter['from_date'],
                 $dateRangeFilter['to_date'],
             ],
         ])
-            ->queryBuilder()
+            ->buidlQueryWithSheetId(Arr::get($filters, 'mq_sheet_id'))
             ->where('mq_accounting.store_id', $storeId)
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
-            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id');
-
-        if ($mqSheetId = Arr::get($filters, 'mq_sheet_id')) {
-            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
-                ->where('mq_accounting.mq_sheet_id', $mqSheetId);
-        } else {
-            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
-                ->where('ms.is_default', 1);
-        }
-
-        $expected = $query
+            ->join('mq_cost as mc', 'mc.id', '=', 'mq_accounting.mq_cost_id')
             ->select(
                 DB::raw('SUM(CASE WHEN mk.sales_amnt IS NULL THEN 0 ELSE mk.sales_amnt END) as sales_amnt'),
                 DB::raw('SUM(CASE WHEN mc.profit IS NULL THEN 0 ELSE mc.profit END) as profit'),
@@ -510,6 +512,24 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'actual' => $actual,
             'expected' => $expected,
         ];
+    }
+
+    /**
+     * Build the query with mq_sheet_id.
+     */
+    protected function buidlQueryWithSheetId(?string $mqSheetId): Builder
+    {
+        $query = $this->queryBuilder();
+
+        if ($mqSheetId) {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('mq_accounting.mq_sheet_id', $mqSheetId);
+        } else {
+            $query->join('mq_sheets as ms', 'ms.id', '=', 'mq_accounting.mq_sheet_id')
+                ->where('ms.is_default', 1);
+        }
+
+        return $query;
     }
 
     /**
