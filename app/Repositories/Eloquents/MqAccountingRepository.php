@@ -403,30 +403,50 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
      */
     public function getTotalParamByStore(string $storeId, array $filters = [])
     {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->toImmutable();
+        $toDate = $dateRangeFilter['to_date']->toImmutable();
         $mqAccounting = $this->mqAccountingService->getTotalParamByStore($storeId, $filters);
 
-        $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $filters['from_date'] = $dateRangeFilter['from_date']->subYear();
-        $filters['to_date'] = $dateRangeFilter['to_date']->subYear();
+        $mqAccountingLastMonth = $this->mqAccountingService->getTotalParamByStoreInAMonth(
+            $storeId,
+            $fromDate->subMonth(),
+        );
+        $lastMonthSalesAmntTotal = $mqAccountingLastMonth?->sales_amnt_total;
+        $lastMonthCostSumTotal = $mqAccountingLastMonth?->cost_sum_total;
+        $lastMonthVariableCostSumTotal = $mqAccountingLastMonth?->variable_cost_sum_total;
+        $lastMonthProfitTotal = $mqAccountingLastMonth?->profit_total;
+        $mqAccounting->sales_amnt_total_compared_to_last_month = $lastMonthSalesAmntTotal
+            ? round((100 * $mqAccounting->sales_amnt_total / $lastMonthSalesAmntTotal), 2) - 100
+            : null;
+        $mqAccounting->cost_sum_total_compared_to_last_month = $lastMonthCostSumTotal
+            ? round((100 * $mqAccounting->cost_sum_total / $lastMonthCostSumTotal), 2) - 100
+            : null;
+        $mqAccounting->variable_cost_sum_total_compared_to_last_month = $lastMonthVariableCostSumTotal
+            ? round((100 * $mqAccounting->variable_cost_sum_total / $lastMonthVariableCostSumTotal), 2) - 100
+            : null;
+        $mqAccounting->profit_total_compared_to_last_month = $lastMonthProfitTotal
+            ? round((100 * $mqAccounting->profit_total / $lastMonthProfitTotal), 2) - 100
+            : null;
 
+        $filters['from_date'] = Arr::get($filters, 'compared_from_date', $fromDate->subYear());
+        $filters['to_date'] = Arr::get($filters, 'compared_to_date', $toDate->subYear());
         $mqAccountingLastYear = $this->mqAccountingService->getTotalParamByStore($storeId, $filters);
-
-        $lastyearSalesAmntTotal = $mqAccountingLastYear->sales_amnt_total;
-        $lastyearCostSumTotal = $mqAccountingLastYear->cost_sum_total;
-        $lastyearVariableCostSumTotal = $mqAccountingLastYear->variable_cost_sum_total;
-        $lastyearProfitTotal = $mqAccountingLastYear->profit_total;
-
-        $mqAccounting->sales_amnt_total_compared_to_last_year = $lastyearSalesAmntTotal
-            ? round((100 * $mqAccounting->sales_amnt_total / $lastyearSalesAmntTotal), 2) - 100
+        $lastYearSalesAmntTotal = $mqAccountingLastYear->sales_amnt_total;
+        $lastYearCostSumTotal = $mqAccountingLastYear->cost_sum_total;
+        $lastYearVariableCostSumTotal = $mqAccountingLastYear->variable_cost_sum_total;
+        $lastYearProfitTotal = $mqAccountingLastYear->profit_total;
+        $mqAccounting->sales_amnt_total_compared_to_last_year = $lastYearSalesAmntTotal
+            ? round((100 * $mqAccounting->sales_amnt_total / $lastYearSalesAmntTotal), 2) - 100
             : null;
-        $mqAccounting->cost_sum_total_compared_to_last_year = $lastyearCostSumTotal
-            ? round((100 * $mqAccounting->cost_sum_total / $lastyearCostSumTotal), 2) - 100
+        $mqAccounting->cost_sum_total_compared_to_last_year = $lastYearCostSumTotal
+            ? round((100 * $mqAccounting->cost_sum_total / $lastYearCostSumTotal), 2) - 100
             : null;
-        $mqAccounting->variable_cost_sum_total_compared_to_last_year = $lastyearVariableCostSumTotal
-            ? round((100 * $mqAccounting->variable_cost_sum_total / $lastyearVariableCostSumTotal), 2) - 100
+        $mqAccounting->variable_cost_sum_total_compared_to_last_year = $lastYearVariableCostSumTotal
+            ? round((100 * $mqAccounting->variable_cost_sum_total / $lastYearVariableCostSumTotal), 2) - 100
             : null;
-        $mqAccounting->profit_total_compared_to_last_year = $lastyearProfitTotal
-            ? round((100 * $mqAccounting->profit_total / $lastyearProfitTotal), 2) - 100
+        $mqAccounting->profit_total_compared_to_last_year = $lastYearProfitTotal
+            ? round((100 * $mqAccounting->profit_total / $lastYearProfitTotal), 2) - 100
             : null;
 
         return $mqAccounting;

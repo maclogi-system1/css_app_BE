@@ -8,6 +8,7 @@ use App\Models\KpiRealData\ShopAnalyticsMonthly;
 use App\Repositories\Contracts\ShopSettingMqAccountingRepository;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -372,5 +373,25 @@ class MqAccountingService extends Service
                 'mc.cost_sum as fixed_cost',
             )
             ->get();
+    }
+
+    /**
+     * Get total sale amount, cost and profit by store id in a month.
+     */
+    public function getTotalParamByStoreInAMonth(string $storeId, CarbonInterface $date)
+    {
+        return MqAccounting::where('mq_accounting.store_id', $storeId)
+            ->where('mq_accounting.year', $date->year)
+            ->where('mq_accounting.month', $date->month)
+            ->join('mq_kpi as mk', 'mk.mq_kpi_id', '=', 'mq_accounting.mq_kpi_id')
+            ->join('mq_cost as mc', 'mc.mq_cost_id', '=', 'mq_accounting.mq_cost_id')
+            ->select(
+                'mq_accounting.store_id',
+                'mk.sales_amnt as sales_amnt_total',
+                'mc.cost_sum as cost_sum_total',
+                'mc.variable_cost_sum as variable_cost_sum_total',
+                'mc.profit as profit_total',
+            )
+            ->first();
     }
 }
