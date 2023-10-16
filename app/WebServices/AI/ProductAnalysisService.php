@@ -908,7 +908,7 @@ class ProductAnalysisService extends Service
     /**
      * Get chart year month products staytimes.
      */
-    public function getChartYearMonthProductsStayTimes(array $filters = []): Collection
+    private function getChartYearMonthProductsStayTimes(array $filters = []): Collection
     {
         $storeId = Arr::get($filters, 'store_id');
         $dateRangeFilter = $this->getDateRangeFilter($filters);

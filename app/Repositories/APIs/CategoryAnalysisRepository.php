@@ -155,4 +155,12 @@ class CategoryAnalysisRepository extends Repository implements CategoryAnalysisR
             'status' => $result->get('status'),
         ]);
     }
+
+    /**
+     * Get categories's sales info from AI.
+     */
+    public function getCategorySalesInfo(array $filters = []): Collection
+    {
+        return $this->categoryAnalysisService->getCategorySalesInfo($filters);
+    }
 }

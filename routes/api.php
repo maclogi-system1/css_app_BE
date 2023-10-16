@@ -326,6 +326,9 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
                 Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
+                Route::get('/get-performance-table/{storeId}', 'getCategoryPerformanceTable')->name('get-performance-table');
+                Route::post('/save-performance-table/{storeId}', 'saveCategorySalesPerformanceTable')->name('save-performance-table');
+                Route::get('/get-category-sales-info', 'getCategorySalesInfo')->name('get-category-sales-info');
             });
 
             Route::prefix('review-analysis')
