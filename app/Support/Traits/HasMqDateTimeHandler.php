@@ -52,8 +52,8 @@ trait HasMqDateTimeHandler
      */
     public function checkAndGetYearForFilter($year): int
     {
-        $year = $year < now()->subYear(2)->year ? now()->subYear(2)->year : $year;
-        $year = $year > now()->addYear()->year ? now()->addYear()->year : $year;
+        $year = $year < 2021 ? 2021 : $year;
+        $year = $year > now()->addMonths(36)->year ? now()->addMonths(36)->year : $year;
 
         return $year;
     }

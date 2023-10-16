@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+
 class GetCumlativeChangeInRevenueAndProfitRequest extends FormRequest
 {
     /**
