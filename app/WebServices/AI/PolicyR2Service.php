@@ -2,7 +2,7 @@
 
 namespace App\WebServices\AI;
 
-use App\Models\KpiRealData\PolicyR2;
+use App\Models\PolicyRealData\PolicyR2;
 use App\WebServices\Service;
 
 class PolicyR2Service extends Service

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Models\KpiRealData;
+namespace App\Models\PolicyRealData;
 
+use App\Constants\DatabaseConnectionConstant;
 use Illuminate\Database\Eloquent\Model;
 
 class Rule extends Model
 {
-    protected $connection = 'kpi_real_data';
+    protected $connection = DatabaseConnectionConstant::POLICY_CONNECTION;
     protected $primaryKey = 'rule_id';
     public $incrementing = false;
 
