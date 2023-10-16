@@ -21,6 +21,7 @@ class KpiCategoryPerformanceRequest extends FormRequest
     {
         return [
             'categories_sales.*.catalog_id' => ['required', 'string'],
+            'categories_sales' => ['required'],
         ];
     }
 }

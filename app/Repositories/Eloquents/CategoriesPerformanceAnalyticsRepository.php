@@ -33,6 +33,8 @@ class CategoriesPerformanceAnalyticsRepository extends Repository implements Cat
             $inputData = [
                 'store_id' => $storeId,
                 'categories_sales' => json_encode(Arr::get($data, 'categories_sales')),
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
             $this->model()->updateOrInsert(['store_id' => $storeId], $inputData);
 
@@ -56,25 +58,27 @@ class CategoriesPerformanceAnalyticsRepository extends Repository implements Cat
         $itemsSales = Arr::get($performanceItems, 'categories_sales');
         if (! is_null($itemsSales)) {
             $items = json_decode($itemsSales, true);
-            $managementNums = implode(',', collect($items)->pluck('catalog_ids')->toArray());
+            if (! is_null($items)) {
+                $managementNums = implode(',', collect($items)->pluck('catalog_ids')->toArray());
 
-            $filters['catalog_ids'] = $managementNums;
-            $actualData = $this->categoryAnalysisService->getCategorySalesInfo($filters)->get('data');
+                $filters['catalog_ids'] = $managementNums;
+                $actualData = $this->categoryAnalysisService->getCategorySalesInfo($filters)->get('data');
 
-            foreach ($items as $item) {
-                $actualItem = collect($actualData)->filter(function ($itemData) use ($item) {
-                    return ! is_null(Arr::get($itemData, 'catalog_id'))
-                        && Arr::get($itemData, 'catalog_id') == Arr::get($item, 'catalog_id');
-                })->first();
-                $data->add([
-                    'store_id' => $storeId,
-                    'catalog_id' => Arr::get($item, 'catalog_id', ''),
-                    'catalog_name' => Arr::get($actualItem, 'catalog_name', ''),
-                    'target_sales' => Arr::get($item, 'sales_amnt', 0),
-                    'current_month_sales' => Arr::get($actualItem, 'current_month_sales', 0),
-                    'previous_month_sales' => Arr::get($actualItem, 'previous_month_sales', 0),
-                    'month_before_previous_sales' => Arr::get($actualItem, 'month_before_previous_sales', 0),
-                ]);
+                foreach ($items as $item) {
+                    $actualItem = collect($actualData)->filter(function ($itemData) use ($item) {
+                        return ! is_null(Arr::get($itemData, 'catalog_id'))
+                            && Arr::get($itemData, 'catalog_id') == Arr::get($item, 'catalog_id');
+                    })->first();
+                    $data->add([
+                        'store_id' => $storeId,
+                        'catalog_id' => Arr::get($item, 'catalog_id', ''),
+                        'catalog_name' => Arr::get($actualItem, 'catalog_name', ''),
+                        'target_sales' => Arr::get($item, 'sales_amnt', 0),
+                        'current_month_sales' => Arr::get($actualItem, 'current_month_sales', 0),
+                        'previous_month_sales' => Arr::get($actualItem, 'previous_month_sales', 0),
+                        'month_before_previous_sales' => Arr::get($actualItem, 'month_before_previous_sales', 0),
+                    ]);
+                }
             }
         }
 
