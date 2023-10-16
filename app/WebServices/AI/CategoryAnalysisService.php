@@ -32,6 +32,7 @@ class CategoryAnalysisService extends Service
 
         $itemsData = DB::connection('kpi_real_data')->table('items_data as id')
             ->where('id.store_id', $storeId)
+            ->where('id.catalog_id', '!=', '')
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id.items_data_all_id')
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
                 $query->whereIn('id.catalog_id', $categoryIdsArr);
@@ -44,10 +45,16 @@ class CategoryAnalysisService extends Service
                 SUM(id.zero_inventory_days) as zero_inventory_num
             ')
             ->first();
-        $itemsData->active_ratio = round($itemsData->active_category_count_all / ($itemsData->active_category_count_all + $itemsData->unactive_category_count_all), 2) * 100;
+        $totalCategoryCountAll = $itemsData->active_category_count_all + $itemsData->unactive_category_count_all;
+        $itemsData->active_ratio = $totalCategoryCountAll
+            ? round($itemsData->active_category_count_all / $totalCategoryCountAll * 100, 2)
+            : 0;
         $itemsData->from_date = $fromDate;
         $itemsData->to_date = $toDate;
-        $itemsData->categories = $this->getCategories($storeId, compact('fromDate', 'toDate'), $categoryIdsArr);
+        $itemsData->categories = $this->getCategories($storeId, [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ], $categoryIdsArr);
 
         return collect([
             'success' => true,
@@ -72,7 +79,7 @@ class CategoryAnalysisService extends Service
                         $query->whereIn('id2.catalog_id', $categoryIdsArr);
                     })
                     ->where('id2.store_id', $storeId)
-                    ->where('id2.date', '!=', '')
+                    ->where('id2.catalog_id', '!=', '')
                     ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
                     ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
                     ->groupBy('id2.catalog_id')
@@ -88,6 +95,7 @@ class CategoryAnalysisService extends Service
                         $query->whereIn('is2.catalog_id', $categoryIdsArr);
                     })
                     ->where('is2.store_id', $storeId)
+                    ->where('is2.catalog_id', '!=', '')
                     ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
                     ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
                     ->groupBy('is2.catalog_id')
