@@ -23,8 +23,8 @@ class GetShopSettingAwardPointRequest extends FormRequest
     {
         return [
             'store_id' => ['required'],
-            'from_date' => ['nullable', 'date_format:Y-m'],
-            'to_date' => ['nullable', 'required_with:from_date', 'date_format:Y-m'],
+            'from_date' => ['nullable', 'date_format:Y-m-d'],
+            'to_date' => ['nullable', 'required_with:from_date', 'date_format:Y-m-d'],
         ];
     }
 }
