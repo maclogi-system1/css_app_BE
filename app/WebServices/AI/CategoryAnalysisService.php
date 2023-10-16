@@ -8,6 +8,7 @@ use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -369,6 +370,71 @@ class CategoryAnalysisService extends Service
             'success' => true,
             'status' => 200,
             'data' => $review,
+        ]);
+    }
+
+    /**
+     * Get categories's sales info from AI.
+     */
+    public function getCategorySalesInfo(array $filters = []): Collection
+    {
+        $categoryIds = Arr::get($filters, 'catalog_ids');
+        $categoryIdsArr = explode(',', $categoryIds);
+        $currentDate = Carbon::now();
+        $currentYearMonth = sprintf('%04d%02d', $currentDate->year, $currentDate->month);
+
+        $previousDate = $currentDate->subMonth();
+        $previousYearMonth = sprintf('%04d%02d', $previousDate->year, $previousDate->month);
+
+        $monthBeforePreviousDate = $previousDate->subMonth();
+        $monthBeforePreviousYearMonth = sprintf('%04d%02d', $monthBeforePreviousDate->year, $monthBeforePreviousDate->month);
+
+        $itemsSales = ItemsSales::whereIn('items_sales.catalog_id', $categoryIdsArr)
+            ->whereRaw(
+                '(SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?)',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->selectRaw(
+                'items_sales.catalog_id,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as current_month_sales,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as previous_month_sales,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as month_before_previous_sales
+            ',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->groupBy('items_sales.catalog_id');
+
+        $result = ItemsData::whereIn('items_data.catalog_id', $categoryIdsArr)
+            ->select(
+                'items_data.catalog_id',
+                'items_sales.current_month_sales',
+                'items_sales.previous_month_sales',
+                'items_sales.month_before_previous_sales'
+            )
+            ->distinct('items_data.catalog_id')
+            ->leftJoinSub($itemsSales, 'items_sales', function ($join) {
+                $join->on('items_data.catalog_id', '=', 'items_sales.catalog_id');
+            })
+            ->get();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
+        $data = [];
+        foreach ($result as $item) {
+            $data[Arr::get($item, 'catalog_id', '')] = [
+                    'catalog_id' => Arr::get($item, 'catalog_id', ''),
+                    'catalog_name' => Arr::get($item, 'item_name', ''),
+                    'current_month_sales' => intval(Arr::get($item, 'current_month_sales', 0)),
+                    'previous_month_sales' => intval(Arr::get($item, 'previous_month_sales', 0)),
+                    'month_before_previous_sales' => intval(Arr::get($item, 'month_before_previous_sales', 0)),
+                ];
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect($data)->values()->all(),
         ]);
     }
 }

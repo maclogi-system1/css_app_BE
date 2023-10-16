@@ -30,4 +30,9 @@ interface CategoryAnalysisRepository extends Repository
      * Get chart categories's reviews trends from AI.
      */
     public function chartCategoriesReviewsTrends(array $filters = []): Collection;
+
+    /**
+     * Get categories's sales info from AI.
+     */
+    public function getCategorySalesInfo(array $filters = []): Collection;
 }
