@@ -518,7 +518,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $profit = [
             'from_date' => Arr::get($filters, 'from_date'),
             'to_date' => Arr::get($filters, 'to_date'),
-            'sales_amnt' => $salesAmntAndProfit->profit,
+            'profit' => $salesAmntAndProfit->profit,
         ];
         $comparedSalesAmnt = [];
         $comparedProfit = [];
