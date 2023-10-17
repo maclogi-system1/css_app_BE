@@ -448,30 +448,58 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $lastYearVariableCostSumTotal = $mqAccountingLastYear?->variable_cost_sum_total ?? 0;
         $lastYearProfitTotal = $mqAccountingLastYear?->profit_total ?? 0;
         $result['sales_amnt_total_compared_to_last_year'] = $lastYearSalesAmntTotal
-            ? round((100 * $salesAmntTotal / $lastYearSalesAmntTotal), 2) - 100
+            ? round((100 * $salesAmntTotal / $lastYearSalesAmntTotal) - 100, 2)
             : 0;
         $result['cost_sum_total_compared_to_last_year'] = $lastYearCostSumTotal
-            ? round((100 * $costSumTotal / $lastYearCostSumTotal), 2) - 100
+            ? round((100 * $costSumTotal / $lastYearCostSumTotal) - 100, 2)
             : 0;
         $result['variable_cost_sum_total_compared_to_last_year'] = $lastYearVariableCostSumTotal
-            ? round((100 * $variableCostSumTotal / $lastYearVariableCostSumTotal), 2) - 100
+            ? round((100 * $variableCostSumTotal / $lastYearVariableCostSumTotal) - 100, 2)
             : 0;
         $result['profit_total_compared_to_last_year'] = $lastYearProfitTotal
-            ? round((100 * $profitTotal / $lastYearProfitTotal), 2) - 100
+            ? round((100 * $profitTotal / $lastYearProfitTotal) - 100, 2)
             : 0;
 
-        $result['sales_amnt_total_this_month'] = $this->buidlQueryWithSheetId(Arr::get($filters, 'mq_sheet_id'))
+        $salesAmntTotalThisMonth = $this->getSalesAmntTotalInAMonth($storeId, [
+            'mq_sheet_id' => Arr::get($filters, 'mq_sheet_id'),
+            'month' => now()->month,
+            'year' => now()->year,
+        ]);
+        $salesAmntTotalLastMonth = $this->getSalesAmntTotalInAMonth($storeId, [
+            'mq_sheet_id' => Arr::get($filters, 'mq_sheet_id'),
+            'month' => now()->subMonth()->month,
+            'year' => now()->year,
+        ]);
+        $salesAmntTotalLastYear = $this->getSalesAmntTotalInAMonth($storeId, [
+            'mq_sheet_id' => Arr::get($filters, 'mq_sheet_id'),
+            'month' => now()->month,
+            'year' => now()->subYear()->year,
+        ]);
+        $result['sales_amnt_total_this_month'] = $salesAmntTotalThisMonth;
+        $result['sales_amnt_total_last_month'] = $salesAmntTotalLastMonth;
+        $result['sales_amnt_total_last_year'] = $salesAmntTotalLastYear;
+        $result['sales_amnt_total_this_month_compared_to_last_month'] = $salesAmntTotalLastMonth
+            ? round((100 * $salesAmntTotalThisMonth / $salesAmntTotalLastMonth) - 100, 2)
+            : 0;
+        $result['sales_amnt_total_this_month_compared_to_last_year'] = $salesAmntTotalLastYear
+            ? round((100 * $salesAmntTotalThisMonth / $salesAmntTotalLastYear) - 100, 2)
+            : 0;
+
+        return $result;
+    }
+
+    protected function getSalesAmntTotalInAMonth($storeId, array $filters = [])
+    {
+        return $this->buidlQueryWithSheetId(Arr::get($filters, 'mq_sheet_id'))
             ->where('mq_accounting.store_id', $storeId)
-            ->where('mq_accounting.month', now()->month)
-            ->where('mq_accounting.year', now()->year)
+            ->where('mq_accounting.month', Arr::get($filters, 'month'))
+            ->where('mq_accounting.year', Arr::get($filters, 'year'))
             ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
             ->select(
                 DB::raw('SUM(mk.sales_amnt) as sales_amnt'),
             )
             ->first()
             ?->sales_amnt ?? 0;
-
-        return $result;
     }
 
     /**
