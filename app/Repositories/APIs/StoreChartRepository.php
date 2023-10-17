@@ -109,10 +109,20 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
      */
     public function getDataChartRelationPVAndConversionRate(array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters);
+        $result = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters, $isMonthQuery);
         $data[] = $result->get('data');
 
         // Get compared data product analysis
@@ -124,7 +134,7 @@ class StoreChartRepository extends Repository implements StoreChartRepositoryCon
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data[] = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters)->get('data');
+            $data[] = $this->storeChartService->getDataChartRelationPVAndConversionRate($filters, $isMonthQuery)->get('data');
         }
 
         return collect([
