@@ -282,11 +282,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::prefix('conversion-rate-analysis')
             ->name('conversion-rate-analysis.')
             ->group(function () {
-                Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
-                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('summary-table');
-                Route::get('/download-csv', 'downloadtableConversionRateCsv')
+                Route::get('/chart-comparison/{storeId}', 'chartComparisonConversionRate')->name('chart-comparison');
+                Route::get('/summary-table/{storeId}', 'tableConversionRateAnalysis')->name('summary-table');
+                Route::get('/download-csv/{storeId}', 'downloadtableConversionRateCsv')
                 ->name('download-csv');
-                Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
+                Route::get('/chart-relation-PV-and-conversion-rate/{storeId}', 'chartRelationPVAndConversionRate')
                     ->name('chart-relation-PV-and-conversion-rate');
             });
 

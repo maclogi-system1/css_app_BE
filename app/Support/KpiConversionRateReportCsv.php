@@ -34,10 +34,11 @@ class KpiConversionRateReportCsv
     /**
      * Return a callback handle stream csv file.
      */
-    public function streamCsvFile(array $filters = []): Closure
+    public function streamCsvFile(string $storeId, array $filters = []): Closure
     {
         $header = $this->getFields('title');
-        $conversionResults = $this->storeChartService->getDataTableConversionRateAnalysis($filters);
+        $result = $this->storeChartService->getDataTableConversionRateAnalysis($storeId, $filters)->get('data');
+        $conversionResults = Arr::get($result, 'table_conversion_rate', []);
 
         return function () use ($header, $conversionResults) {
             $file = fopen('php://output', 'w');

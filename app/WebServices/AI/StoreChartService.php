@@ -16,10 +16,10 @@ class StoreChartService extends Service
     /**
      * Query chart stores's conversion rate analysis.
      */
-    public function getDataChartComparisonConversionRate(array $filters = [], bool $isMonthQuery = false): Collection
+    public function getDataChartComparisonConversionRate(string $storeId, array $filters = [], bool $isMonthQuery = false): Collection
     {
         if ($isMonthQuery) {
-            return $this->getDataChartYearMonthComparisonConversionRate($filters);
+            return $this->getDataChartYearMonthComparisonConversionRate($storeId, $filters);
         }
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
@@ -27,7 +27,8 @@ class StoreChartService extends Service
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsDaily::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_daily_conversion_rate as daily_conversion_rate',
@@ -42,36 +43,32 @@ class StoreChartService extends Service
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
 
-        $data = collect();
+        $conversionRateData = collect();
         foreach ($dailyResult as $dailyKey => $dailyItem) {
-            $listStoreValues = collect();
-            foreach ($dailyItem as $storeVal) {
-                $listStoreValues->add([
-                    'display_name' => Arr::get($storeVal, 'store_id'),
-                    'store_id' => Arr::get($storeVal, 'store_id'),
-                    'conversion_rate' => round(floatval(Arr::get($storeVal, 'conversion_rate', 0)), 2),
-                ]);
-            }
-            $data->add([
+            $conversionRateData->add([
                 'date' => substr($dailyKey, 0, 4).'/'.substr($dailyKey, 4, 2).'/'.substr($dailyKey, 6, 2),
-                'stores_conversion_rate' => $listStoreValues,
+                'conversion_rate' => round(floatval(Arr::get($dailyItem[0], 'conversion_rate', 0)), 2),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_conversion_rate' => $conversionRateData,
+            ]),
         ]);
     }
 
     /**
      * Query summary conversion rate analysis.
      */
-    public function getDataTableConversionRateAnalysis(array $filters = [], bool $isMonthQuery = false): Collection
+    public function getDataTableConversionRateAnalysis(string $storeId, array $filters = [], bool $isMonthQuery = false): Collection
     {
         if ($isMonthQuery) {
-            return $this->getDataYearMonthTableConversionRateAnalysis($filters);
+            return $this->getDataYearMonthTableConversionRateAnalysis($storeId, $filters);
         }
 
         $dateRangeFilter = $this->getDateRangeFilter($filters);
@@ -80,7 +77,8 @@ class StoreChartService extends Service
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsDaily::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_daily_conversion_rate as daily_conversion_rate',
@@ -96,7 +94,7 @@ class StoreChartService extends Service
                 AVG(daily_conversion_rate.device) as device
             ')
             ->orderBy('date')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get()
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
@@ -113,16 +111,24 @@ class StoreChartService extends Service
             ]);
         }
 
-        return $data;
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'table_conversion_rate' => $data,
+            ]),
+        ]);
     }
 
     /**
      * Query PV chart data.
      */
-    public function getDataChartRelationPVAndConversionRate($filters, bool $isMonthQuery = false): Collection
+    public function getDataChartRelationPVAndConversionRate(string $storeId, $filters, bool $isMonthQuery = false): Collection
     {
         if ($isMonthQuery) {
-            return $this->getDataYearMonthChartRelationPVAndConversionRate($filters);
+            return $this->getDataYearMonthChartRelationPVAndConversionRate($storeId, $filters);
         }
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
@@ -130,7 +136,8 @@ class StoreChartService extends Service
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsDaily::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_daily_conversion_rate as daily_conversion_rate',
@@ -148,7 +155,7 @@ class StoreChartService extends Service
                 AVG(daily_conversion_rate.all_rate) as all_rate,
                 SUM(daily_access_num.all_value) as all_access
             ')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get();
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
         $data = collect();
@@ -173,7 +180,7 @@ class StoreChartService extends Service
     /**
      * Query chart stores's conversion rate analysis.
      */
-    private function getDataChartYearMonthComparisonConversionRate(array $filters = []): Collection
+    private function getDataChartYearMonthComparisonConversionRate(string $storeId, array $filters = []): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date']->format('Y-m');
@@ -181,7 +188,8 @@ class StoreChartService extends Service
         $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsMonthly::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_monthly_conversion_rate as monthly_conversion_rate',
@@ -196,41 +204,38 @@ class StoreChartService extends Service
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
 
-        $data = collect();
+        $conversionRateData = collect();
         foreach ($dailyResult as $dailyKey => $dailyItem) {
-            $listStoreValues = collect();
-            foreach ($dailyItem as $storeVal) {
-                $listStoreValues->add([
-                    'display_name' => Arr::get($storeVal, 'store_id'),
-                    'store_id' => Arr::get($storeVal, 'store_id'),
-                    'conversion_rate' => round(floatval(Arr::get($storeVal, 'conversion_rate', 0)), 2),
-                ]);
-            }
-            $data->add([
+            $conversionRateData->add([
                 'date' => substr($dailyKey, 0, 4).'/'.substr($dailyKey, 4, 2),
-                'stores_conversion_rate' => $listStoreValues,
+                'conversion_rate' => round(floatval(Arr::get($dailyItem[0], 'conversion_rate', 0)), 2),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_conversion_rate' => $conversionRateData,
+            ]),
         ]);
     }
 
     /**
      * Query summary conversion rate analysis by year-month.
      */
-    private function getDataYearMonthTableConversionRateAnalysis(array $filters = []): Collection
+    private function getDataYearMonthTableConversionRateAnalysis($storeId, array $filters = []): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
-        $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
-        $toDate = $dateRangeFilter['to_date']->format('Y-m-d');
-        $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
-        $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsMonthly::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_monthly_conversion_rate as monthly_conversion_rate',
@@ -246,7 +251,7 @@ class StoreChartService extends Service
                 AVG(monthly_conversion_rate.device) as device
             ')
             ->orderBy('date')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get()
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
@@ -263,13 +268,21 @@ class StoreChartService extends Service
             ]);
         }
 
-        return $data;
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'table_conversion_rate' => $data,
+            ]),
+        ]);
     }
 
     /**
      * Query PV chart data by year-month.
      */
-    private function getDataYearMonthChartRelationPVAndConversionRate($filters): Collection
+    private function getDataYearMonthChartRelationPVAndConversionRate(string $storeId, $filters): Collection
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date']->format('Y-m');
@@ -277,7 +290,8 @@ class StoreChartService extends Service
         $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
 
-        $monthlyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+        $monthlyResult = ShopAnalyticsMonthly::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_monthly_conversion_rate as monthly_conversion_rate',
@@ -295,7 +309,7 @@ class StoreChartService extends Service
                 AVG(monthly_conversion_rate.all_rate) as all_rate,
                 SUM(monthly_access_num.all_value) as all_access
             ')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get();
         $monthlyResult = ! is_null($monthlyResult) ? $monthlyResult->toArray() : [];
         $data = collect();
