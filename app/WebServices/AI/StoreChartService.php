@@ -116,13 +116,46 @@ class StoreChartService extends Service
         return $data;
     }
 
-    public function getDataChartRelationPVAndConversionRate($filters): Collection
+    /**
+     * Query PV chart data.
+     */
+    public function getDataChartRelationPVAndConversionRate($filters, bool $isMonthQuery = false): Collection
     {
-        $dataFake = collect();
-        for ($i = 0; $i < 30; $i++) {
-            $dataFake->add([
-                'conversion_rate' => rand(0, 5000),
-                'PV' => rand(0, 70000),
+        if ($isMonthQuery) {
+            return $this->getDataYearMonthChartRelationPVAndConversionRate($filters);
+        }
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m-d');
+        $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
+
+        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+            ->where('date', '<=', $toDateStr)
+            ->join(
+                'shop_analytics_daily_conversion_rate as daily_conversion_rate',
+                'daily_conversion_rate.conversion_rate_id',
+                '=',
+                'shop_analytics_daily.conversion_rate_id'
+            )
+            ->join(
+                'shop_analytics_daily_access_num as daily_access_num',
+                'daily_access_num.access_num_id',
+                '=',
+                'shop_analytics_daily.access_num_id'
+            )
+            ->selectRaw('
+                AVG(daily_conversion_rate.all_rate) as all_rate,
+                SUM(daily_access_num.all_value) as all_access
+            ')
+            ->groupBy('date')
+            ->get();
+        $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
+        $data = collect();
+        foreach ($dailyResult as $item) {
+            $data->add([
+                'conversion_rate' => round(Arr::get($item, 'all_rate', 0), 2),
+                'PV' => intval(Arr::get($item, 'all_access', 0)),
             ]);
         }
 
@@ -132,7 +165,7 @@ class StoreChartService extends Service
             'data' => collect([
                 'from_date' => Arr::get($filters, 'from_date'),
                 'to_date' => Arr::get($filters, 'to_date'),
-                'chart_pv' => $dataFake,
+                'chart_pv' => $data,
             ]),
         ]);
     }
@@ -231,5 +264,56 @@ class StoreChartService extends Service
         }
 
         return $data;
+    }
+
+    /**
+     * Query PV chart data by year-month.
+     */
+    private function getDataYearMonthChartRelationPVAndConversionRate($filters): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
+
+        $monthlyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+            ->where('date', '<=', $toDateStr)
+            ->join(
+                'shop_analytics_monthly_conversion_rate as monthly_conversion_rate',
+                'monthly_conversion_rate.conversion_rate_id',
+                '=',
+                'shop_analytics_monthly.conversion_rate_id'
+            )
+            ->join(
+                'shop_analytics_monthly_access_num as monthly_access_num',
+                'monthly_access_num.access_num_id',
+                '=',
+                'shop_analytics_monthly.access_num_id'
+            )
+            ->selectRaw('
+                AVG(monthly_conversion_rate.all_rate) as all_rate,
+                SUM(monthly_access_num.all_value) as all_access
+            ')
+            ->groupBy('date')
+            ->get();
+        $monthlyResult = ! is_null($monthlyResult) ? $monthlyResult->toArray() : [];
+        $data = collect();
+        foreach ($monthlyResult as $item) {
+            $data->add([
+                'conversion_rate' => round(Arr::get($item, 'all_rate', 0), 2),
+                'PV' => intval(Arr::get($item, 'all_access', 0)),
+            ]);
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_pv' => $data,
+            ]),
+        ]);
     }
 }
