@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
-
-class GetCumlativeChangeInRevenueAndProfitRequest extends FormRequest
+class GetCumlativeChangeInRevenueAndProfitRequest extends GetMqAnalysisRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,11 +19,10 @@ class GetCumlativeChangeInRevenueAndProfitRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'store_id' => [Rule::requiredIf(! $this->route('storeId')), 'string'],
-            'from_date' => ['required', 'date:Y-m'],
-            'to_date' => ['required', 'date:Y-m', 'after:from_date'],
-            'mq_sheet_id' => ['nullable', 'string'],
-        ];
+        $rules = parent::rules();
+        unset($rules['compared_from_date'], $rules['compared_to_date']);
+        $rules['mq_sheet_id'] = ['nullable', 'string'];
+
+        return $rules;
     }
 }

@@ -23,13 +23,13 @@ class GetMqAnalysisRequest extends FormRequest
     {
         return [
             'store_id' => [Rule::requiredIf(! $this->route('storeId')), 'string'],
-            'from_date' => ['required', 'date:Y-m'],
-            'to_date' => ['required', 'date:Y-m', 'after:from_date'],
-            'compared_from_date' => ['nullable', 'date:Y-m'],
+            'from_date' => ['required', 'date:Y-m', 'after_or_equal:2021-01'],
+            'to_date' => ['required', 'date:Y-m', 'after_or_equal:from_date'],
+            'compared_from_date' => ['nullable', 'date:Y-m', 'after_or_equal:2021-01'],
             'compared_to_date' => [
                 Rule::requiredIf($this->has('compared_from_date')),
                 'date:Y-m',
-                'after:compared_from_date',
+                'after_or_equal:compared_from_date',
             ],
         ];
     }
