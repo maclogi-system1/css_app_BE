@@ -125,6 +125,7 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
         return $this->handleSafely(function () use ($mqSheet) {
             $newMqSheet = $mqSheet->replicate()->fill([
                 'name' => MqSheet::PREFIX_NAME.now()->format('Y/m/d H:i:s'),
+                'is_default' => false,
             ]);
             $newMqSheet->save();
             $allMqAccountings = $mqSheet->mqAccountings;
