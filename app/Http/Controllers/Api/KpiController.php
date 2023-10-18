@@ -343,7 +343,7 @@ class KpiController extends Controller
      */
     public function downloadtableSalesAmntPerUserCsv(Request $request, string $storeId): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiSalesAmntPerUserReportCsv->streamCsvFile($request->query()), headers: [
+        return response()->stream(callback: $this->kpiSalesAmntPerUserReportCsv->streamCsvFile($storeId, $request->query()), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=客単価比較.csv',
             'Pragma' => 'no-cache',
