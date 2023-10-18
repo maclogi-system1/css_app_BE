@@ -659,7 +659,6 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 $dataMqCost = [
                     'management_agency_fee' => Arr::get($setting, 'estimated_management_agency_expenses'),
                     'cost_price_rate' => Arr::get($setting, 'estimated_cost_rate'),
-                    'management_agency_fee' => Arr::get($setting, 'estimated_shipping_fee'),
                     'commision_rate' => Arr::get($setting, 'estimated_commission_rate'),
                     'reserve1' => Arr::get($setting, 'estimated_store_opening_fee'),
                     'reserve2' => Arr::get($setting, 'estimated_csv_usage_fee'),
