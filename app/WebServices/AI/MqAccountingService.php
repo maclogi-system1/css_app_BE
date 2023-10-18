@@ -32,7 +32,8 @@ class MqAccountingService extends Service
             ->map(function ($item) use ($settings) {
                 if ($settings->isNotEmpty()) {
                     $setting = $settings->where(function ($shopSetting) use ($item) {
-                        return $shopSetting->date->year == $item->year && $shopSetting->date->month == $item->month;
+                        return Carbon::create($shopSetting->date)->year == $item->year
+                            && Carbon::create($shopSetting->date)->month == $item->month;
                     })->first();
 
                     if ($setting) {
