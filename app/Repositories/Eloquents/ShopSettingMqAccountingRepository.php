@@ -67,6 +67,10 @@ class ShopSettingMqAccountingRepository extends Repository implements ShopSettin
      */
     public function getListByStore(string $storeId, array $filters = []): Collection
     {
+        if (app()->environment('staging')) {
+            $storeId = $storeId == 'ariat' ? '_partner_53016' : $storeId;
+        }
+
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date'];
         $toDate = $dateRangeFilter['to_date'];
