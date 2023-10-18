@@ -27,7 +27,8 @@ class SalesAmntPerUserService extends Service
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsDaily::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_daily_sales_amnt_per_user as daily_sales',
@@ -44,24 +45,20 @@ class SalesAmntPerUserService extends Service
 
         $data = collect();
         foreach ($dailyResult as $dailyKey => $dailyItem) {
-            $listStoreValues = collect();
-            foreach ($dailyItem as $storeVal) {
-                $listStoreValues->add([
-                    'display_name' => Arr::get($storeVal, 'store_id'),
-                    'store_id' => Arr::get($storeVal, 'store_id'),
-                    'sales_amnt_per_user' => floatval(Arr::get($storeVal, 'sales_amnt_per_user', 0)),
-                ]);
-            }
             $data->add([
                 'date' => substr($dailyKey, 0, 4).'/'.substr($dailyKey, 4, 2).'/'.substr($dailyKey, 6, 2),
-                'stores_sales_amnt_per_user' => $listStoreValues,
+                'sales_amnt_per_user' => floatval(Arr::get($dailyItem[0], 'sales_amnt_per_user', 0)),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_sales_amnt_per_user' => $data,
+            ]),
         ]);
     }
 
@@ -80,7 +77,8 @@ class SalesAmntPerUserService extends Service
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsDaily::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsDaily::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_daily_sales_amnt_per_user as daily_sales',
@@ -96,7 +94,7 @@ class SalesAmntPerUserService extends Service
                 AVG(daily_sales.device) as device
             ')
             ->orderBy('date')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get()
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
@@ -116,7 +114,11 @@ class SalesAmntPerUserService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'table_sales_amnt_per_user' => $data,
+            ]),
         ]);
     }
 
@@ -191,7 +193,8 @@ class SalesAmntPerUserService extends Service
         $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsMonthly::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_monthly_sales_amnt_per_user as monthly_sales',
@@ -208,24 +211,20 @@ class SalesAmntPerUserService extends Service
 
         $data = collect();
         foreach ($dailyResult as $dailyKey => $dailyItem) {
-            $listStoreValues = collect();
-            foreach ($dailyItem as $storeVal) {
-                $listStoreValues->add([
-                    'display_name' => Arr::get($storeVal, 'store_id'),
-                    'store_id' => Arr::get($storeVal, 'store_id'),
-                    'sales_amnt_per_user' => floatval(Arr::get($storeVal, 'sales_amnt_per_user', 0)),
-                ]);
-            }
             $data->add([
                 'date' => substr($dailyKey, 0, 4).'/'.substr($dailyKey, 4, 2),
-                'stores_sales_amnt_per_user' => $listStoreValues,
+                'sales_amnt_per_user' => floatval(Arr::get($dailyItem[0], 'sales_amnt_per_user', 0)),
             ]);
         }
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'chart_sales_amnt_per_user' => $data,
+            ]),
         ]);
     }
 
@@ -240,7 +239,8 @@ class SalesAmntPerUserService extends Service
         $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
 
-        $dailyResult = ShopAnalyticsMonthly::where('date', '>=', $fromDateStr)
+        $dailyResult = ShopAnalyticsMonthly::where('store_id', $storeId)
+            ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->join(
                 'shop_analytics_monthly_sales_amnt_per_user as monthly_sales',
@@ -256,7 +256,7 @@ class SalesAmntPerUserService extends Service
                 AVG(monthly_sales.device) as device
             ')
             ->orderBy('date')
-            ->groupBy('date')
+            ->groupBy('date', 'store_id')
             ->get()
             ->groupBy('date');
         $dailyResult = ! is_null($dailyResult) ? $dailyResult->toArray() : [];
@@ -276,7 +276,11 @@ class SalesAmntPerUserService extends Service
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $data,
+            'data' => collect([
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'table_sales_amnt_per_user' => $data,
+            ]),
         ]);
     }
 

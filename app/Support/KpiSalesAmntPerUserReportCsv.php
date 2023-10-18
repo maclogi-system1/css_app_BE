@@ -37,12 +37,23 @@ class KpiSalesAmntPerUserReportCsv
     public function streamCsvFile($storeId, array $filters = []): Closure
     {
         $header = $this->getFields('title');
-        $salesAmntPerUserResults = $this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters);
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+        $salesAmntPerUserResults = $this->salesAmntPerUserService->getSalesAmntPerUserComparisonTable($storeId, $filters, $isMonthQuery)->get('data');
+        $salesAmntPerUser = Arr::get($salesAmntPerUserResults, 'table_sales_amnt_per_user', []);
 
-        return function () use ($header, $salesAmntPerUserResults) {
+        return function () use ($header, $salesAmntPerUser) {
             $file = fopen('php://output', 'w');
             fputcsv($file, convert_fields_to_sjis(array_values($header)));
-            foreach ($salesAmntPerUserResults as $salesAmntPerUserItem) {
+            foreach ($salesAmntPerUser as $salesAmntPerUserItem) {
                 $row = [];
                 foreach (static::HEADING as $field => $heading) {
                     $row[] = Arr::get($salesAmntPerUserItem, $field);
