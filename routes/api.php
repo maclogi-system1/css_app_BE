@@ -124,6 +124,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('mq-sheets.')
         ->controller(MqSheetController::class)
         ->group(function () {
+            Route::post('/clone-sheet/{mqSheet}', 'cloneSheet');
+
             Route::get('/', 'index')->name('index');
             Route::get('/{mqSheet}', 'show')->name('show');
             Route::post('/', 'store')->name('store');

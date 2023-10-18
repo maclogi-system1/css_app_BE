@@ -107,4 +107,24 @@ class MqSheetController extends Controller
                 'message' => __('Deleted failure.'),
             ], Response::HTTP_BAD_REQUEST);
     }
+
+    /**
+     * Hanle cloning a new mq_sheet.
+     */
+    public function cloneSheet(MqSheet $mqSheet): JsonResource|JsonResponse
+    {
+        if ($this->mqSheetRepository->totalMqSheetInStore($mqSheet->store_id) >= 5) {
+            return response()->json([
+                'message' => __('A maximum of 5 sheets can only be created.'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $mqSheet = $this->mqSheetRepository->cloneSheet($mqSheet);
+
+        return $mqSheet
+            ? new MqSheetResource($mqSheet)
+            : response()->json([
+                'message' => __('Created failure.'),
+            ], Response::HTTP_BAD_REQUEST);
+    }
 }

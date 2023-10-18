@@ -12,6 +12,7 @@ class MqSheet extends Model
     use HasFactory, HasUuids;
 
     public const DEFAULT_NAME = 'AI売上予測MQ会計';
+    public const PREFIX_NAME = 'MQ会計シート';
 
     protected $fillable = [
         'id', 'store_id', 'name', 'is_default', 'created_at', 'updated_at',

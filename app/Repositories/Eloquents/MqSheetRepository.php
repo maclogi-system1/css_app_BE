@@ -108,4 +108,51 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
             return $mqSheet;
         }, 'Delete mq_sheets');
     }
+
+    /**
+     * Get the total of all sheets in the store.
+     */
+    public function totalMqSheetInStore(string $storeId): int
+    {
+        return $this->model()->where('store_id', $storeId)->count();
+    }
+
+    /**
+     * Hanle cloning a new mq_sheet.
+     */
+    public function cloneSheet(MqSheet $mqSheet): ?MqSheet
+    {
+        return $this->handleSafely(function () use ($mqSheet) {
+            $newMqSheet = $mqSheet->replicate()->fill([
+                'name' => MqSheet::PREFIX_NAME.now()->format('Y/m/d H:i:s'),
+            ]);
+            $newMqSheet->save();
+            $allMqAccountings = $mqSheet->mqAccountings;
+
+            foreach ($allMqAccountings as $mqAccounting) {
+                $newMqKpi = $mqAccounting->mqKpi->replicate();
+                $newMqKpi->save();
+                $newMqAccessNum = $mqAccounting->mqAccessNum->replicate();
+                $newMqAccessNum->save();
+                $newMqAdSalesAmnt = $mqAccounting->mqAdSalesAmnt->replicate();
+                $newMqAdSalesAmnt->save();
+                $newMqUserTrend = $mqAccounting->mqUserTrends->replicate();
+                $newMqUserTrend->save();
+                $newMqCost = $mqAccounting->mqCost->replicate();
+                $newMqCost->save();
+                $newMqAccounting = $mqAccounting->replicate()->fill([
+                    'mq_kpi_id' => $newMqKpi->id,
+                    'mq_access_num_id' => $newMqAccessNum->id,
+                    'mq_ad_sales_amnt_id' => $newMqAdSalesAmnt->id,
+                    'mq_user_trends_id' => $newMqUserTrend->id,
+                    'mq_cost_id' => $newMqCost->id,
+                    'mq_sheet_id' => $newMqSheet->id,
+                ]);
+
+                $newMqAccounting->save();
+            }
+
+            return $newMqSheet;
+        }, 'Clone mq_sheets');
+    }
 }
