@@ -80,6 +80,34 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
     }
 
     /**
+     * Handles the creation of new mq_sheet defaults for the store.
+     */
+    public function createDefault(string $storeId, bool $withCurrentYearData = true): ?MqSheet
+    {
+        return $this->handleSafely(function () use ($storeId, $withCurrentYearData) {
+            $mqSheet = $this->model()->updateOrCreate([
+                'store_id' => $storeId,
+                'name' => MqSheet::DEFAULT_NAME,
+                'is_default' => true,
+            ]);
+
+            /** @var \App\Repositories\Contracts\MqAccountingRepository */
+            $mqAccountingRepository = app(MqAccountingRepository::class);
+
+            if ($withCurrentYearData) {
+                /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
+                $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
+                $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
+                $mqAccountingRepository->makeDefaultData($storeId, $mqSheet, $shopSettingMqAccounting->toArray());
+            }
+
+            $mqAccountingRepository->makeDataFromAI($storeId, $mqSheet);
+
+            return $mqSheet;
+        }, 'Create default mq_sheets');
+    }
+
+    /**
      * Handle update a specified mq sheet.
      */
     public function update(array $data, MqSheet $mqSheet): ?MqSheet

@@ -14,6 +14,7 @@ use App\Repositories\Repository;
 use App\Support\MqAccountingCsv;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\MqAccountingService;
+use App\WebServices\AI\StorePred36mService;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -85,7 +86,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     ];
 
     public function __construct(
-        protected MqAccountingService $mqAccountingService
+        protected MqAccountingService $mqAccountingService,
+        protected StorePred36mService $storePred36mService,
     ) {
     }
 
@@ -651,6 +653,12 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             [$year, $month] = explode('-', $yearMonth);
             $dataMqCost = [];
             $dataMqAccounting = [];
+            $mqAccounting = $this->model()->firstOrNew([
+                'store_id' => $storeId,
+                'year' => $year,
+                'month' => $month,
+                'mq_sheet_id' => $mqSheet->id,
+            ]);
 
             if (
                 ! empty($setting)
@@ -669,28 +677,60 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
                 ];
             }
 
-            $mqKpi = MqKpi::create([]);
-            $mqAccessNum = MqAccessNum::create([]);
-            $mqAdSalesAmnt = MqAdSalesAmnt::create([]);
-            $mqUserTrends = MqUserTrend::create([]);
-            $mqCost = MqCost::create($dataMqCost);
-            $mqAccounting = $this->model([
-                'store_id' => $storeId,
-                'year' => $year,
-                'month' => $month,
+            $mqKpi = MqKpi::firstOrCreate(['id' => $mqAccounting?->mq_kpi_id]);
+            $mqAccessNum = MqAccessNum::firstOrCreate(['id' => $mqAccounting?->mq_access_num_id]);
+            $mqAdSalesAmnt = MqAdSalesAmnt::firstOrCreate(['id' => $mqAccounting?->mq_ad_sales_amnt_id]);
+            $mqUserTrends = MqUserTrend::firstOrCreate(['id' => $mqAccounting?->mq_user_trends_id]);
+            $mqCost = MqCost::updateOrcreate(['id' => $mqAccounting?->mq_cost_id], $dataMqCost);
+            $mqAccounting->fill([
                 'mq_kpi_id' => $mqKpi->id,
                 'mq_access_num_id' => $mqAccessNum->id,
                 'mq_ad_sales_amnt_id' => $mqAdSalesAmnt->id,
                 'mq_user_trends_id' => $mqUserTrends->id,
                 'mq_cost_id' => $mqCost->id,
-                'mq_sheet_id' => $mqSheet->id,
-                'created_at' => now(),
-                'updated_at' => now(),
             ] + $dataMqAccounting);
-
             $mqAccounting->save();
 
             return $mqAccounting;
         }, 'Create default mq accounting');
+    }
+
+    /**
+     * Handles the creation of new mq_accounting along with relationships from AI data.
+     */
+    public function makeDataFromAI(string $storeId, MqSheet $mqSheet): void
+    {
+        $data36m = $this->storePred36mService->getPredSalesAmntByStoreId($storeId);
+        $data36m = $data36m->get('success') ? $data36m->get('data') : collect();
+
+        if ($data36m->isNotEmpty()) {
+            foreach ($data36m as $item) {
+                [$year, $month] = explode('-', $item->target_ym);
+                $mqAccounting = $this->model()->firstOrNew([
+                    'store_id' => $storeId,
+                    'year' => $year,
+                    'month' => $month,
+                    'mq_sheet_id' => $mqSheet->id,
+                ]);
+
+                $mqKpi = MqKpi::updateOrcreate(
+                    ['id' => $mqAccounting?->mq_kpi_id],
+                    ['sales_amnt' => $item->sales_amnt]
+                );
+                $mqAccessNum = MqAccessNum::firstOrCreate(['id' => $mqAccounting?->mq_access_num_id]);
+                $mqAdSalesAmnt = MqAdSalesAmnt::firstOrCreate(['id' => $mqAccounting?->mq_ad_sales_amnt_id]);
+                $mqUserTrends = MqUserTrend::firstOrCreate(['id' => $mqAccounting?->mq_user_trends_id]);
+                $mqCost = MqCost::firstOrCreate(['id' => $mqAccounting?->mq_cost_id]);
+                $mqAccounting->mq_kpi_id = $mqKpi->id;
+                $mqAccounting->mq_access_num_id = $mqAccessNum->id;
+                $mqAccounting->mq_ad_sales_amnt_id = $mqAdSalesAmnt->id;
+                $mqAccounting->mq_user_trends_id = $mqUserTrends->id;
+                $mqAccounting->mq_cost_id = $mqCost->id;
+                $mqAccounting->mq_sheet_id = $mqSheet->id;
+                $mqAccounting->save();
+            }
+        } else {
+            $this->makeDefaultData($storeId, $mqSheet);
+        }
     }
 }
