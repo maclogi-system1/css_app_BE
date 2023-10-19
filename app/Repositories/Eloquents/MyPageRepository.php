@@ -83,7 +83,7 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                     'value' => 'team',
                 ],
                 [
-                    'label' => '担当店舗"',
+                    'label' => '担当店舗',
                     'value' => 'store_in_charge',
                 ],
             ],
