@@ -19,6 +19,15 @@ class DynamicDatabaseConnection
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $this->getAndSetConnectionConfiguration();
+
+        $this->checkAndTryToConnect();
+
+        return $next($request);
+    }
+
+    public function getAndSetConnectionConfiguration()
+    {
         $password = SecretsManagerService::getPasswordCache();
 
         foreach (DatabaseConnectionConstant::EXTERNAL_CONNECTIONS as $connectionName) {
@@ -26,7 +35,19 @@ class DynamicDatabaseConnection
             DB::purge($connectionName);
             DB::reconnect($connectionName);
         }
+    }
 
-        return $next($request);
+    public function checkAndTryToConnect()
+    {
+        try {
+            DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)->getPdo();
+        } catch (\Throwable $e) {
+            if (DatabaseConnectionConstant::reconnectable($e)) {
+                cache()->forget('aws_secret_password');
+                $this->getAndSetConfigDatabaseConnection();
+            } else {
+                throw $e;
+            }
+        }
     }
 }
