@@ -176,7 +176,7 @@ class ShopRepository extends Repository implements ShopRepositoryContract
         return $data;
     }
 
-    protected function convertCssUserByOssUser(Collection $data): Collection
+    public function convertCssUserByOssUser(Collection $data): Collection
     {
         return $data->map(function ($shop) {
             $listConvert = ['directors', 'designers', 'consultants', 'managers', 'person_in_charges'];

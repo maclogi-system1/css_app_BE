@@ -49,6 +49,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\LinkedUserInfoRepository::class => \App\Repositories\Eloquents\LinkedUserInfoRepository::class,
         \App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository::class => \App\Repositories\Eloquents\ItemsPerformanceAnalyticsRepository::class,
         \App\Repositories\Contracts\CategoriesPerformanceAnalyticsRepository::class => \App\Repositories\Eloquents\CategoriesPerformanceAnalyticsRepository::class,
+        \App\Repositories\Contracts\MyPageRepository::class => \App\Repositories\Eloquents\MyPageRepository::class,
     ];
 
     /**

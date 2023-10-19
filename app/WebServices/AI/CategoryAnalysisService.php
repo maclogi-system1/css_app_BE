@@ -2,6 +2,7 @@
 
 namespace App\WebServices\AI;
 
+use App\Constants\DatabaseConnectionConstant;
 use App\Models\KpiRealData\ItemsData;
 use App\Models\KpiRealData\ItemsSales;
 use App\Support\Traits\HasMqDateTimeHandler;
@@ -30,7 +31,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $itemsData = DB::connection('kpi_real_data')->table('items_data as id')
+        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)->table('items_data as id')
             ->where('id.store_id', $storeId)
             ->where('id.catalog_id', '!=', '')
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id.items_data_all_id')
@@ -71,7 +72,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date');
         $toDate = Arr::get($dateRangeFilter, 'to_date');
 
-        return DB::connection('kpi_real_data')
+        return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_data', 'id2')
                     ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
@@ -127,7 +128,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $data = DB::connection('kpi_real_data')
+        $data = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_data', 'id2')
                     ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
@@ -205,7 +206,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsDataTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsData = DB::connection('kpi_real_data')
+        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('items_data', 'id1')
             ->where('id1.store_id', $storeId)
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id1.items_data_all_id')
@@ -243,7 +244,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsSalesTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsSales = DB::connection('kpi_real_data')
+        $itemsSales = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('items_sales', 'is1')
             ->where('is1.store_id', $storeId)
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {

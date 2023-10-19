@@ -77,7 +77,12 @@ return [
                 'get_list_table' => '/schema/list-table',
                 'check_exist_with_store' => '/schema/check-exist-with-store',
                 'query_condition_result' => '/schema/query-condition-result',
-            ]
+            ],
+            'my_page' => [
+                'get_store_profit_reference' => '/my-page/get-store-profit-reference',
+                'get_store_profit_table' => '/my-page/get-store-profit-table',
+                'get_tasks' => '/my-page/get-tasks',
+            ],
         ],
     ],
 

@@ -27,4 +27,6 @@ interface ShopRepository extends Repository
     public function getOptions(): array;
 
     public function update(string $storeId, array $data): Collection;
+
+    public function convertCssUserByOssUser(Collection $data): Collection;
 }
