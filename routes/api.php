@@ -36,7 +36,7 @@ Route::post('/password-reset-token', [PasswordController::class, 'getPasswordRes
 Route::post('/reset-password', [PasswordController::class, 'reset'])
     ->name('reset-password');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
