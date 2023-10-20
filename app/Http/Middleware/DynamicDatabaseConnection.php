@@ -44,7 +44,7 @@ class DynamicDatabaseConnection
         } catch (\Throwable $e) {
             if (DatabaseConnectionConstant::reconnectable($e)) {
                 cache()->forget('aws_secret_password');
-                $this->getAndSetConfigDatabaseConnection();
+                $this->getAndSetConnectionConfiguration();
             } else {
                 throw $e;
             }
