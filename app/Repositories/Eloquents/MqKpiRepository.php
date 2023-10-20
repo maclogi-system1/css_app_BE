@@ -9,7 +9,9 @@ use App\Repositories\Contracts\MqKpiRepository as MqKpiRepositoryContract;
 use App\Repositories\Repository;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\MqAccountingService;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 
 class MqKpiRepository extends Repository implements MqKpiRepositoryContract
 {
@@ -125,5 +127,19 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
         return [
             'ads_types' => $adsTypes,
         ];
+    }
+
+    public function getKPIByDate(string $storeId, Carbon $date): ?MqKpi
+    {
+        /** @var MqKpi $mqKPI */
+        $mqKPI = $this->model()->newQuery()
+            ->join('mq_accounting as ma', function (JoinClause $join) use ($storeId, $date) {
+                $join->on('ma.mq_kpi_id', '=', 'mq_kpi.id')
+                    ->where('ma.store_id', $storeId)
+                    ->where('ma.year', $date->year)
+                    ->where('ma.month', $date->month);
+            })->first();
+
+        return $mqKPI;
     }
 }

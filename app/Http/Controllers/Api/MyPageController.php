@@ -66,4 +66,19 @@ class MyPageController extends Controller
 
         return response()->json($result->get('data'));
     }
+
+    /**
+     * Get tasks, task alerts.
+     */
+    public function getAlerts(StoreProfitReferenceRequest $request)
+    {
+        $result = $this->myPageRepository->getAlerts($request->all());
+        if (! $result->get('success')) {
+            return response()->json([
+                'message' => __('Something went wrong!. Please try again'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return response()->json($result->get('data'));
+    }
 }
