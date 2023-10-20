@@ -19,7 +19,7 @@
             }
             body {
                 font-size: 16px;
-                font-family: Consolas, monaco, monospace;
+                font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
             }
             .container {
                 display: flex;
@@ -33,20 +33,30 @@
             .mb-5 {
                 margin-bottom: 1.25rem;
             }
+            .mb-8 {
+                margin-bottom: 2rem;
+            }
             .text-center {
                 text-align: center;
             }
-            h1 {
+            h1, h2 {
                 display: block;
                 width: 100%;
                 text-align: center;
                 margin: 0 auto 1.5rem auto;
+                color: #3d3d40;
+            }
+            h1 {
+                font-weight: 600;
+            }
+            h2 {
+                font-weight: 500;
             }
             form {
                 background: #fff;
                 border-radius: 4px;
-                padding: 2rem 1.5rem;
-                max-width: 20rem;
+                padding: 6rem;
+                max-width: 28rem;
                 width: 100%;
                 box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
             }
@@ -62,14 +72,14 @@
             }
             button {
                 padding: .5rem 1.5rem;
-                background: #2d3748;
-                color: #fff;
+                background: #eef2f5;
                 border: none;
                 border-radius: 20px;
                 cursor: pointer;
+                color: #3d3d40;
             }
             button:hover {
-                opacity: .75;
+                background: #dee1e4;
             }
             .error {
                 font-size: .75rem;
@@ -86,6 +96,8 @@
 
                 <h1>CSS</h1>
 
+                <h2>{{ __('Reset Password') }}</h2>
+
                 <div class="mb-5">
                     <input type="email" name="email" placeholder="Email" />
                     @error('email')
@@ -100,11 +112,11 @@
                     @enderror()
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-8">
                     <input type="password" name="password_confirmation" placeholder="Password confirmation" />
                 </div>
                 <div class="text-center">
-                    <button type="submit">Reset</button>
+                    <button type="submit">{{ __('Reset') }}</button>
                 </div>
             </form>
         </div>
