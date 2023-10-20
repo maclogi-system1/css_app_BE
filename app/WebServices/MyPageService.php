@@ -31,12 +31,23 @@ class MyPageService extends Service
     }
 
     /**
-     * Get total tasks.
+     * Get tasks.
      */
     public function getTasks(array $params): Collection
     {
         return $this->toResponse(Http::oss()->get(
             OSSService::getApiUri('my_page.get_tasks'),
+            $params
+        ));
+    }
+
+    /**
+     * Get alerts.
+     */
+    public function getAlerts(array $params)
+    {
+        return $this->toResponse(Http::oss()->get(
+            OSSService::getApiUri('my_page.get_alerts'),
             $params
         ));
     }

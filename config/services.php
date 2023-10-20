@@ -82,6 +82,7 @@ return [
                 'get_store_profit_reference' => '/my-page/get-store-profit-reference',
                 'get_store_profit_table' => '/my-page/get-store-profit-table',
                 'get_tasks' => '/my-page/get-tasks',
+                'get_alerts' => '/my-page/get-alerts',
             ],
         ],
     ],

@@ -16,4 +16,6 @@ interface MyPageRepository extends Repository
     public function getStoreProfitTable(array $params): Collection;
 
     public function getTasks(array $params): Collection;
+
+    public function getAlerts(array $params): Collection;
 }

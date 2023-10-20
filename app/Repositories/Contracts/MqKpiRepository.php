@@ -2,6 +2,9 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\MqKpi;
+use Illuminate\Support\Carbon;
+
 interface MqKpiRepository extends Repository
 {
     /**
@@ -13,4 +16,6 @@ interface MqKpiRepository extends Repository
      * Get a list of the option for select.
      */
     public function getOptions(): array;
+
+    public function getKPIByDate(string $storeId, Carbon $date): ?MqKpi;
 }

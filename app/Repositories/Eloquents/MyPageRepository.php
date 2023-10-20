@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquents;
 
 use App\Constants\DatabaseConnectionConstant;
+use App\Repositories\Contracts;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\MyPageRepository as MyPageRepositoryContract;
 use App\Repositories\Contracts\ShopRepository;
@@ -18,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 class MyPageRepository extends Repository implements MyPageRepositoryContract
 {
     public function __construct(
-        private MyPageService $myPageService
+        protected MyPageService $myPageService,
+        protected Contracts\MqKpiRepository $mqKpiRepository
     ) {
     }
 
@@ -146,10 +148,22 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 $storeIds,
                 now()->subDays()
             )?->total_sales ?? 0);
+
+            $totalSalesToday = (int) ($this->getShopAnalyticsByDate(
+                $storeIds,
+                now()
+            )?->total_sales ?? 0);
+            $totalSalesSameDayLastYear = (int) ($this->getShopAnalyticsByDate(
+                $storeIds,
+                now()->subYear()
+            )?->total_sales ?? 0);
+
             $totalSalesTheMonth = (int) ($this->getShopAnalyticsCurrentMonth($storeIds, now())?->total_sales ?? 0);
             $totalSalesTheLastYear = (int) ($this->getShopAnalyticsCurrentMonth($storeIds, now()->subYears(), true)?->total_sales ?? 0);
             $totalSalesCurrentTheMonthMQ = (int) ($this->getShopAnalyticsCurrentMonthMQ($storeIds, now())?->total_sales ?? 0);
-            $shopCost = $this->getShopCostByDate($storeIds, now());
+            $shopCost = $this->getShopCostByDate($storeIds, now())->first();
+            $salesForecast = (int) ($shop['sales_forecast'] ?? 0);
+
             $extraData = [
                 'total_sales_the_previous_day' => $totalSalesThePreviousDay,
                 'total_sales_the_month' => $totalSalesTheMonth,
@@ -160,6 +174,14 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 'variable_cost_sum' => $shopCost->variable_cost_sum ?? 0,
                 'cost_sum' => $shopCost->cost_sum ?? 0,
                 'sum_profit' => $shopCost->sum_profit ?? 0,
+                'same_day_last_year_rate' => $totalSalesSameDayLastYear
+                    ? round(100 * $totalSalesToday / $totalSalesSameDayLastYear, 2)
+                    : 0,
+                'sales_target' => $this->mqKpiRepository->getKPIByDate($shop['store_id'], now())?->sales_amnt ?? 0,
+                'sales_forecast' => $salesForecast,
+                'sales_consumption_rate' => ($salesForecast * $totalSalesTheMonth)
+                    ? round(100 * $totalSalesToday / $salesForecast * $totalSalesTheMonth, 2)
+                    : 0,
             ];
 
             return array_merge($shop, $extraData);
@@ -221,27 +243,29 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
             ->first();
     }
 
-    public function getShopAnalyticsCurrentMonthMQ(array $storeIds, Carbon $date):  object
+    public function getShopAnalyticsCurrentMonthMQ(array $storeIds, Carbon $date): object
     {
         return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('mq_accounting as ma')
             ->join('mq_kpi as mk', function (JoinClause $join) use ($storeIds, $date) {
                 $join->on('ma.mq_kpi_id', '=', 'mk.mq_kpi_id')
+                    ->whereIn('ma.store_id', $storeIds)
                     ->where('ma.year', $date->year)
                     ->where('ma.month', $date->month);
             })->selectRaw('SUM(mk.sales_amnt) as total_sales')
             ->first();
     }
 
-    public function getShopCostByDate(array $storeIds, Carbon $date)
+    public function getShopCostByDate(array $storeIds, Carbon $date): Collection
     {
         return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('mq_accounting as ma')
             ->join('mq_cost as mc', function (JoinClause $join) use ($storeIds, $date) {
                 $join->on('ma.mq_cost_id', '=', 'mc.mq_cost_id')
+                    ->whereIn('ma.store_id', $storeIds)
                     ->where('ma.year', $date->year)
                     ->where('ma.month', $date->month);
-            })->first();
+            })->get();
     }
 
     public function prepareDataStoreProfit(array $params): array
@@ -275,5 +299,14 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
         $result->get('data')->put('tasks', $tasks);
 
         return $result;
+    }
+
+    public function getAlerts(array $params): Collection
+    {
+        $ossManager = $this->prepareDataStoreProfit($params);
+
+        return $this->myPageService->getAlerts(array_merge($params, [
+            'manager' => implode(',', $ossManager),
+        ]));
     }
 }
