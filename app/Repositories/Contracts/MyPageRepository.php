@@ -18,4 +18,6 @@ interface MyPageRepository extends Repository
     public function getTasks(array $params): Collection;
 
     public function getAlerts(array $params): Collection;
+
+    public function getSales4QuadrantMap(array $params): Collection;
 }

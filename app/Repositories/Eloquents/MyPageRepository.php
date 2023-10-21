@@ -174,9 +174,7 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 'variable_cost_sum' => $shopCost->variable_cost_sum ?? 0,
                 'cost_sum' => $shopCost->cost_sum ?? 0,
                 'sum_profit' => $shopCost->sum_profit ?? 0,
-                'same_day_last_year_rate' => $totalSalesSameDayLastYear
-                    ? round(100 * $totalSalesToday / $totalSalesSameDayLastYear, 2)
-                    : 0,
+                'same_day_last_year_rate' => $totalSalesToday - $totalSalesSameDayLastYear,
                 'sales_target' => $this->mqKpiRepository->getKPIByDate($shop['store_id'], now())?->sales_amnt ?? 0,
                 'sales_forecast' => $salesForecast,
                 'sales_consumption_rate' => ($salesForecast * $totalSalesTheMonth)
@@ -308,5 +306,36 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
         return $this->myPageService->getAlerts(array_merge($params, [
             'manager' => implode(',', $ossManager),
         ]));
+    }
+
+    public function getSales4QuadrantMap(array $params): Collection
+    {
+        $ossManager = $this->prepareDataStoreProfit($params);
+        $result = $this->myPageService->getStoreProfitTable(array_merge($params, [
+            'manager' => implode(',', $ossManager),
+        ]));
+
+        if (! $result->get('success')) {
+            return $result;
+        }
+
+        $shops = collect($result->get('data')->get('shops'))->map(function ($shop) {
+            $storeIds = [Arr::get($shop, 'store_id', '')];
+            $totalSalesThisMonth = (int) ($this->getShopAnalyticsCurrentMonth($storeIds, now())?->total_sales ?? 0);
+            $totalSalesLastMonth = (int) ($this->getShopAnalyticsCurrentMonth($storeIds, now()->subMonth())?->total_sales ?? 0);
+
+            return [
+                'id' => Arr::get($shop, 'id'),
+                'store_id' => Arr::get($shop, 'store_id'),
+                'name' => Arr::get($shop, 'name'),
+                'total_sales_this_month' => $totalSalesThisMonth,
+                'total_sales_last_month' => $totalSalesLastMonth,
+                'sales_target' => $this->mqKpiRepository->getKPIByDate(Arr::get($shop, 'store_id', ''), now())?->sales_amnt ?? 0,
+            ];
+        });
+
+        $result->get('data')->put('shops', $shops);
+
+        return $result;
     }
 }
