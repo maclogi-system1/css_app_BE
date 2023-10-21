@@ -389,5 +389,6 @@ Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
             Route::get('/store-profit-table', [MyPageController::class, 'getStoreProfitTable'])->name('store-profit-table');
             Route::get('/tasks', [MyPageController::class, 'getTasks'])->name('tasks');
             Route::get('/alerts', [MyPageController::class, 'getAlerts'])->name('alerts');
+            Route::get('/sales-4-quadrant-map', [MyPageController::class, 'getSales4QuadrantMap'])->name('sales-4-quadrant-map');
     });
 });

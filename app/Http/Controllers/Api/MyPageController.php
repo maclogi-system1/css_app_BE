@@ -81,4 +81,16 @@ class MyPageController extends Controller
 
         return response()->json($result->get('data'));
     }
+
+    public function getSales4QuadrantMap(StoreProfitReferenceRequest $request)
+    {
+        $result = $this->myPageRepository->getSales4QuadrantMap($request->all());
+        if (! $result->get('success')) {
+            return response()->json([
+                'message' => __('Something went wrong!. Please try again'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return response()->json($result->get('data'));
+    }
 }
