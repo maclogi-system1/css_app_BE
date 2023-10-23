@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
@@ -11,7 +12,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('update', [$this->route('user')]);
+        return $this->user()->can('update', [User::class, $this->route('user')]);
     }
 
     /**

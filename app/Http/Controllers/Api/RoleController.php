@@ -25,6 +25,7 @@ class RoleController extends Controller
      */
     public function index(Request $request): JsonResource|JsonResponse
     {
+        $this->authorizeForUser($request->user(), 'view_roles');
         $roles = RoleResource::collection($this->roleRepository->getList($request->query()));
         $roles->wrap('roles');
 
@@ -61,8 +62,10 @@ class RoleController extends Controller
     /**
      * Display the specified role.
      */
-    public function show(Role $role): JsonResource|JsonResponse
+    public function show(Role $role, Request $request): JsonResource|JsonResponse
     {
+        $this->authorizeForUser($request->user(), 'view_roles');
+
         return new RoleResource($role);
     }
 
@@ -81,8 +84,9 @@ class RoleController extends Controller
     /**
      * Remove the specified role from storage.
      */
-    public function destroy(Role $role): JsonResource|JsonResponse
+    public function destroy(Role $role, Request $request): JsonResource|JsonResponse
     {
+        $this->authorizeForUser($request->user(), 'delete_roles');
         $role = $this->roleRepository->delete($role);
 
         return $role ? new RoleResource($role) : response()->json([
@@ -95,6 +99,8 @@ class RoleController extends Controller
      */
     public function deleteMultiple(Request $request): JsonResponse
     {
+        $this->authorizeForUser($request->user(), 'delete_roles');
+
         return ! $this->roleRepository->deleteMultiple($request->query('role_ids', []))
             ? response()->json([
                 'message' => __('Delete failed. Please check your role ids!'),
