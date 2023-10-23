@@ -91,4 +91,26 @@ class MqChartRepository extends Repository implements MqChartRepositoryContract
             'profit_achievement_rate' => $profitAchievementRate,
         ];
     }
+
+    /**
+     * Calculate and get the break-even point.
+     */
+    public function getBreakEvenPoint(string $storeId, array $filters = [])
+    {
+        $actualMqAccounting = $this->mqAccountingService->getTotalParamByStore($storeId, $filters);
+        $fixedCost = $actualMqAccounting->cost_sum_total ?? 0;
+        $salesAmnt = $actualMqAccounting->sales_amnt_total ?? 0;
+        $variableCost = $actualMqAccounting->variable_cost_sum_total ?? 0;
+
+        $breakEvenPoint = $salesAmnt ? round($fixedCost / (($salesAmnt - $variableCost) / $salesAmnt), 2) : 0;
+        $breakEvenPointRatio = $salesAmnt ? round(100 * $breakEvenPoint / $salesAmnt, 2) : 0;
+
+        return [
+            'sales_amnt' => $salesAmnt,
+            'variable_cost_sum' => $variableCost,
+            'cost_sum' => $fixedCost,
+            'break_even_point' => $breakEvenPoint,
+            'break_even_point_ratio' => $breakEvenPointRatio,
+        ];
+    }
 }
