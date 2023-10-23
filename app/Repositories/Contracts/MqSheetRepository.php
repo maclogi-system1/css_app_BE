@@ -25,7 +25,7 @@ interface MqSheetRepository extends Repository
     /**
      * Handles the creation of new mq_sheet defaults for the store.
      */
-    public function createDefault(string $storeId, bool $withCurrentYearData = true): ?MqSheet;
+    public function createDefault(string $storeId): ?MqSheet;
 
     /**
      * Handle update a specified mq sheet.

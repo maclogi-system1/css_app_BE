@@ -623,19 +623,19 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     /**
      * Handle creating default mq_accounting.
      */
-    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $defaultData = []): void
+    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $dataFromSetting = []): void
     {
         $dateRange = $this->getDateTimeRange(now()->firstOfYear(), now()->endOfYear());
 
         foreach ($dateRange as $yearMonth) {
-            $setting = Arr::first(Arr::where($defaultData, function ($item) use ($yearMonth) {
+            $setting = Arr::first(Arr::where($dataFromSetting, function ($item) use ($yearMonth) {
                 return Carbon::create($item['date'])->format('Y-m') == $yearMonth;
             }));
 
             $this->createDefaultData($yearMonth, $storeId, $mqSheet, $setting);
         }
 
-        $anotherData = Arr::where($defaultData, function ($item) {
+        $anotherData = Arr::where($dataFromSetting, function ($item) {
             return Carbon::create($item['date'])->year != now()->year;
         });
 
