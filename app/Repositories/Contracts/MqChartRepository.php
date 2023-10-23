@@ -13,4 +13,9 @@ interface MqChartRepository extends Repository
      * Get the cumulative change in revenue and profit.
      */
     public function cumulativeChangeInRevenueAndProfit($storeId, array $filters = []);
+
+    /**
+     * Calculate and get the break-even point.
+     */
+    public function getBreakEvenPoint(string $storeId, array $filters = []);
 }

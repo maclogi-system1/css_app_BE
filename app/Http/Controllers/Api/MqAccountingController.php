@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetCumlativeChangeInRevenueAndProfitRequest;
 use App\Http\Requests\GetMqAnalysisRequest;
+use App\Http\Requests\GetMqBreakEvenPointRequest;
 use App\Http\Requests\GetMqTotalParamRequest;
 use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
@@ -216,10 +217,10 @@ class MqAccountingController extends Controller
      */
     public function getTotalParamByStore(GetMqTotalParamRequest $request, $storeId): JsonResponse
     {
-        $expectedTotalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->validated());
+        $totalParam = $this->mqAccountingRepository->getTotalParamByStore($storeId, $request->validated());
 
         return response()->json([
-            'total_param' => $expectedTotalParam,
+            'total_param' => $totalParam,
         ]);
     }
 
@@ -250,5 +251,17 @@ class MqAccountingController extends Controller
         $result = $this->mqAccountingRepository->getComparativeAnalysis($storeId, $request->validated());
 
         return response()->json($result);
+    }
+
+    /**
+     * Calculate and get the break-even point.
+     */
+    public function getBreakEvenPoint(GetMqBreakEvenPointRequest $request, string $storeId): JsonResponse
+    {
+        $breakEvenPoint = $this->mqChartRepository->getBreakEvenPoint($storeId, $request->validated());
+
+        return response()->json([
+            'break_even' => $breakEvenPoint,
+        ]);
     }
 }
