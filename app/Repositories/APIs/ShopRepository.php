@@ -4,6 +4,7 @@ namespace App\Repositories\APIs;
 
 use App\Models\User;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
+use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\ShopRepository as ShopRepositoryContract;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
@@ -134,7 +135,6 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     public function create(array $data)
     {
         $data = $this->convertOssUserByCssUser($data);
-
         $result = $this->shopService->create(array_merge($data, ['is_css' => 1]));
 
         if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
@@ -144,6 +144,13 @@ class ShopRepository extends Repository implements ShopRepositoryContract
                 'status' => $result->get('status'),
                 'errors' => $errors,
             ]);
+        }
+
+        $shop = $result->get('data')?->get('shop');
+        if (! empty($shop)) {
+            /** @var \App\Repositories\Contracts\MqSheetRepository */
+            $mqSheetRepository = app(MqSheetRepository::class);
+            $mqSheetRepository->createDefault($shop['store_id']);
         }
 
         return $this->convertCssUserByOssUser($result->get('data'));

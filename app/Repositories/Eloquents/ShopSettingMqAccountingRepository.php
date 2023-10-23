@@ -3,7 +3,6 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\ShopSettingMqAccounting;
-use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\ShopSettingMqAccountingRepository as ShopSettingMqAccountingRepositoryContract;
 use App\Repositories\Repository;
 use App\Support\Traits\HasMqDateTimeHandler;
@@ -31,13 +30,7 @@ class ShopSettingMqAccountingRepository extends Repository implements ShopSettin
     public function create(array $data): ?ShopSettingMqAccounting
     {
         return $this->handleSafely(function () use ($data) {
-            $shopSetting = $this->model()->create($data);
-
-            /** @var \App\Repositories\Contracts\MqSheetRepository */
-            $mqSheetRepository = app(MqSheetRepository::class);
-            $mqSheetRepository->createDefault($shopSetting->store_id);
-
-            return $shopSetting;
+            return $this->model()->create($data);
         }, 'Create Shop Setting Mq Accounting');
     }
 
