@@ -67,13 +67,7 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
             $mqSheet->save();
             $storeId = Arr::get($data, 'store_id');
 
-            /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
-            $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
-            $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
-
-            /** @var \App\Repositories\Contracts\MqAccountingRepository */
-            $mqAccountingRepository = app(MqAccountingRepository::class);
-            $mqAccountingRepository->makeDefaultData($storeId, $mqSheet->refresh(), $shopSettingMqAccounting->toArray());
+            $this->injectDataToCreateDefaultMqAccounting($storeId, $mqSheet->refresh());
 
             return $mqSheet;
         }, 'Create mq_sheets');
@@ -82,29 +76,34 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
     /**
      * Handles the creation of new mq_sheet defaults for the store.
      */
-    public function createDefault(string $storeId, bool $withCurrentYearData = true): ?MqSheet
+    public function createDefault(string $storeId): ?MqSheet
     {
-        return $this->handleSafely(function () use ($storeId, $withCurrentYearData) {
+        return $this->handleSafely(function () use ($storeId) {
             $mqSheet = $this->model()->updateOrCreate([
                 'store_id' => $storeId,
                 'name' => MqSheet::DEFAULT_NAME,
                 'is_default' => true,
             ]);
 
-            /** @var \App\Repositories\Contracts\MqAccountingRepository */
-            $mqAccountingRepository = app(MqAccountingRepository::class);
-
-            if ($withCurrentYearData) {
-                /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
-                $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
-                $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
-                $mqAccountingRepository->makeDefaultData($storeId, $mqSheet, $shopSettingMqAccounting->toArray());
-            }
-
-            $mqAccountingRepository->makeDataFromAI($storeId, $mqSheet);
+            $this->injectDataToCreateDefaultMqAccounting($storeId, $mqSheet->refresh());
 
             return $mqSheet;
         }, 'Create default mq_sheets');
+    }
+
+    /**
+     * Handles data injection to create default MqAccounting.
+     */
+    public function injectDataToCreateDefaultMqAccounting(string $storeId, MqSheet $mqSheet): void
+    {
+        /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
+        $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
+        $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
+
+        /** @var \App\Repositories\Contracts\MqAccountingRepository */
+        $mqAccountingRepository = app(MqAccountingRepository::class);
+        $mqAccountingRepository->makeDefaultData($storeId, $mqSheet, $shopSettingMqAccounting->toArray());
+        $mqAccountingRepository->makeDataFromAI($storeId, $mqSheet);
     }
 
     /**
