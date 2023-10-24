@@ -18,4 +18,9 @@ interface MqChartRepository extends Repository
      * Calculate and get the break-even point.
      */
     public function getBreakEvenPoint(string $storeId, array $filters = []);
+
+    /**
+     * Get inferred and expected sales.
+     */
+    public function getInferredAndExpectedMqSales(string $storeId, array $filters = []);
 }
