@@ -194,18 +194,141 @@ class ReportSearchService extends Service
         $page = 1;
         $perPage = 5;
 
-        $topProducts = KeysearchRanking::where('store_id', $storeId)
-                ->where('date', '>=', $fromDateStr)
-                ->where('date', '<=', $toDateStr)
-                ->select(
-                    'store_id',
-                    'date',
-                    'search_id',
-                    DB::raw('COALESCE(keywordnum1, 0) + COALESCE(keywordnum2, 0) + COALESCE(keywordnum3, 0) + COALESCE(keywordnum4, 0) + COALESCE(keywordnum5, 0) as total_sum')
-                )
-                ->orderByDesc('total_sum')
-                ->forPage($page, $perPage)
-                ->get()->toArray();
+        /*
+        WIP - Updating query product keywords
+        $aggregatedData = KeysearchRanking::select(
+                'itemid',
+                'date',
+                'keyword',
+                DB::raw('SUM(access_num) as total_access')
+            )
+            ->where('date', '>=', $fromDateStr)
+            ->where('date', '<=', $toDateStr)
+            ->from(DB::raw("(
+                SELECT itemid, date, keyword1 AS keyword, keywordnum1 AS access_num
+                FROM keysearch_ranking
+                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, date, keyword2, keywordnum2
+                FROM keysearch_ranking
+                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, date, keyword3, keywordnum3
+                FROM keysearch_ranking
+                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, date, keyword4, keywordnum4
+                FROM keysearch_ranking
+                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, date, keyword5, keywordnum5
+                FROM keysearch_ranking
+                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
+            ) as subquery"))
+            ->groupBy('itemid', 'date', 'keyword')
+            ->get();
+
+        $topKeywords = KeysearchRanking::where('keysearch_ranking.store_id', $storeId)
+            ->where('keysearch_ranking.date', '>=', $fromDateStr)
+            ->where('keysearch_ranking.date', '<=', $toDateStr)
+            ->select(
+                'keysearch_ranking.store_id',
+                'keysearch_ranking.date',
+                'keysearch_ranking.itemid',
+                'keyword1',
+                'keywordnum1',
+                'keyword2',
+                'keywordnum2',
+                'keyword3',
+                'keywordnum3',
+                'keyword4',
+                'keywordnum4',
+                'keyword5',
+                'keywordnum5'
+            );
+
+        $productResult = ItemsData::where('items_data.store_id', $storeId)
+            ->where('items_data.date', '>=', $fromDateStr)
+            ->where('items_data.date', '<=', $toDateStr)
+            ->distinct('item_id')
+            ->join('items_data_all as item_all', 'item_all.items_data_all_id', '=', 'items_data.items_data_all_id')
+            ->joinSub($topKeywords, 'keysearch_ranking', function ($join) {
+                $join->on('items_data.item_id', '=', 'keysearch_ranking.itemid');
+            })
+            ->select(
+                'item_id',
+                'mng_number',
+                'item_name',
+                'items_data.date',
+                DB::raw('MAX(keysearch_ranking.keyword1) as keyword1'),
+                DB::raw('MAX(keysearch_ranking.keywordnum1) as keywordnum1'),
+                DB::raw('MAX(keysearch_ranking.keyword2) as keyword2'),
+                DB::raw('MAX(keysearch_ranking.keywordnum2) as keywordnum2'),
+                DB::raw('MAX(keysearch_ranking.keyword3) as keyword3'),
+                DB::raw('MAX(keysearch_ranking.keywordnum3) as keywordnum3'),
+                DB::raw('MAX(keysearch_ranking.keyword4) as keyword4'),
+                DB::raw('MAX(keysearch_ranking.keywordnum4) as keywordnum4'),
+                DB::raw('MAX(keysearch_ranking.keyword5) as keyword5'),
+                DB::raw('MAX(keysearch_ranking.keywordnum5) as keywordnum5'),
+                DB::raw('MAX(visit_all) as max_visit_all'),
+            )
+            ->groupBy('item_id', 'mng_number', 'item_name', 'items_data.date')
+            ->orderByDesc('max_visit_all')
+            ->skip(($page - 1) * $perPage)
+            ->take($perPage)
+            ->get();
+        $productResult = ! is_null($productResult) ? $productResult->toArray() : [];
+
+        $data = collect();
+        foreach ($productResult as $index => $item) {
+            $totalAccess = intval(Arr::get($item, 'visit_all', 0));
+
+            $data->add([
+                'store_id' => $storeId,
+                'from_date' => Arr::get($filters, 'from_date'),
+                'to_date' => Arr::get($filters, 'to_date'),
+                'product' => [
+                    'total_access' => $totalAccess,
+                    'item_id' => Arr::get($item, 'item_id', ''),
+                    'item_name' => Arr::get($item, 'item_name', ''),
+                    'ranking' => ($index + 1),
+                    'table_report_search_by_product' => collect([
+                        [
+                            'display_name' => Arr::get($item, 'keyword1', ''),
+                            'keyword' => Arr::get($item, 'keyword1', ''),
+                            'value' => intval(Arr::get($item, 'keywordnum1', 0)),
+                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum1', 0) / $totalAccess * 100, 2) : 0,
+                        ],
+                        [
+                            'display_name' => Arr::get($item, 'keyword2', ''),
+                            'keyword' => Arr::get($item, 'keyword2', ''),
+                            'value' => intval(Arr::get($item, 'keywordnum2', 0)),
+                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum2', 0) / $totalAccess * 100, 2) : 0,
+                        ],
+                        [
+                            'display_name' => Arr::get($item, 'keyword3', ''),
+                            'keyword' => Arr::get($item, 'keyword3', ''),
+                            'value' => intval(Arr::get($item, 'keywordnum3', 0)),
+                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum3', 0) / $totalAccess * 100, 2) : 0,
+                        ],
+                        [
+                            'display_name' => Arr::get($item, 'keyword4', ''),
+                            'keyword' => Arr::get($item, 'keyword4', ''),
+                            'value' => intval(Arr::get($item, 'keywordnum4', 0)),
+                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum4', 0) / $totalAccess * 100, 2) : 0,
+                        ],
+                        [
+                            'display_name' => Arr::get($item, 'keyword5', ''),
+                            'keyword' => Arr::get($item, 'keyword5', ''),
+                            'value' => intval(Arr::get($item, 'keywordnum5', 0)),
+                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum5', 0) / $totalAccess * 100, 2) : 0,
+                        ],
+                    ]),
+                    'chart_report_search_by_product' => '$chartByProduct',
+                ],
+            ]);
+        }
+        */
 
         $dateTimeRange = $this->getDateTimeRange(
             $dateRangeFilter['from_date'],
@@ -245,7 +368,7 @@ class ReportSearchService extends Service
                     'item_id' => rand(1000, 5000),
                     'item_name' => '商品名1テキス',
                     'ranking' => 1,
-                    'table_report_serach_by_product' => collect([
+                    'table_report_search_by_product' => collect([
                         [
                             'display_name' => 'キーワード1',
                             'keyword' => 'keyword_1',

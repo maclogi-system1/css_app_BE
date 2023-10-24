@@ -224,7 +224,7 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 && count($expectedItem) > 0
             ) {
                 $realAccessAmount = Arr::get($realDataItem, 'access_flow_sum') ?? 0;
-                $expectedAccessAmount = Arr::get($expectedItem[0], 'access_flow_sum') ?? 0;
+                $expectedAccessAmount = Arr::get($expectedItem[0] ?? [], 'access_flow_sum') ?? 0;
                 if ($expectedAccessAmount > 0) {
                     $userAccessRate = round($realAccessAmount / $expectedAccessAmount, 1) * 100;
                 }
