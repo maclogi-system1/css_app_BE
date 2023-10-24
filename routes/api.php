@@ -113,6 +113,7 @@ Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
             Route::get('/chart-financial-indicators-monthly/{storeId}', 'financialIndicatorsMonthly');
             Route::get('/chart-cumulative-change-in-revenue-profit/{storeId}', 'cumulativeChangeInRevenueAndProfit');
             Route::get('/chart-break-even-point/{storeId}', 'getBreakEvenPoint');
+            Route::get('/chart-inferred-expected-mq-sales/{storeId}', 'getInferredAndExpectedMqSales');
 
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
             Route::put('/{storeId}', 'updateByStore')->name('update-by-store');

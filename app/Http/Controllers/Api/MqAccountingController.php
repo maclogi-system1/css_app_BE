@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GetCumlativeChangeInRevenueAndProfitRequest;
 use App\Http\Requests\GetMqAnalysisRequest;
 use App\Http\Requests\GetMqBreakEvenPointRequest;
+use App\Http\Requests\GetMqInferredAndExpectedMqSalesRequest;
 use App\Http\Requests\GetMqTotalParamRequest;
 use App\Http\Requests\UpdateMqAccountingRequest;
 use App\Http\Requests\UploadMqAccountingCsvRequest;
@@ -263,5 +264,15 @@ class MqAccountingController extends Controller
         return response()->json([
             'break_even' => $breakEvenPoint,
         ]);
+    }
+
+    public function getInferredAndExpectedMqSales(GetMqInferredAndExpectedMqSalesRequest $request, string $storeId)
+    {
+        $expectedAndActualSales = $this->mqChartRepository->getInferredAndExpectedMqSales(
+            $storeId,
+            $request->validated()
+        );
+
+        return response()->json($expectedAndActualSales);
     }
 }

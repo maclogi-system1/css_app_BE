@@ -166,7 +166,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             return $policies;
         }
 
-        return $result->get('data');
+        return collect([]);
     }
 
     /**
