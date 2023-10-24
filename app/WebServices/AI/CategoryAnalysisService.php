@@ -2,12 +2,14 @@
 
 namespace App\WebServices\AI;
 
+use App\Constants\DatabaseConnectionConstant;
 use App\Models\KpiRealData\ItemsData;
 use App\Models\KpiRealData\ItemsSales;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -29,8 +31,9 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $itemsData = DB::connection('kpi_real_data')->table('items_data as id')
+        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)->table('items_data as id')
             ->where('id.store_id', $storeId)
+            ->where('id.catalog_id', '!=', '')
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id.items_data_all_id')
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
                 $query->whereIn('id.catalog_id', $categoryIdsArr);
@@ -43,10 +46,16 @@ class CategoryAnalysisService extends Service
                 SUM(id.zero_inventory_days) as zero_inventory_num
             ')
             ->first();
-        $itemsData->active_ratio = round($itemsData->active_category_count_all / ($itemsData->active_category_count_all + $itemsData->unactive_category_count_all), 2) * 100;
+        $totalCategoryCountAll = $itemsData->active_category_count_all + $itemsData->unactive_category_count_all;
+        $itemsData->active_ratio = $totalCategoryCountAll
+            ? round($itemsData->active_category_count_all / $totalCategoryCountAll * 100, 2)
+            : 0;
         $itemsData->from_date = $fromDate;
         $itemsData->to_date = $toDate;
-        $itemsData->categories = $this->getCategories($storeId, compact('fromDate', 'toDate'), $categoryIdsArr);
+        $itemsData->categories = $this->getCategories($storeId, [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ], $categoryIdsArr);
 
         return collect([
             'success' => true,
@@ -63,7 +72,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date');
         $toDate = Arr::get($dateRangeFilter, 'to_date');
 
-        return DB::connection('kpi_real_data')
+        return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_data', 'id2')
                     ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
@@ -71,7 +80,7 @@ class CategoryAnalysisService extends Service
                         $query->whereIn('id2.catalog_id', $categoryIdsArr);
                     })
                     ->where('id2.store_id', $storeId)
-                    ->where('id2.date', '!=', '')
+                    ->where('id2.catalog_id', '!=', '')
                     ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
                     ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
                     ->groupBy('id2.catalog_id')
@@ -87,6 +96,7 @@ class CategoryAnalysisService extends Service
                         $query->whereIn('is2.catalog_id', $categoryIdsArr);
                     })
                     ->where('is2.store_id', $storeId)
+                    ->where('is2.catalog_id', '!=', '')
                     ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
                     ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
                     ->groupBy('is2.catalog_id')
@@ -118,7 +128,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $data = DB::connection('kpi_real_data')
+        $data = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_data', 'id2')
                     ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
@@ -196,7 +206,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsDataTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsData = DB::connection('kpi_real_data')
+        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('items_data', 'id1')
             ->where('id1.store_id', $storeId)
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id1.items_data_all_id')
@@ -234,7 +244,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsSalesTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsSales = DB::connection('kpi_real_data')
+        $itemsSales = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table('items_sales', 'is1')
             ->where('is1.store_id', $storeId)
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
@@ -369,6 +379,71 @@ class CategoryAnalysisService extends Service
             'success' => true,
             'status' => 200,
             'data' => $review,
+        ]);
+    }
+
+    /**
+     * Get categories's sales info from AI.
+     */
+    public function getCategorySalesInfo(array $filters = []): Collection
+    {
+        $categoryIds = Arr::get($filters, 'catalog_ids');
+        $categoryIdsArr = explode(',', $categoryIds);
+        $currentDate = Carbon::now();
+        $currentYearMonth = sprintf('%04d%02d', $currentDate->year, $currentDate->month);
+
+        $previousDate = $currentDate->subMonth();
+        $previousYearMonth = sprintf('%04d%02d', $previousDate->year, $previousDate->month);
+
+        $monthBeforePreviousDate = $previousDate->subMonth();
+        $monthBeforePreviousYearMonth = sprintf('%04d%02d', $monthBeforePreviousDate->year, $monthBeforePreviousDate->month);
+
+        $itemsSales = ItemsSales::whereIn('items_sales.catalog_id', $categoryIdsArr)
+            ->whereRaw(
+                '(SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?
+                OR SUBSTRING(items_sales.date, 1, 6) = ?)',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->selectRaw(
+                'items_sales.catalog_id,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as current_month_sales,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as previous_month_sales,
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as month_before_previous_sales
+            ',
+                [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
+            )
+            ->groupBy('items_sales.catalog_id');
+
+        $result = ItemsData::whereIn('items_data.catalog_id', $categoryIdsArr)
+            ->select(
+                'items_data.catalog_id',
+                'items_sales.current_month_sales',
+                'items_sales.previous_month_sales',
+                'items_sales.month_before_previous_sales'
+            )
+            ->distinct('items_data.catalog_id')
+            ->leftJoinSub($itemsSales, 'items_sales', function ($join) {
+                $join->on('items_data.catalog_id', '=', 'items_sales.catalog_id');
+            })
+            ->get();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
+        $data = [];
+        foreach ($result as $item) {
+            $data[Arr::get($item, 'catalog_id', '')] = [
+                    'catalog_id' => Arr::get($item, 'catalog_id', ''),
+                    'catalog_name' => Arr::get($item, 'item_name', ''),
+                    'current_month_sales' => intval(Arr::get($item, 'current_month_sales', 0)),
+                    'previous_month_sales' => intval(Arr::get($item, 'previous_month_sales', 0)),
+                    'month_before_previous_sales' => intval(Arr::get($item, 'month_before_previous_sales', 0)),
+                ];
+        }
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => collect($data)->values()->all(),
         ]);
     }
 }

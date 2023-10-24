@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MacroController;
 use App\Http\Controllers\Api\MqAccountingController;
 use App\Http\Controllers\Api\MqCostController;
 use App\Http\Controllers\Api\MqSheetController;
+use App\Http\Controllers\Api\MyPageController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PolicyAttachmentController;
 use App\Http\Controllers\Api\PolicyController;
@@ -36,7 +37,7 @@ Route::post('/password-reset-token', [PasswordController::class, 'getPasswordRes
 Route::post('/reset-password', [PasswordController::class, 'reset'])
     ->name('reset-password');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::prefix('user')->name('user.')->group(function () {
@@ -111,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/upload-csv/{storeId}', 'uploadMqAccountingCsv')->name('upload-csv');
             Route::get('/chart-financial-indicators-monthly/{storeId}', 'financialIndicatorsMonthly');
             Route::get('/chart-cumulative-change-in-revenue-profit/{storeId}', 'cumulativeChangeInRevenueAndProfit');
+            Route::get('/chart-break-even-point/{storeId}', 'getBreakEvenPoint');
+            Route::get('/chart-inferred-expected-mq-sales/{storeId}', 'getInferredAndExpectedMqSales');
 
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
             Route::put('/{storeId}', 'updateByStore')->name('update-by-store');
@@ -124,6 +127,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('mq-sheets.')
         ->controller(MqSheetController::class)
         ->group(function () {
+            Route::post('/clone-sheet/{mqSheet}', 'cloneSheet');
+
             Route::get('/', 'index')->name('index');
             Route::get('/{mqSheet}', 'show')->name('show');
             Route::post('/', 'store')->name('store');
@@ -282,11 +287,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::prefix('conversion-rate-analysis')
             ->name('conversion-rate-analysis.')
             ->group(function () {
-                Route::get('/chart-comparison', 'chartComparisonConversionRate')->name('chart-comparison');
-                Route::get('/summary-table', 'tableConversionRateAnalysis')->name('summary-table');
-                Route::get('/download-csv', 'downloadtableConversionRateCsv')
+                Route::get('/chart-comparison/{storeId}', 'chartComparisonConversionRate')->name('chart-comparison');
+                Route::get('/summary-table/{storeId}', 'tableConversionRateAnalysis')->name('summary-table');
+                Route::get('/download-csv/{storeId}', 'downloadtableConversionRateCsv')
                 ->name('download-csv');
-                Route::get('/chart-relation-PV-and-conversion-rate', 'chartRelationPVAndConversionRate')
+                Route::get('/chart-relation-PV-and-conversion-rate/{storeId}', 'chartRelationPVAndConversionRate')
                     ->name('chart-relation-PV-and-conversion-rate');
             });
 
@@ -326,6 +331,9 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/chart-categories-trends', 'chartCategoriesTrends')->name('chart-categories-trends');
                 Route::post('/chart-categories-stay-times', 'chartCategoriesStayTimes')->name('chart-categories-stay-times');
                 Route::post('/chart-categories-reviews-trends', 'chartCategoriesReviewsTrends')->name('chart-categories-reviews-trends');
+                Route::get('/get-performance-table/{storeId}', 'getCategoryPerformanceTable')->name('get-performance-table');
+                Route::post('/save-performance-table/{storeId}', 'saveCategorySalesPerformanceTable')->name('save-performance-table');
+                Route::get('/get-category-sales-info', 'getCategorySalesInfo')->name('get-category-sales-info');
             });
 
             Route::prefix('review-analysis')
@@ -374,4 +382,15 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::put('/update/{storeId}', 'updateSearchRankingSettings')->name('update');
                 });
         });
+
+    Route::prefix('my-page')
+        ->name('my-page.')
+        ->group(function () {
+            Route::get('/options', [MyPageController::class, 'options'])->name('options');
+            Route::get('/store-profit-reference', [MyPageController::class, 'getStoreProfitReference'])->name('store-profit-reference');
+            Route::get('/store-profit-table', [MyPageController::class, 'getStoreProfitTable'])->name('store-profit-table');
+            Route::get('/tasks', [MyPageController::class, 'getTasks'])->name('tasks');
+            Route::get('/alerts', [MyPageController::class, 'getAlerts'])->name('alerts');
+            Route::get('/sales-4-quadrant-map', [MyPageController::class, 'getSales4QuadrantMap'])->name('sales-4-quadrant-map');
+    });
 });

@@ -2,8 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\MqSheet;
-use Closure;
+use App\Rules\LimitNumberMqSheets;
 use Illuminate\Validation\Rule;
 
 class StoreMqSheetRequest extends FormRequest
@@ -33,13 +32,7 @@ class StoreMqSheetRequest extends FormRequest
                     ->where(function ($query) {
                         $query->where('store_id', $this->input('store_id'));
                     }),
-                function (string $attributes, mixed $value, Closure $fail) {
-                    $mqSheetCount = MqSheet::where('store_id', $this->input('store_id'))->count();
-
-                    if ($mqSheetCount >= 5) {
-                        $fail('A maximum of 5 sheets can only be created.');
-                    }
-                },
+                new LimitNumberMqSheets($this->input('store_id')),
             ],
         ];
     }

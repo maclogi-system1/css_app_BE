@@ -8,7 +8,6 @@ use App\Repositories\Repository;
 use App\Support\Traits\ShopSettingUpdateRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 
 class ShopSettingAwardPointRepository extends Repository implements ShopSettingAwardPointRepositoryContract
 {
@@ -51,8 +50,6 @@ class ShopSettingAwardPointRepository extends Repository implements ShopSettingA
         }
 
         if ($fromDate && $toDate) {
-            $fromDate = Carbon::createFromFormat('Y-m', $fromDate)->firstOfMonth()->toDateString();
-            $toDate = Carbon::createFromFormat('Y-m', $toDate)->endOfMonth()->toDateString();
             $builder->whereBetween('purchase_date', [$fromDate, $toDate]);
         }
 

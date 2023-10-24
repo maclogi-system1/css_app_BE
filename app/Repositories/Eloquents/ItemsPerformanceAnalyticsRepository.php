@@ -33,6 +33,8 @@ class ItemsPerformanceAnalyticsRepository extends Repository implements ItemsPer
             $inputData = [
                 'store_id' => $storeId,
                 'items_sales' => json_encode(Arr::get($data, 'items_sales')),
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
             $this->model()->updateOrInsert(['store_id' => $storeId], $inputData);
 
@@ -56,25 +58,27 @@ class ItemsPerformanceAnalyticsRepository extends Repository implements ItemsPer
         $itemsSales = Arr::get($performanceItems, 'items_sales');
         if (! is_null($itemsSales)) {
             $items = json_decode($itemsSales, true);
-            $managementNums = implode(',', collect($items)->pluck('mng_number')->toArray());
+            if (! is_null($items)) {
+                $managementNums = implode(',', collect($items)->pluck('mng_number')->toArray());
 
-            $filters['management_nums'] = $managementNums;
-            $actualData = $this->productAnalysisService->getProductSalesInfo($filters)->get('data');
+                $filters['management_nums'] = $managementNums;
+                $actualData = $this->productAnalysisService->getProductSalesInfo($filters)->get('data');
 
-            foreach ($items as $item) {
-                $actualItem = collect($actualData)->filter(function ($itemData) use ($item) {
-                    return ! is_null(Arr::get($itemData, 'management_num'))
-                        && Arr::get($itemData, 'management_num') == Arr::get($item, 'mng_number');
-                })->first();
-                $data->add([
-                    'store_id' => $storeId,
-                    'management_num' => Arr::get($item, 'mng_number'),
-                    'item_name' => Arr::get($actualItem, 'item_name'),
-                    'target_sales' => Arr::get($item, 'sales_amnt'),
-                    'current_month_sales' => Arr::get($actualItem, 'current_month_sales'),
-                    'previous_month_sales' => Arr::get($actualItem, 'previous_month_sales'),
-                    'month_before_previous_sales' => Arr::get($actualItem, 'month_before_previous_sales'),
-                ]);
+                foreach ($items as $item) {
+                    $actualItem = collect($actualData)->filter(function ($itemData) use ($item) {
+                        return ! is_null(Arr::get($itemData, 'management_num'))
+                            && Arr::get($itemData, 'management_num') == Arr::get($item, 'mng_number');
+                    })->first();
+                    $data->add([
+                        'store_id' => $storeId,
+                        'management_num' => Arr::get($item, 'mng_number'),
+                        'item_name' => Arr::get($actualItem, 'item_name'),
+                        'target_sales' => Arr::get($item, 'sales_amnt'),
+                        'current_month_sales' => Arr::get($actualItem, 'current_month_sales'),
+                        'previous_month_sales' => Arr::get($actualItem, 'previous_month_sales'),
+                        'month_before_previous_sales' => Arr::get($actualItem, 'month_before_previous_sales'),
+                    ]);
+                }
             }
         }
 

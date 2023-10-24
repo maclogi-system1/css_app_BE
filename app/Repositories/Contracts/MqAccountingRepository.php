@@ -76,5 +76,10 @@ interface MqAccountingRepository extends Repository
     /**
      * Handle creating default mq_accounting.
      */
-    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $defaultData = []): void;
+    public function makeDefaultData(string $storeId, MqSheet $mqSheet, array $dataFromSetting = []): void;
+
+    /**
+     * Handles the creation of new mq_accounting along with relationships from AI data.
+     */
+    public function makeDataFromAI(string $storeId, MqSheet $mqSheet): void;
 }

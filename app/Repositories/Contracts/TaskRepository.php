@@ -35,4 +35,9 @@ interface TaskRepository extends Repository
      * Handle delete a task.
      */
     public function delete(string $storeId, int $taskId): ?Collection;
+
+    /**
+     * Convert user oss to css.
+     */
+    public function handleTaskAssignees(Collection $data): Collection;
 }

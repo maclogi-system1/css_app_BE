@@ -56,6 +56,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'frontend_url' => env('APP_FRONTEND_URL', 'http://localhost'),
+
     'asset_url' => env('ASSET_URL'),
 
     /*
@@ -188,6 +190,7 @@ return [
         Spatie\Permission\PermissionServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Aws\Laravel\AwsServiceProvider::class,
 
         /*
          * Application Service Providers...

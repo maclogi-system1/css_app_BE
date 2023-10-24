@@ -2,6 +2,7 @@
 
 namespace App\Models\KpiRealData;
 
+use App\Constants\DatabaseConnectionConstant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,6 +10,6 @@ class RgroupAdByAd extends Model
 {
     use HasFactory;
 
-    protected $connection = 'kpi_real_data';
+    protected $connection = DatabaseConnectionConstant::KPI_CONNECTION;
     protected $table = 'rgroup_ad_by_ad';
 }

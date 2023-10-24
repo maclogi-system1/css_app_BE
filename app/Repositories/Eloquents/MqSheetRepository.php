@@ -67,16 +67,43 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
             $mqSheet->save();
             $storeId = Arr::get($data, 'store_id');
 
-            /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
-            $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
-            $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
-
-            /** @var \App\Repositories\Contracts\MqAccountingRepository */
-            $mqAccountingRepository = app(MqAccountingRepository::class);
-            $mqAccountingRepository->makeDefaultData($storeId, $mqSheet->refresh(), $shopSettingMqAccounting->toArray());
+            $this->injectDataToCreateDefaultMqAccounting($storeId, $mqSheet->refresh());
 
             return $mqSheet;
         }, 'Create mq_sheets');
+    }
+
+    /**
+     * Handles the creation of new mq_sheet defaults for the store.
+     */
+    public function createDefault(string $storeId): ?MqSheet
+    {
+        return $this->handleSafely(function () use ($storeId) {
+            $mqSheet = $this->model()->updateOrCreate([
+                'store_id' => $storeId,
+                'name' => MqSheet::DEFAULT_NAME,
+                'is_default' => true,
+            ]);
+
+            $this->injectDataToCreateDefaultMqAccounting($storeId, $mqSheet->refresh());
+
+            return $mqSheet;
+        }, 'Create default mq_sheets');
+    }
+
+    /**
+     * Handles data injection to create default MqAccounting.
+     */
+    public function injectDataToCreateDefaultMqAccounting(string $storeId, MqSheet $mqSheet): void
+    {
+        /** @var \App\Repositories\Contracts\ShopSettingMqAccountingRepository */
+        $shopSettingMqAccountingRepository = app(ShopSettingMqAccountingRepository::class);
+        $shopSettingMqAccounting = $shopSettingMqAccountingRepository->getListByStore($storeId);
+
+        /** @var \App\Repositories\Contracts\MqAccountingRepository */
+        $mqAccountingRepository = app(MqAccountingRepository::class);
+        $mqAccountingRepository->makeDefaultData($storeId, $mqSheet, $shopSettingMqAccounting->toArray());
+        $mqAccountingRepository->makeDataFromAI($storeId, $mqSheet);
     }
 
     /**
@@ -107,5 +134,53 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
 
             return $mqSheet;
         }, 'Delete mq_sheets');
+    }
+
+    /**
+     * Get the total of all sheets in the store.
+     */
+    public function totalMqSheetInStore(string $storeId): int
+    {
+        return $this->model()->where('store_id', $storeId)->count();
+    }
+
+    /**
+     * Hanle cloning a new mq_sheet.
+     */
+    public function cloneSheet(MqSheet $mqSheet): ?MqSheet
+    {
+        return $this->handleSafely(function () use ($mqSheet) {
+            $newMqSheet = $mqSheet->replicate()->fill([
+                'name' => MqSheet::PREFIX_NAME.now()->format('Y/m/d H:i:s'),
+                'is_default' => false,
+            ]);
+            $newMqSheet->save();
+            $allMqAccountings = $mqSheet->mqAccountings;
+
+            foreach ($allMqAccountings as $mqAccounting) {
+                $newMqKpi = $mqAccounting->mqKpi->replicate();
+                $newMqKpi->save();
+                $newMqAccessNum = $mqAccounting->mqAccessNum->replicate();
+                $newMqAccessNum->save();
+                $newMqAdSalesAmnt = $mqAccounting->mqAdSalesAmnt->replicate();
+                $newMqAdSalesAmnt->save();
+                $newMqUserTrend = $mqAccounting->mqUserTrends->replicate();
+                $newMqUserTrend->save();
+                $newMqCost = $mqAccounting->mqCost->replicate();
+                $newMqCost->save();
+                $newMqAccounting = $mqAccounting->replicate()->fill([
+                    'mq_kpi_id' => $newMqKpi->id,
+                    'mq_access_num_id' => $newMqAccessNum->id,
+                    'mq_ad_sales_amnt_id' => $newMqAdSalesAmnt->id,
+                    'mq_user_trends_id' => $newMqUserTrend->id,
+                    'mq_cost_id' => $newMqCost->id,
+                    'mq_sheet_id' => $newMqSheet->id,
+                ]);
+
+                $newMqAccounting->save();
+            }
+
+            return $newMqSheet;
+        }, 'Clone mq_sheets');
     }
 }

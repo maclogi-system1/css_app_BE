@@ -28,10 +28,20 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
      */
     public function getDataTableAccessAnalysis(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
-        $result = $this->accessAnalysisService->getDataTableAccessAnalysis($storeId, $filters);
+        $result = $this->accessAnalysisService->getDataTableAccessAnalysis($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -43,7 +53,7 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->accessAnalysisService->getDataTableAccessAnalysis($storeId, $filters)->get('data'));
+            $data = $data->merge($this->accessAnalysisService->getDataTableAccessAnalysis($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         return collect([
@@ -57,11 +67,21 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
      */
     public function getDataChartNewUserAccess(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
 
-        $data = collect($this->accessAnalysisService->getDataChartNewUserAccess($storeId, $filters));
+        $data = collect($this->accessAnalysisService->getDataChartNewUserAccess($storeId, $filters, $isMonthQuery));
 
         // Get compared data new user access for access analysis screen
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -72,7 +92,7 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->accessAnalysisService->getDataChartNewUserAccess($storeId, $filters));
+            $data = $data->merge($this->accessAnalysisService->getDataChartNewUserAccess($storeId, $filters, $isMonthQuery));
         }
 
         return collect([
@@ -87,11 +107,21 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
      */
     public function getDataChartExistUserAccess(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
 
-        $data = collect($this->accessAnalysisService->getDataChartExistUserAccess($storeId, $filters));
+        $data = collect($this->accessAnalysisService->getDataChartExistUserAccess($storeId, $filters, $isMonthQuery));
 
         // Get compared data exist user access for access analysis screen
         if (Arr::has($filters, ['compared_from_date', 'compared_to_date'])) {
@@ -102,7 +132,7 @@ class AccessAnalysisRepository extends Repository implements AccessAnalysisRepos
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $data = $data->merge($this->accessAnalysisService->getDataChartExistUserAccess($storeId, $filters));
+            $data = $data->merge($this->accessAnalysisService->getDataChartExistUserAccess($storeId, $filters, $isMonthQuery));
         }
 
         return collect([

@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Models\KpiRealData\PolicyR2;
 use App\Models\Policy;
+use App\Models\PolicyRealData\PolicyR2;
 use App\Support\DataAdapter\PolicyAdapter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

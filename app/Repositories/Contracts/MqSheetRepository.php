@@ -23,6 +23,11 @@ interface MqSheetRepository extends Repository
     public function create(array $data): ?MqSheet;
 
     /**
+     * Handles the creation of new mq_sheet defaults for the store.
+     */
+    public function createDefault(string $storeId): ?MqSheet;
+
+    /**
      * Handle update a specified mq sheet.
      */
     public function update(array $data, MqSheet $mqSheet): ?MqSheet;
@@ -31,4 +36,14 @@ interface MqSheetRepository extends Repository
      * Handle delete a specified mq sheet.
      */
     public function delete(MqSheet $mqSheet): ?MqSheet;
+
+    /**
+     * Get the total of all sheets in the store.
+     */
+    public function totalMqSheetInStore(string $storeId): int;
+
+    /**
+     * Hanle cloning a new mq_sheet.
+     */
+    public function cloneSheet(MqSheet $mqSheet): ?MqSheet;
 }

@@ -44,6 +44,10 @@ class AuthServiceProvider extends ServiceProvider
         $this->defineGates();
 
         ResetPassword::createUrlUsing(function (User $user, string $token) {
+            if ($frontendUrl = config('app.frontend_url')) {
+                return $frontendUrl.'/reset-password/'.$token;
+            }
+
             return url('/reset-password/'.$token);
         });
     }

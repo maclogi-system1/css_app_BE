@@ -4,7 +4,6 @@ namespace App\Repositories\Contracts;
 
 use App\Models\Company;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
@@ -13,7 +12,7 @@ interface UserRepository extends Repository
     /**
      * Get the list of the resource with pagination and handle filter.
      */
-    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection;
+    public function getList(array $filters = [], array $columns = ['*']);
 
     /**
      * Find a specified user with roles or permissions.
@@ -89,4 +88,6 @@ interface UserRepository extends Repository
      * Get a list of css_user_ids by oss_user_ids.
      */
     public function getCssUserIdsByOssUserIds(array|Collection $linkedUserIds): array;
+
+    public function getUsersByIds(array $userIds): Collection;
 }

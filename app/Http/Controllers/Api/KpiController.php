@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\KpiCategoryAnalysisRequest;
+use App\Http\Requests\KpiCategoryPerformanceRequest;
 use App\Http\Requests\KpiProductPerformanceRequest;
 use App\Repositories\Contracts\AccessAnalysisRepository;
 use App\Repositories\Contracts\AdsAnalysisRepository;
+use App\Repositories\Contracts\CategoriesPerformanceAnalyticsRepository;
 use App\Repositories\Contracts\CategoryAnalysisRepository;
 use App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository;
@@ -49,6 +51,7 @@ class KpiController extends Controller
         protected KpiProductsAnalysisCsv $kpiProductsAnalysisCsv,
         protected KpiCategoriesAnalysisCsv $kpiCategoriesAnalysisCsv,
         protected ItemsPerformanceAnalyticsRepository $itemsPerformanceAnalyticsRepository,
+        protected CategoriesPerformanceAnalyticsRepository $categoriesPerformanceAnalyticsRepository,
     ) {
     }
 
@@ -274,9 +277,9 @@ class KpiController extends Controller
     /**
      * Get data chart comparison conversion rate from AI.
      */
-    public function chartComparisonConversionRate(Request $request): JsonResponse
+    public function chartComparisonConversionRate(Request $request, string $storeId): JsonResponse
     {
-        $result = $this->storeChartRepository->getDataChartComparisonConversionRate($request->query());
+        $result = $this->storeChartRepository->getDataChartComparisonConversionRate($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
@@ -284,9 +287,9 @@ class KpiController extends Controller
     /**
      * Get data table conversion rate analysis from AI.
      */
-    public function tableConversionRateAnalysis(Request $request): JsonResponse
+    public function tableConversionRateAnalysis(Request $request, string $storeId): JsonResponse
     {
-        $result = $this->storeChartRepository->getDataTableConversionRateAnalysis($request->query());
+        $result = $this->storeChartRepository->getDataTableConversionRateAnalysis($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
@@ -294,9 +297,9 @@ class KpiController extends Controller
     /**
      * Get data table conversion rate analysis from AI.
      */
-    public function downloadtableConversionRateCsv(Request $request): StreamedResponse
+    public function downloadtableConversionRateCsv(Request $request, string $storeId): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiConversionRateReportCsv->streamCsvFile($request->query()), headers: [
+        return response()->stream(callback: $this->kpiConversionRateReportCsv->streamCsvFile($storeId, $request->query()), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=転換率比較.csv',
             'Pragma' => 'no-cache',
@@ -308,9 +311,9 @@ class KpiController extends Controller
     /**
      * Get data relation between number of PV and conversion rate from AI.
      */
-    public function chartRelationPVAndConversionRate(Request $request): JsonResponse
+    public function chartRelationPVAndConversionRate(Request $request, string $storeId): JsonResponse
     {
-        $result = $this->storeChartRepository->getDataChartRelationPVAndConversionRate($request->query());
+        $result = $this->storeChartRepository->getDataChartRelationPVAndConversionRate($storeId, $request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
@@ -340,7 +343,7 @@ class KpiController extends Controller
      */
     public function downloadtableSalesAmntPerUserCsv(Request $request, string $storeId): StreamedResponse
     {
-        return response()->stream(callback: $this->kpiSalesAmntPerUserReportCsv->streamCsvFile($request->query()), headers: [
+        return response()->stream(callback: $this->kpiSalesAmntPerUserReportCsv->streamCsvFile($storeId, $request->query()), headers: [
             'Content-Type' => 'text/csv; charset=shift_jis',
             'Content-Disposition' => 'attachment; filename=客単価比較.csv',
             'Pragma' => 'no-cache',
@@ -537,6 +540,37 @@ class KpiController extends Controller
     {
         $conditions = json_decode($request->getContent(), true);
         $result = $this->categoryAnalysisRepository->chartCategoriesReviewsTrends($conditions);
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
+
+    /**
+     * Get categories's performance table from AI.
+     */
+    public function getCategoryPerformanceTable(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->categoriesPerformanceAnalyticsRepository->getPerformanceTable($storeId, $request->query());
+
+        return response()->json($result, Response::HTTP_OK);
+    }
+
+    /**
+     * Save categories's sales performance table.
+     */
+    public function saveCategorySalesPerformanceTable(KpiCategoryPerformanceRequest $request, string $storeId): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $result = $this->categoriesPerformanceAnalyticsRepository->saveSalesPerformanceTable($storeId, $data);
+
+        return response()->json($result, Response::HTTP_OK);
+    }
+
+    /**
+     * Get products's sales info from AI.
+     */
+    public function getCategorySalesInfo(Request $request): JsonResponse
+    {
+        $result = $this->categoryAnalysisRepository->getCategorySalesInfo($request->query());
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }

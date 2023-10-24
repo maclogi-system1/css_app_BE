@@ -21,6 +21,7 @@ class KpiProductPerformanceRequest extends FormRequest
     {
         return [
             'items_sales.*.mng_number' => ['required', 'string'],
+            'items_sales' => ['required'],
         ];
     }
 }
