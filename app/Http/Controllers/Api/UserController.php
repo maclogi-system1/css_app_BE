@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 
 class UserController extends Controller
 {
@@ -25,7 +26,31 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResource|JsonResponse
     {
-        $users = UserResource::collection($this->userRepository->getList($request->query()));
+        /** @var \App\Models\User */
+        $context = $request->user();
+        $filters = $request->query();
+        $viewAllUserInfo = $context->hasPermissionTo('view_all_user_info');
+
+        if (! $viewAllUserInfo) {
+            $viewCompanyUserInfoPerm = $context->hasPermissionTo('view_company_user_info');
+
+            if ($viewCompanyUserInfoPerm) {
+                Arr::set($filters, 'filter.company', $context->company_id);
+                Arr::forget($filters, ['search.company', 'searches.company', 'filters.company']);
+            }
+
+            if (! $viewCompanyUserInfoPerm && $context->hasPermissionTo('view_my_user_info')) {
+                $filters = [];
+                $withs = Arr::get($filters, 'with');
+                Arr::set($filters, 'filter.email', $context->email);
+
+                if (! empty($withs)) {
+                    $filters['with'] = $withs;
+                }
+            }
+        }
+
+        $users = UserResource::collection($this->userRepository->getList($filters));
         $users->wrap('users');
 
         return $users;
@@ -74,6 +99,8 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResource|JsonResponse
     {
+        $this->authorizeForUser(request()->user(), 'view', [$user]);
+
         return new UserResource($user);
     }
 
@@ -103,6 +130,8 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user): JsonResource|JsonResponse
     {
+        $this->authorizeForUser($request->user(), $user);
+
         if ($request->user()->id == $user->id) {
             return response()->json([
                 'message' => __('You cannot delete yourself.'),
@@ -121,11 +150,19 @@ class UserController extends Controller
      */
     public function deleteMultiple(Request $request): JsonResponse
     {
-        return ! $this->userRepository->deleteMultiple($request->query('user_ids', []))
-            ? response()->json([
-                'message' => __('Delete failed. Please check your user ids!'),
-                'user_ids' => $request->input('user_ids', []),
-            ], Response::HTTP_BAD_REQUEST)
+        $userIds = $request->query('user_ids', []);
+
+        $responseFail = response()->json([
+            'message' => __('Delete failed. Please check your user ids!'),
+            'user_ids' => $userIds,
+        ], Response::HTTP_BAD_REQUEST);
+
+        if (empty($userIds) || ! $request->user()->can('multipleDelete', [User::class, $userIds])) {
+            return $responseFail;
+        }
+
+        return ! $this->userRepository->deleteMultiple($userIds)
+            ? $responseFail
             : response()->json([
                 'message' => __('The users have been deleted successfully.'),
             ]);

@@ -15,7 +15,6 @@ use App\WebServices\UploadFileService;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
@@ -42,7 +41,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     /**
      * Get the list of the resource with pagination and handle filter.
      */
-    public function getList(array $filters = [], array $columns = ['*']): LengthAwarePaginator|Collection
+    public function getList(array $filters = [], array $columns = ['*'])
     {
         $this->enableUseWith(['chatwork', 'company', 'teams', 'roles', 'permissions'], $filters);
 
@@ -73,7 +72,7 @@ class UserRepository extends Repository implements UserRepositoryContract
 
         if ($company = Arr::pull($filters, 'filter.company')) {
             $this->useHas(['company' => function (Builder $query) use ($company) {
-                $query->where('company_id', $company)
+                $query->where('id', $company)
                     ->orWhere('name', $company);
             }]);
         }
@@ -398,5 +397,10 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function getCssUserIdsByOssUserIds(array|Collection $linkedUserIds): array
     {
         return $this->getListByLinkedUserIds($linkedUserIds)->pluck('id')->toArray();
+    }
+
+    public function getUsersByIds(array $userIds): Collection
+    {
+        return $this->model()->newQuery()->whereIn('id', $userIds)->get();
     }
 }

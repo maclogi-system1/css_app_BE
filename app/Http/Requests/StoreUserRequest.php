@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use App\Support\Traits\PasswordValidationRules;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('edit_all_user_info');
+        return $this->user()->can('create', [User::class, $this->post('company_id')]);
     }
 
     /**
@@ -27,7 +28,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
-            'company_id' => ['nullable', 'integer'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
             'roles' => ['required', 'array'],
             'chatwork_account_id' => ['nullable', 'max:10'],
             'teams' => ['required', 'array'],

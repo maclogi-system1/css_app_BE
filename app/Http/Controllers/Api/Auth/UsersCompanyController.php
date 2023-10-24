@@ -33,6 +33,8 @@ class UsersCompanyController extends Controller
      */
     public function update(UpdateUsersCompanyRequest $request): JsonResource|JsonResponse
     {
+        $this->authorizeForUser($request->user(), 'edit_all_companies');
+
         $company = $this->companyRepository->update(
             $request->validated(),
             $request->user()->company,

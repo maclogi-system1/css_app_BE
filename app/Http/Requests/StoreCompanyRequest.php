@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Company;
 use Illuminate\Contracts\Validation\Rule;
 
 class StoreCompanyRequest extends FormRequest
@@ -11,7 +12,7 @@ class StoreCompanyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('edit_all_companies');
+        return $this->user()->can('create', [Company::class]);
     }
 
     /**

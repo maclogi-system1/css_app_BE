@@ -9,6 +9,15 @@ class Role extends Model
 {
     use HasFactory;
 
+    public const SYSTEM_ADMIN_ROLE = 'system_admin';
+    public const COMPANY_ADMINISTRATOR_ROLE = 'company_administrator';
+    public const GENERAL_USER_ROLE = 'general_user';
+    public const ROLE_SEED = [
+        self::SYSTEM_ADMIN_ROLE => 'システムアドミン',
+        self::COMPANY_ADMINISTRATOR_ROLE => '企業管理者',
+        self::GENERAL_USER_ROLE => '一般ユーザー',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
