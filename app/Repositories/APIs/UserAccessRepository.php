@@ -61,11 +61,21 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
      */
     public function getDataChartUserAccess(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date').'-01' > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m');
         }
 
-        $result = $this->userAccessService->getListUserAccess($storeId, $filters);
+        $result = $this->userAccessService->getListUserAccess($storeId, $filters, $isMonthQuery);
         $realData = $result->get('data');
         $expectedData = $this->getExpectedAccessData($storeId, $filters);
         $data = $this->buildUserAccessData($realData, $expectedData);
@@ -79,7 +89,7 @@ class UserAccessRepository extends Repository implements UserAccessRepositoryCon
                 $filters['to_date'] = now()->format('Y-m');
             }
 
-            $comparedRealData = $this->userAccessService->getListUserAccess($storeId, $filters)->get('data');
+            $comparedRealData = $this->userAccessService->getListUserAccess($storeId, $filters, $isMonthQuery)->get('data');
             $comparedExpectedData = $this->getExpectedAccessData($storeId, $filters);
 
             $data = $data->merge($this->buildUserAccessData($comparedRealData, $comparedExpectedData));
