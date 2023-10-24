@@ -195,15 +195,23 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
     {
         $actualMqAccounting = $this->getListFromAIByStore($storeId, $filters);
         $expectedMqAccounting = $this->getListByStore($storeId, $filters)->toArray();
-        $difference = (new MqAccountingCsv())->compareActualsWithExpectedValues(
+
+        $mqAccountingCsv = new MqAccountingCsv();
+        $difference = $mqAccountingCsv->compareActualsWithExpectedValues(
             $actualMqAccounting,
             $expectedMqAccounting
+        );
+        $differenceFraction = $mqAccountingCsv->compareActualsWithExpectedValues(
+            $actualMqAccounting,
+            $expectedMqAccounting,
+            true,
         );
 
         return [
             'actual_mq_accounting' => $actualMqAccounting,
             'expected_mq_accounting' => $expectedMqAccounting,
             'difference' => $difference,
+            'difference_fraction' => $differenceFraction,
         ];
     }
 
