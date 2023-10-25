@@ -28,9 +28,9 @@ class ShopController extends Controller
     /**
      * Get a specified shop.
      */
-    public function show($storeId): JsonResponse
+    public function show(Request $request, $storeId): JsonResponse
     {
-        $result = $this->shopRepository->find($storeId);
+        $result = $this->shopRepository->find($storeId, ['*'], $request->query());
 
         if (! $result?->get('success')) {
             return response()->json(['message' => __('Shop not found')], Response::HTTP_NOT_FOUND);
