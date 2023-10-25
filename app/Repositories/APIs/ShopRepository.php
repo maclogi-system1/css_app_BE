@@ -58,9 +58,9 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     /**
      * Find a specified shop.
      */
-    public function find($storeId)
+    public function find($storeId, array $columns = ['*'], array $filters = [])
     {
-        $result = $this->shopService->find($storeId);
+        $result = $this->shopService->find($storeId, $filters);
         if ($result->get('success')) {
             $shops = $this->convertCssUserByOssUser(collect($result->get('data')));
             $result->put('data', $shops);
