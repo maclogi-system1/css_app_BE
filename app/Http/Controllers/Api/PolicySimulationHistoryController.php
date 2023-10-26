@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PolicyResource;
 use App\Http\Resources\PolicySimulationHistoryResource;
-use App\Models\Policy;
+use App\Models\PolicySimulationHistory;
+use App\Repositories\Contracts\MqAccountingRepository;
+use App\Repositories\Contracts\MqSheetRepository;
+use App\Repositories\Contracts\PolicyRepository;
 use App\Repositories\Contracts\PolicySimulationHistoryRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +17,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PolicySimulationHistoryController extends Controller
 {
     public function __construct(
+        protected MqAccountingRepository $mqAccountingRepository,
+        protected MqSheetRepository $mqSheetRepository,
+        protected PolicyRepository $policyRepository,
         protected PolicySimulationHistoryRepository $policySimulationHistoryRepository,
     ) {
     }
@@ -28,5 +35,31 @@ class PolicySimulationHistoryController extends Controller
         $policySimulationHistories->wrap('policy_simulation_histories');
 
         return $policySimulationHistories;
+    }
+
+    public function show(Request $request, PolicySimulationHistory $policySimulationHistory)
+    {
+        $simulation = $this->policyRepository->find($policySimulationHistory->policy_id);
+
+        if ($simulation->isProcessDone()) {
+            $mqSheet = $this->mqSheetRepository->getDefaultByStore($simulation->store_id);
+            $filters = $request->query() + [
+                'from_date' => $simulation->simulation_start_date,
+                'to_date' => $simulation->simulation_end_date,
+                'mq_sheet_id' => $mqSheet->id,
+            ];
+            $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
+                $simulation->store_id,
+                $filters,
+            );
+        }
+
+        $policyResource = (new PolicyResource($simulation))
+            ->additional([
+                'history' => $policySimulationHistory,
+                'mq_accountings' => $mqAccountingActualsAndExpected ?? [],
+            ]);
+
+        return $policyResource;
     }
 }

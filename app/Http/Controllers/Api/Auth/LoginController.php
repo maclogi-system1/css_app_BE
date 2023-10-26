@@ -20,6 +20,16 @@ class LoginController extends Controller
     }
 
     /**
+     * Handle an unauthenticated user.
+     */
+    public function unauthenticated(): JsonResponse
+    {
+        return response()->json([
+            'message' => __('Unauthenticated.'),
+        ], Response::HTTP_UNAUTHORIZED);
+    }
+
+    /**
      * Handle login.
      */
     public function login(Request $request): JsonResponse

@@ -741,4 +741,20 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             $this->makeDefaultData($storeId, $mqSheet);
         }
     }
+
+    /**
+     * Get sales amount by store id.
+     */
+    public function getSalesAmntByStore(string $storeId, array $filters = [])
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date'];
+        $toDate = $dateRangeFilter['to_date'];
+
+        return $this->buidlQueryWithSheetId(Arr::get($filters, 'mq_sheet_id'))
+            ->where('mq_accounting.store_id', $storeId)
+            ->dateRange($fromDate, $toDate)
+            ->join('mq_kpi as mk', 'mk.id', '=', 'mq_accounting.mq_kpi_id')
+            ->sum('mk.sales_amnt');
+    }
 }
