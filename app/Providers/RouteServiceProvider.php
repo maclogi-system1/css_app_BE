@@ -26,6 +26,7 @@ class RouteServiceProvider extends ServiceProvider
         'team' => \App\Repositories\Contracts\TeamRepository::class,
         'policy' => \App\Repositories\Contracts\PolicyRepository::class,
         'macroConfiguration' => \App\Repositories\Contracts\MacroConfigurationRepository::class,
+        'policySimulationHistory' => \App\Repositories\Contracts\PolicySimulationHistoryRepository::class,
     ];
 
     /**

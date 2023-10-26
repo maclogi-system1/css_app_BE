@@ -20,6 +20,8 @@ class PolicySimulationHistory extends Model
         'undo_time',
         'creation_date',
         'sale_effect',
+        'store_pred_2m',
+        'items_pred_2m',
         'created_at',
         'updated_at',
     ];

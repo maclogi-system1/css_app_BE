@@ -75,6 +75,11 @@ class Policy extends Model
         return $this->hasMany(PolicyRule::class);
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(PolicySimulationHistory::class);
+    }
+
     public function getCategoryForHumanAttribute(): string
     {
         return static::CATEGORIES[$this->category] ?? static::MEASURES_CATEGORY;

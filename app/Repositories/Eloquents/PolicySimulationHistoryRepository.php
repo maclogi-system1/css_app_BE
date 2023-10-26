@@ -3,14 +3,23 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\PolicySimulationHistory;
+use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\PolicySimulationHistoryRepository as PolicySimulationHistoryRepositoryContract;
 use App\Repositories\Repository;
+use App\WebServices\AI\ItemsPred2mService;
+use App\WebServices\AI\StorePred2mService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 
 class PolicySimulationHistoryRepository extends Repository implements PolicySimulationHistoryRepositoryContract
 {
+    public function __construct(
+        protected ItemsPred2mService $itemsPred2mService,
+        protected StorePred2mService $storePred2mService,
+    ) {
+    }
+
     /**
      * Get full name of model.
      */
@@ -45,6 +54,47 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
     {
         $policySimulationHistory = $this->model()->fill($data);
         $policySimulationHistory->save();
+
+        return $policySimulationHistory;
+    }
+
+    /**
+     * Get a specified policy simulation history.
+     */
+    public function find($id, array $columns = ['*'], array $filters = []): ?PolicySimulationHistory
+    {
+        $policySimulationHistory = $this->model()
+            ->with('policy')
+            ->where('id', $id)
+            ->first($columns);
+
+        if (is_null($policySimulationHistory)) {
+            return null;
+        }
+
+        $policySimulationHistory->pred_sales_amnt = 0;
+
+        if ($storePred2mId = $policySimulationHistory?->store_pred_2m) {
+            $resultStorePred2m = $this->storePred2mService->getTotalSales($storePred2mId, [
+                'from_date' => $policySimulationHistory->execution_time,
+                'to_date' => $policySimulationHistory->undo_time,
+            ]);
+            if ($resultStorePred2m->get('success')) {
+                $policySimulationHistory->pred_sales_amnt = $resultStorePred2m->get('data');
+            }
+        }
+
+        /** @var \App\Repositories\Contracts\MqAccountingRepository */
+        $mqAccountingRepository = app(MqAccountingRepository::class);
+        $mqSalesAmnt = $mqAccountingRepository->getSalesAmntByStore($policySimulationHistory->policy->store_id, [
+            'from_date' => $policySimulationHistory->execution_time,
+            'to_date' => $policySimulationHistory->undo_time,
+        ]);
+
+        $policySimulationHistory->mq_sales_amnt = $mqSalesAmnt;
+        $policySimulationHistory->growth_rate_prediction = $mqSalesAmnt
+            ? round($policySimulationHistory->pred_sales_amnt / $mqSalesAmnt, 2) - 1
+            : 0;
 
         return $policySimulationHistory;
     }

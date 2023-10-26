@@ -190,6 +190,7 @@ Route::middleware(['auth:sanctum', 'dynamic_connection'])->group(function () {
         ->controller(PolicySimulationHistoryController::class)
         ->group(function () {
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
+            Route::get('/history/{policySimulationHistory}', 'show')->name('show');
         });
 
     Route::prefix('policy-attachments')

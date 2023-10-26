@@ -19,6 +19,9 @@ abstract class Service
         return Http::asJson()->acceptJson()->baseUrl($url ?? $this->baseUrl ?? '');
     }
 
+    /**
+     * Reformat the response according to standards.
+     */
     public function toResponse(Response $response): Collection
     {
         return collect([
