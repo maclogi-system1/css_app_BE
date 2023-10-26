@@ -37,6 +37,7 @@ class UserResource extends JsonResource
             'updated_at' => $this->resource->updated_at,
             'company' => $this->whenLoaded('company', fn () => new CompanyResource($this->resource->company)),
             'role' => $this->whenLoaded('roles', fn () => $this->resource->roles->first()),
+            'roles' => $this->whenLoaded('roles', fn () => $this->resource->roles),
             'permissions' => $this->whenLoaded('roles', fn () => PermissionResource::collection($this->resource->getPermissionsViaRoles())),
             'chatwork' => $this->whenLoaded('chatwork', fn () => new ChatworkResource($this->resource->chatwork)),
             'teams' => $this->whenLoaded('teams', fn () => TeamResource::collection($this->resource->teams)),
