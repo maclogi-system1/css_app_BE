@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Policy;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -96,12 +97,12 @@ interface PolicyRepository extends Repository
     /**
      * Run multiple policy simulation.
      */
-    public function runMultipleSimulation(array $data);
+    public function runMultipleSimulation(array $data, User $manager);
 
     /**
      * Run policy simulation.
      */
-    public function runSimulation($id);
+    public function runSimulation($id, User $manager);
 
     /**
      * Get list of work breakdown structure.

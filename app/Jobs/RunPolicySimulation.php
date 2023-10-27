@@ -3,11 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Policy;
+use App\Models\User;
 use App\Repositories\Contracts\PolicySimulationHistoryRepository;
 use App\WebServices\AI\StorePred2mService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
@@ -28,6 +30,8 @@ class RunPolicySimulation implements ShouldQueue
     public function __construct(
         public string $storeId,
         public array $data = [],
+        #[WithoutRelations]
+        public User $manager,
     ) {
     }
 
@@ -52,6 +56,7 @@ class RunPolicySimulation implements ShouldQueue
                     'sale_effect' => Arr::get($item, 'sale_effect', 0),
                     'store_pred_2m' => Arr::get($item, 'store_pred_2m', ''),
                     'items_pred_2m' => Arr::get($item, 'items_pred_2m', ''),
+                    'manager' => $this->manager?->name,
                 ]);
                 $simulation = Policy::find(Arr::get($item, 'policy_id'));
                 $simulation->processing_status = Policy::DONE_PROCESSING_STATUS;
