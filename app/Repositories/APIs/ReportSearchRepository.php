@@ -108,10 +108,21 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
      */
     public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection
     {
+        // Check if the input matches the 'yyyy-MM' format
+        $isMonthQuery = false;
+        if (Arr::has($filters, ['from_date', 'to_date'])) {
+            if (
+                preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'from_date'))
+                && preg_match('/^\d{4}-\d{2}$/', Arr::get($filters, 'to_date'))
+            ) {
+                $isMonthQuery = true;
+            }
+        }
+
         if (! Arr::get($filters, 'to_date') || Arr::get($filters, 'to_date') > now()->format('Y-m-d')) {
             $filters['to_date'] = now()->format('Y-m-d');
         }
-        $result = $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters);
+        $result = $this->reportSearchService->getDataReportSearchByProduct($storeId, $filters, $isMonthQuery);
         $data = $result->get('data');
 
         // Get compared data category analysis
@@ -123,7 +134,7 @@ class ReportSearchRepository extends Repository implements ReportSearchRepositor
                 $filters['to_date'] = now()->format('Y-m-d');
             }
 
-            $data = $data->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters)->get('data'));
+            $data = $data->merge($this->reportSearchService->getDataReportSearchByProduct($storeId, $filters, $isMonthQuery)->get('data'));
         }
 
         $perPage = Arr::get($filters, 'per_page', 10);
