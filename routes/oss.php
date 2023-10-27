@@ -11,6 +11,7 @@ Route::prefix('shops')->name('shops.')->controller(ShopController::class)->group
     Route::get('/{storeId}', 'show')->name('show');
     Route::put('/{storeId}', 'update')->name('update');
     Route::post('/', 'create')->name('create');
+    Route::get('/shop-info/{storeId}', 'getInfo')->name('shop-info');
 });
 
 Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->group(function () {

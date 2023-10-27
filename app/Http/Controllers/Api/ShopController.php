@@ -42,14 +42,14 @@ class ShopController extends Controller
     /**
      * Get a list of options for select.
      */
-    public function getOptions()
+    public function getOptions(): JsonResponse
     {
         $options = $this->shopRepository->getOptions();
 
         return response()->json($options);
     }
 
-    public function update(string $storeId, Request $request)
+    public function update(string $storeId, Request $request): JsonResponse
     {
         $result = $this->shopRepository->update($storeId, $request->all());
 
@@ -63,7 +63,7 @@ class ShopController extends Controller
         return response()->json($result);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $result = $this->shopRepository->create($request->all());
 
@@ -73,6 +73,13 @@ class ShopController extends Controller
                 'errors' => $result->get('errors'),
             ], $result->get('status'));
         }
+
+        return response()->json($result);
+    }
+
+    public function getInfo(string $storeId): JsonResponse
+    {
+        $result = $this->shopRepository->getInfo($storeId);
 
         return response()->json($result);
     }

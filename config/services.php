@@ -44,6 +44,7 @@ return [
             ],
             'alerts' => [
                 'list' => '/alerts',
+                'get_alert_count' => '/alerts/get-alert-count/{storeId}',
             ],
             'tasks' => [
                 'list' => '/tasks',
