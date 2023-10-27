@@ -47,4 +47,9 @@ class ShopService extends Service
     {
         return $this->toResponse(Http::oss()->post(OSSService::getApiUri('shops.create'), $data));
     }
+
+    public function getAlertCount(string $storeId)
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.get_alert_count', $storeId)));
+    }
 }

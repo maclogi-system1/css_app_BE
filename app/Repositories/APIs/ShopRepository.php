@@ -70,6 +70,21 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     }
 
     /**
+     * Get shop information as minimally as possible.
+     */
+    public function getInfo(string $storeId)
+    {
+        $result = $this->shopService->getAlertCount($storeId);
+        $shopDetail = null;
+
+        if ($result->get('success')) {
+            $shopDetail = $result->get('data');
+        }
+
+        return $shopDetail;
+    }
+
+    /**
      * Get a list of the user in a shop.
      */
     public function getUsers(array $filters = [])
