@@ -7,6 +7,7 @@ use App\Jobs\RunPolicySimulation;
 use App\Models\Policy;
 use App\Models\PolicyAttachment;
 use App\Models\PolicyRule;
+use App\Models\User;
 use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\PolicyAttachmentRepository;
@@ -594,10 +595,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Run multiple policy simulation.
      */
-    public function runMultipleSimulation(array $data)
+    public function runMultipleSimulation(array $data, User $manager)
     {
         if ($policyId = Arr::get($data, 'policy_id')) {
-            return $this->runSimulation($policyId);
+            return $this->runSimulation($policyId, $manager);
         }
 
         $simulation = $this->model()
@@ -608,17 +609,17 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->get()
             ->toArray();
 
-        RunPolicySimulation::dispatch($data['store_id'], $simulation);
+        RunPolicySimulation::dispatch($data['store_id'], $simulation, $manager);
     }
 
     /**
      * Run policy simulation.
      */
-    public function runSimulation($id)
+    public function runSimulation($id, User $manager)
     {
         $simulation = $this->model()->where('id', $id)->with('rules')->first();
 
-        RunPolicySimulation::dispatch($simulation->store_id, [$simulation->toArray()]);
+        RunPolicySimulation::dispatch($simulation->store_id, [$simulation->toArray()], $manager);
     }
 
     /**
