@@ -17,4 +17,9 @@ interface PolicySimulationHistoryRepository extends Repository
      * Handle create a new policy simulation history.
      */
     public function create(array $data): ?PolicySimulationHistory;
+
+    /**
+     * Get a specified policy simulation history.
+     */
+    public function find($id, array $columns = ['*'], array $filters = []): ?PolicySimulationHistory;
 }

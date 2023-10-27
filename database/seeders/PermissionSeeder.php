@@ -56,7 +56,7 @@ class PermissionSeeder extends Seeder
                 'create_all_macros', 'view_all_macros', 'edit_all_macros', 'delete_all_macros',
             ]);
         })->values());
-;
+
         $roleCompanyAdmin->syncPermissions($permissions->filter(function ($permission) {
             return in_array($permission, [
                 'create_company_user_info', 'view_company_user_info', 'edit_company_user_info', 'delete_company_user_info',

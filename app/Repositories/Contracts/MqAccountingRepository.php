@@ -82,4 +82,9 @@ interface MqAccountingRepository extends Repository
      * Handles the creation of new mq_accounting along with relationships from AI data.
      */
     public function makeDataFromAI(string $storeId, MqSheet $mqSheet): void;
+
+    /**
+     * Get sales amount by store id.
+     */
+    public function getSalesAmntByStore(string $storeId, array $filters = []);
 }

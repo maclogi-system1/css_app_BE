@@ -20,6 +20,16 @@ class LoginController extends Controller
     }
 
     /**
+     * Handle an unauthenticated user.
+     */
+    public function unauthenticated(): JsonResponse
+    {
+        return response()->json([
+            'message' => __('Unauthenticated.'),
+        ], Response::HTTP_UNAUTHORIZED);
+    }
+
+    /**
      * Handle login.
      */
     public function login(Request $request): JsonResponse
@@ -35,7 +45,7 @@ class LoginController extends Controller
                 ->where('c.company_id', $data['company_id']);
         })
             ->where('email', $data['email'])
-            ->with(['roles', 'permissions'])
+            ->with(['roles', 'roles.permissions'])
             ->first(['users.*', 'c.company_id as company_company_id', 'c.name as company_name']);
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {

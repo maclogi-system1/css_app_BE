@@ -14,7 +14,12 @@ interface ShopRepository extends Repository
     /**
      * Find a specified shop.
      */
-    public function find($storeId);
+    public function find($storeId, array $columns = ['*'], array $filters = []);
+
+    /**
+     * Get shop information as minimally as possible.
+     */
+    public function getInfo(string $storeId);
 
     /**
      * Get a list of the user in a shop.

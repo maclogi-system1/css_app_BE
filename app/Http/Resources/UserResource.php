@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property User $resource
+ */
 class UserResource extends JsonResource
 {
     /**
@@ -32,8 +36,9 @@ class UserResource extends JsonResource
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
             'company' => $this->whenLoaded('company', fn () => new CompanyResource($this->resource->company)),
-            'permissions' => $this->whenLoaded('permissions', fn () => PermissionResource::collection($this->resource->permissions)),
-            'role' => $this->whenLoaded('roles', fn () => new RoleResource($this->resource->roles->first())),
+            'role' => $this->whenLoaded('roles', fn () => $this->resource->roles->first()),
+            'roles' => $this->whenLoaded('roles', fn () => $this->resource->roles),
+            'permissions' => $this->whenLoaded('roles', fn () => PermissionResource::collection($this->resource->getPermissionsViaRoles())),
             'chatwork' => $this->whenLoaded('chatwork', fn () => new ChatworkResource($this->resource->chatwork)),
             'teams' => $this->whenLoaded('teams', fn () => TeamResource::collection($this->resource->teams)),
         ];

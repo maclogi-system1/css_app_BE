@@ -19,9 +19,9 @@ class ShopService extends Service
     /**
      * Find a specified shop.
      */
-    public function find($storeId)
+    public function find($storeId, array $filters = [])
     {
-        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId)));
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('shops.detail', $storeId), $filters));
     }
 
     /**
@@ -46,5 +46,10 @@ class ShopService extends Service
     public function create(array $data)
     {
         return $this->toResponse(Http::oss()->post(OSSService::getApiUri('shops.create'), $data));
+    }
+
+    public function getAlertCount(string $storeId)
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.get_alert_count', $storeId)));
     }
 }

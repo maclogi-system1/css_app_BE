@@ -68,3 +68,13 @@ if (! function_exists('to_array')) {
         return (array) $items;
     }
 }
+
+if (! function_exists('getUserImageInitial')) {
+    function getUserImageInitial(int $userId, string $name): string
+    {
+        $colors = ['329af0', 'fc6369', 'ffaa2e', '42c9af', '7d68f0'];
+        $index = $userId % 5;
+
+        return "https://ui-avatars.com/api/?name=$name&size=64&rounded=true&color=fff&background=$colors[$index]";
+    }
+}

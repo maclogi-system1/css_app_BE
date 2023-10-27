@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\VerificationController;
 use Illuminate\Http\Request;
@@ -22,3 +23,4 @@ Route::get('/', function (Request $request) {
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
 Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+Route::get('/unauthenticated', [LoginController::class, 'unauthenticated'])->name('login');

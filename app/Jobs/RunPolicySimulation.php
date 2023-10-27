@@ -3,10 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Policy;
+use App\Models\User;
 use App\Repositories\Contracts\PolicySimulationHistoryRepository;
+use App\WebServices\AI\StorePred2mService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
@@ -27,6 +30,8 @@ class RunPolicySimulation implements ShouldQueue
     public function __construct(
         public string $storeId,
         public array $data = [],
+        #[WithoutRelations]
+        public User $manager,
     ) {
     }
 
@@ -39,22 +44,21 @@ class RunPolicySimulation implements ShouldQueue
         try {
             DB::beginTransaction();
 
-            $result = $this->callApiRunPolicySimulation();
+            $result = $this->handleSimulations();
 
-            if (is_null($result)) {
-                throw new RuntimeException('Calling the api to run the policy simulation from the AI side failed.');
-            }
-
-            foreach (Arr::get($result, 'data', []) as $item) {
+            foreach ($result as $item) {
                 $policySimulationHistoryRepository->create([
-                    'policy_id' => Arr::get($item, 'id'),
+                    'policy_id' => Arr::get($item, 'policy_id'),
                     'title' => Arr::get($item, 'name'),
-                    'execution_time' => Arr::get($item, 'simulation_start_date'),
-                    'undo_time' => Arr::get($item, 'simulation_end_date'),
+                    'execution_time' => Arr::get($item, 'start_date'),
+                    'undo_time' => Arr::get($item, 'end_date'),
                     'creation_date' => now(),
                     'sale_effect' => Arr::get($item, 'sale_effect', 0),
+                    'store_pred_2m' => Arr::get($item, 'store_pred_2m', ''),
+                    'items_pred_2m' => Arr::get($item, 'items_pred_2m', ''),
+                    'manager' => $this->manager?->name,
                 ]);
-                $simulation = Policy::find(Arr::get($item, 'id'));
+                $simulation = Policy::find(Arr::get($item, 'policy_id'));
                 $simulation->processing_status = Policy::DONE_PROCESSING_STATUS;
                 $simulation->save();
             }
@@ -70,30 +74,48 @@ class RunPolicySimulation implements ShouldQueue
         }
     }
 
-    private function callApiRunPolicySimulation()
+    private function handleSimulations()
     {
-        $dataRequest = [
-            'store_id' => $this->storeId,
-            'data' => array_map(function ($simulation) {
-                return [
-                    'id' => $simulation['id'],
-                    'name' => $simulation['name'],
-                    'simulation_start_date' => Carbon::parse($simulation['simulation_start_date'])->format('Y-m-d H:i:s'),
-                    'simulation_end_date' => Carbon::parse($simulation['simulation_end_date'])->format('Y-m-d H:i:s'),
-                    'simulation_promotional_expenses' => $simulation['simulation_promotional_expenses'],
-                    'policy_rules' => array_map(function ($rule) {
-                        return [
-                            'id' => $rule['id'],
-                            'class' => $rule['class'],
-                            'service' => $rule['service'],
-                            'value' => $rule['value'],
-                        ];
-                    }, $simulation['rules']),
-                    'created_at' => Carbon::parse($simulation['created_at'])->format('Y-m-d H:i:s'),
-                ];
-            }, $this->data),
-        ];
+        $result = [];
 
-        return $dataRequest;
+        foreach ($this->data as $simulation) {
+            $startDate = Carbon::parse($simulation['simulation_start_date']);
+            $endDate = Carbon::parse($simulation['simulation_end_date']);
+
+            $result[] = $this->callApiRunPolicySimulation([
+                'store_id' => $this->storeId,
+                'policies' => array_map(function ($rule) use ($startDate, $endDate) {
+                    return [
+                        'class' => $rule['class'],
+                        'service' => $rule['service'],
+                        'value' => $rule['value'],
+                        'start_date' => $startDate->format('Y-m-d H:i'),
+                        'end_date' => $endDate->format('Y-m-d H:i'),
+                    ];
+                }, $simulation['rules']),
+            ]) + [
+                'policy_id' => $simulation['id'],
+                'name' => $simulation['name'],
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function callApiRunPolicySimulation(array $dataRequest)
+    {
+        /** @var \App\WebServices\AI\StorePred2mService */
+        $storePred2mService = app(StorePred2mService::class);
+        $result = $storePred2mService->runSimulation($dataRequest);
+
+        if (! $result->get('success')) {
+            logger()->error($result->get('data')->toJson());
+
+            throw new RuntimeException('Calling the api to run the policy simulation from the AI side failed.');
+        }
+
+        return $result->get('data')->get('data');
     }
 }

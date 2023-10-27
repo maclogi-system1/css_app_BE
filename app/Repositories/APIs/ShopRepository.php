@@ -45,6 +45,22 @@ class ShopRepository extends Repository implements ShopRepositoryContract
                 'createdUser',
             ]] + $filters;
 
+        $filterManagers = Arr::get($filters, 'filters.manager');
+        if (! empty($filterManagers)) {
+            $filterManagers = array_map(function ($manager) {
+                if (is_numeric($manager)) {
+                    $manager = $this->getLinkedUserInfoRepository()->getOssUserIdsByCssUserIds([$manager]);
+                    if (! empty($manager)) {
+                        $manager = $manager[0];
+                    }
+                }
+
+                return $manager;
+            }, array_filter(explode(',', $filterManagers)));
+
+            Arr::set($filters, 'filters.manager', implode(',', $filterManagers));
+        }
+
         $result = $this->shopService->getList($filters);
 
         if ($result->get('success')) {
@@ -58,15 +74,30 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     /**
      * Find a specified shop.
      */
-    public function find($storeId)
+    public function find($storeId, array $columns = ['*'], array $filters = [])
     {
-        $result = $this->shopService->find($storeId);
+        $result = $this->shopService->find($storeId, $filters);
         if ($result->get('success')) {
             $shops = $this->convertCssUserByOssUser(collect($result->get('data')));
             $result->put('data', $shops);
         }
 
         return $result;
+    }
+
+    /**
+     * Get shop information as minimally as possible.
+     */
+    public function getInfo(string $storeId)
+    {
+        $result = $this->shopService->getAlertCount($storeId);
+        $shopDetail = null;
+
+        if ($result->get('success')) {
+            $shopDetail = $result->get('data');
+        }
+
+        return $shopDetail;
     }
 
     /**
@@ -164,10 +195,11 @@ class ShopRepository extends Repository implements ShopRepositoryContract
             'director_contact',
             'designer_contact',
             'person_in_charge_contact',
+            'created_by',
         ];
 
-        /** @var \App\Repositories\Contracts\LinkedUserInfoRepository */
-        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+        $linkedUserInfoRepository = $this->getLinkedUserInfoRepository();
+
         $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($assignees);
 
         Arr::set($data, 'assignees', $ossUserIds);
@@ -187,6 +219,7 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     {
         return $data->map(function ($shop) {
             $listConvert = ['directors', 'designers', 'consultants', 'managers', 'person_in_charges'];
+            $singleConvert = ['created_by'];
 
             if (! empty($shop['is_css'])) {
                 foreach ($listConvert as $item) {
@@ -195,6 +228,21 @@ class ShopRepository extends Repository implements ShopRepositoryContract
                         $shop[$item] = $this->getUserRepository()->getListByLinkedUserIds($userIds)->map(function (User $user) {
                             return $user->getFieldForOSS();
                         })->toArray();
+                    }
+                }
+
+                foreach ($singleConvert as $item) {
+                    if (! empty($shop[$item])) {
+                        $userId = collect($shop[$item])->get('id');
+                        if ($userId) {
+                            /** @var Collection $users */
+                            $users = $this->getUserRepository()->getListByLinkedUserIds([$userId])->map(function (User $user) {
+                                return $user->getFieldForOSS();
+                            });
+                            if ($users->count()) {
+                                $shop[$item] = $users->first();
+                            }
+                        }
                     }
                 }
             }
@@ -206,5 +254,10 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     public function getUserRepository(): UserRepository
     {
         return app(UserRepository::class);
+    }
+
+    public function getLinkedUserInfoRepository(): LinkedUserInfoRepository
+    {
+        return app(LinkedUserInfoRepository::class);
     }
 }
