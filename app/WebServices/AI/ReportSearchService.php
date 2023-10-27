@@ -4,6 +4,7 @@ namespace App\WebServices\AI;
 
 use App\Models\KpiRealData\AccessKeywords;
 use App\Models\KpiRealData\ItemsData;
+use App\Models\KpiRealData\ItemsDataAll;
 use App\Models\KpiRealData\KeysearchRanking;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\Service;
@@ -184,24 +185,28 @@ class ReportSearchService extends Service
         ]);
     }
 
-    public function getDataReportSearchByProduct(string $storeId, array $filters = []): Collection
+    /**
+     * Query products keywords data.
+     */
+    public function getDataReportSearchByProduct(string $storeId, array $filters = [], bool $isMonthQuery = false): Collection
     {
+        if ($isMonthQuery) {
+            return $this->getDataYearMonthReportSearchByProduct($storeId, $filters);
+        }
         $dateRangeFilter = $this->getDateRangeFilter($filters);
         $fromDate = $dateRangeFilter['from_date']->format('Y-m-d');
         $toDate = $dateRangeFilter['to_date']->format('Y-m-d');
         $fromDateStr = str_replace('-', '', date('Ymd', strtotime($fromDate)));
         $toDateStr = str_replace('-', '', date('Ymd', strtotime($toDate)));
-        $page = 1;
-        $perPage = 5;
+        $page = Arr::get($filters, 'page', 1);
+        $perPage = Arr::get($filters, 'per_page', 5);
 
-        /*
-        WIP - Updating query product keywords
         $aggregatedData = KeysearchRanking::select(
-                'itemid',
-                'date',
-                'keyword',
-                DB::raw('SUM(access_num) as total_access')
-            )
+            'itemid',
+            'date',
+            'keyword',
+            DB::raw('SUM(access_num) as total_access')
+        )
             ->where('date', '>=', $fromDateStr)
             ->where('date', '<=', $toDateStr)
             ->from(DB::raw("(
@@ -216,204 +221,108 @@ class ReportSearchService extends Service
                 SELECT itemid, date, keyword3, keywordnum3
                 FROM keysearch_ranking
                 WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
-                UNION ALL
-                SELECT itemid, date, keyword4, keywordnum4
-                FROM keysearch_ranking
-                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
-                UNION ALL
-                SELECT itemid, date, keyword5, keywordnum5
-                FROM keysearch_ranking
-                WHERE date >= '".$fromDateStr."' AND date <= '".$toDateStr."'
             ) as subquery"))
             ->groupBy('itemid', 'date', 'keyword')
             ->get();
+        $itemsIds = ! is_null($aggregatedData) ? $aggregatedData->pluck('itemid')->unique()->toArray() : [];
+        $aggregatedData = ! is_null($aggregatedData) ? $aggregatedData->groupBy('itemid')->toArray() : [];
 
-        $topKeywords = KeysearchRanking::where('keysearch_ranking.store_id', $storeId)
-            ->where('keysearch_ranking.date', '>=', $fromDateStr)
-            ->where('keysearch_ranking.date', '<=', $toDateStr)
-            ->select(
-                'keysearch_ranking.store_id',
-                'keysearch_ranking.date',
-                'keysearch_ranking.itemid',
-                'keyword1',
-                'keywordnum1',
-                'keyword2',
-                'keywordnum2',
-                'keyword3',
-                'keywordnum3',
-                'keyword4',
-                'keywordnum4',
-                'keyword5',
-                'keywordnum5'
-            );
+        // Get item info
+        $itemsInfo = collect();
+        if (! empty($itemsIds)) {
+            $itemsData = ItemsData::where('store_id', $storeId)
+                ->whereIn('item_id', $itemsIds)
+                ->where('date', '>=', $fromDateStr)
+                ->where('date', '<=', $toDateStr)
+                ->select('item_id', 'mng_number', 'item_name', 'items_data_all_id');
+            $itemsDataAllIds = ! is_null($itemsData) ? $itemsData->pluck('items_data_all_id')->unique()->toArray() : [];
 
-        $productResult = ItemsData::where('items_data.store_id', $storeId)
-            ->where('items_data.date', '>=', $fromDateStr)
-            ->where('items_data.date', '<=', $toDateStr)
-            ->distinct('item_id')
-            ->join('items_data_all as item_all', 'item_all.items_data_all_id', '=', 'items_data.items_data_all_id')
-            ->joinSub($topKeywords, 'keysearch_ranking', function ($join) {
-                $join->on('items_data.item_id', '=', 'keysearch_ranking.itemid');
-            })
-            ->select(
-                'item_id',
-                'mng_number',
-                'item_name',
-                'items_data.date',
-                DB::raw('MAX(keysearch_ranking.keyword1) as keyword1'),
-                DB::raw('MAX(keysearch_ranking.keywordnum1) as keywordnum1'),
-                DB::raw('MAX(keysearch_ranking.keyword2) as keyword2'),
-                DB::raw('MAX(keysearch_ranking.keywordnum2) as keywordnum2'),
-                DB::raw('MAX(keysearch_ranking.keyword3) as keyword3'),
-                DB::raw('MAX(keysearch_ranking.keywordnum3) as keywordnum3'),
-                DB::raw('MAX(keysearch_ranking.keyword4) as keyword4'),
-                DB::raw('MAX(keysearch_ranking.keywordnum4) as keywordnum4'),
-                DB::raw('MAX(keysearch_ranking.keyword5) as keyword5'),
-                DB::raw('MAX(keysearch_ranking.keywordnum5) as keywordnum5'),
-                DB::raw('MAX(visit_all) as max_visit_all'),
-            )
-            ->groupBy('item_id', 'mng_number', 'item_name', 'items_data.date')
-            ->orderByDesc('max_visit_all')
-            ->skip(($page - 1) * $perPage)
-            ->take($perPage)
-            ->get();
-        $productResult = ! is_null($productResult) ? $productResult->toArray() : [];
+            $itemsDataAll = ItemsDataAll::whereIn('items_data_all.items_data_all_id', $itemsDataAllIds)
+                ->rightJoinSub($itemsData, 'items_data', function ($join) {
+                    $join->on('items_data_all.items_data_all_id', '=', 'items_data.items_data_all_id');
+                })
+                ->select(
+                    'items_data.item_id',
+                    'items_data.mng_number',
+                    'items_data.item_name',
+                    DB::raw('SUM(items_data_all.visit_all) as total_access')
+                )
+                ->groupBy(
+                    'items_data.item_id',
+                    'items_data.mng_number',
+                    'items_data.item_name',
+                )
+                ->orderByDesc('total_access')
+                ->skip(($page - 1) * $perPage)
+                ->take($perPage)
+                ->get();
+            $itemsDataAll = ! is_null($itemsDataAll) ? $itemsDataAll->toArray() : [];
 
-        $data = collect();
-        foreach ($productResult as $index => $item) {
-            $totalAccess = intval(Arr::get($item, 'visit_all', 0));
+            foreach ($itemsDataAll as $itemData) {
+                $totalAccess = Arr::get($itemData, 'total_access', 1);
+                $topItemsKeywords = Arr::get($aggregatedData, Arr::get($itemData, 'item_id', ''), []);
+                if (count($topItemsKeywords) > 0) {
+                    // Merged data and sum keyword access to build table data
+                    $topItemsKeywords = collect($topItemsKeywords)->groupBy('keyword')->map(function ($group) {
+                        return [
+                            'keyword' => $group[0]['keyword'],
+                            'total_access' => $group->sum('total_access'),
+                        ];
+                    })->values()->all();
+                }
+                $tableKeywords = collect();
 
-            $data->add([
-                'store_id' => $storeId,
-                'from_date' => Arr::get($filters, 'from_date'),
-                'to_date' => Arr::get($filters, 'to_date'),
-                'product' => [
-                    'total_access' => $totalAccess,
-                    'item_id' => Arr::get($item, 'item_id', ''),
-                    'item_name' => Arr::get($item, 'item_name', ''),
-                    'ranking' => ($index + 1),
-                    'table_report_search_by_product' => collect([
-                        [
-                            'display_name' => Arr::get($item, 'keyword1', ''),
-                            'keyword' => Arr::get($item, 'keyword1', ''),
-                            'value' => intval(Arr::get($item, 'keywordnum1', 0)),
-                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum1', 0) / $totalAccess * 100, 2) : 0,
-                        ],
-                        [
-                            'display_name' => Arr::get($item, 'keyword2', ''),
-                            'keyword' => Arr::get($item, 'keyword2', ''),
-                            'value' => intval(Arr::get($item, 'keywordnum2', 0)),
-                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum2', 0) / $totalAccess * 100, 2) : 0,
-                        ],
-                        [
-                            'display_name' => Arr::get($item, 'keyword3', ''),
-                            'keyword' => Arr::get($item, 'keyword3', ''),
-                            'value' => intval(Arr::get($item, 'keywordnum3', 0)),
-                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum3', 0) / $totalAccess * 100, 2) : 0,
-                        ],
-                        [
-                            'display_name' => Arr::get($item, 'keyword4', ''),
-                            'keyword' => Arr::get($item, 'keyword4', ''),
-                            'value' => intval(Arr::get($item, 'keywordnum4', 0)),
-                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum4', 0) / $totalAccess * 100, 2) : 0,
-                        ],
-                        [
-                            'display_name' => Arr::get($item, 'keyword5', ''),
-                            'keyword' => Arr::get($item, 'keyword5', ''),
-                            'value' => intval(Arr::get($item, 'keywordnum5', 0)),
-                            'rate' => $totalAccess > 0 ? round(Arr::get($item, 'keywordnum5', 0) / $totalAccess * 100, 2) : 0,
-                        ],
-                    ]),
-                    'chart_report_search_by_product' => '$chartByProduct',
-                ],
-            ]);
+                $chartItemsReportSearch = collect();
+                if (count($topItemsKeywords) > 0) {
+                    $totalAccess = collect($topItemsKeywords)->sum('total_access');
+
+                    //Build chart items report search
+                    $chartKeywordsItems = Arr::get($aggregatedData, Arr::get($itemData, 'item_id', ''), []);
+                    if (count($chartKeywordsItems) > 0) {
+                        $chartKeywordsByDate = collect($chartKeywordsItems)->groupBy('date')->toArray();
+                        foreach ($chartKeywordsByDate as $date => $chartItem) {
+                            $listKeywordsInChart = [];
+                            $listKeywordsInChart['date'] = substr($date, 0, 4).'/'.substr($date, 4, 2).'/'.substr($date, 6, 2);
+                            foreach ($chartItem as $keywordChartItem) {
+                                if (! is_null(Arr::get($keywordChartItem, 'keyword'))) {
+                                    $listKeywordsInChart[Arr::get($keywordChartItem, 'keyword')] = Arr::get($keywordChartItem, 'total_access', 0);
+                                }
+                            }
+                            $chartItemsReportSearch->add($listKeywordsInChart);
+                        }
+                    }
+                }
+                foreach ($topItemsKeywords as $keywordsItem) {
+                    $keywordsAccess = Arr::get($keywordsItem, 'total_access', 1);
+                    if (! is_null(Arr::get($keywordsItem, 'keyword'))) {
+                        $tableKeywords->add([
+                            'keyword' => Arr::get($keywordsItem, 'keyword', ''),
+                            'value' => $keywordsAccess,
+                            'rate' => round($keywordsAccess / $totalAccess * 100, 2),
+                        ]);
+                    }
+                }
+
+                $itemsInfo->add([
+                    'store_id' => $storeId,
+                    'from_date' => $fromDate,
+                    'to_date' => $toDate,
+                    'product' => [
+                        'total_access' => $totalAccess,
+                        'mng_number' => Arr::get($itemData, 'mng_number', ''),
+                        'item_name' => Arr::get($itemData, 'item_name', ''),
+                        'table_report_serach_by_product' => $tableKeywords,
+                        'chart_report_search_by_product' => $chartItemsReportSearch,
+                    ],
+                ]);
+            }
         }
-        */
-
-        $dateTimeRange = $this->getDateTimeRange(
-            $dateRangeFilter['from_date'],
-            $dateRangeFilter['to_date'],
-            [
-                'format' => 'Y/m/d',
-                'step' => '1 day',
-            ]
-        );
-
-        $chartByProduct = collect();
-        $dataFake = collect();
-
-        foreach ($dateTimeRange as $date) {
-            $chartByProduct->add([
-                'date' => $date,
-                'keyword_1' => rand(1000, 5000),
-                'keyword_2' => rand(1000, 5000),
-                'keyword_3' => rand(1000, 5000),
-                'keyword_4' => rand(1000, 5000),
-                'keyword_5' => rand(1000, 5000),
-                'keyword_6' => rand(1000, 5000),
-                'keyword_7' => rand(1000, 5000),
-                'keyword_8' => rand(1000, 5000),
-                'keyword_9' => rand(1000, 5000),
-                'keyword_10' => rand(1000, 5000),
-            ]);
-        }
-
-        for ($i = 0; $i < 15; $i++) {
-            $dataFake->add([
-                'store_id' => $storeId,
-                'from_date' => Arr::get($filters, 'from_date'),
-                'to_date' => Arr::get($filters, 'to_date'),
-                'product' => [
-                    'total_access' => rand(1000, 5000),
-                    'item_id' => rand(1000, 5000),
-                    'item_name' => '商品名1テキス',
-                    'ranking' => 1,
-                    'table_report_search_by_product' => collect([
-                        [
-                            'display_name' => 'キーワード1',
-                            'keyword' => 'keyword_1',
-                            'value' => rand(1000, 5000),
-                            'rate' => rand(3, 20),
-                            'conversion_rate' => rand(3, 20),
-                        ],
-                        [
-                            'display_name' => 'キーワード2',
-                            'keyword' => 'keyword_2',
-                            'value' => rand(1000, 5000),
-                            'rate' => rand(3, 20),
-                            'conversion_rate' => rand(3, 20),
-                        ],
-                        [
-                            'display_name' => 'キーワード3',
-                            'keyword' => 'keyword_3',
-                            'value' => rand(1000, 5000),
-                            'rate' => rand(3, 20),
-                            'conversion_rate' => rand(3, 20),
-                        ],
-                        [
-                            'display_name' => 'キーワード4',
-                            'keyword' => 'keyword_4',
-                            'value' => rand(1000, 5000),
-                            'rate' => rand(3, 20),
-                            'conversion_rate' => rand(3, 20),
-                        ],
-                        [
-                            'display_name' => 'キーワード5',
-                            'keyword' => 'keyword_5',
-                            'value' => rand(1000, 5000),
-                            'rate' => rand(3, 20),
-                            'conversion_rate' => rand(3, 20),
-                        ],
-                    ]),
-                    'chart_report_search_by_product' => $chartByProduct,
-                ],
-            ]);
-        }
+        $itemsInfo = $itemsInfo->sortByDesc('product.total_access');
 
         return collect([
             'success' => true,
             'status' => 200,
-            'data' => $dataFake,
+            'data' => $itemsInfo,
         ]);
     }
 
@@ -828,6 +737,143 @@ class ReportSearchService extends Service
             'success' => true,
             'status' => 200,
             'data' => $data,
+        ]);
+    }
+
+    /**
+     * Query products keywords data by year-month.
+     */
+    private function getDataYearMonthReportSearchByProduct(string $storeId, array $filters = []): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
+        $page = Arr::get($filters, 'page', 1);
+        $perPage = Arr::get($filters, 'per_page', 5);
+
+        $aggregatedData = KeysearchRanking::select(
+            'itemid',
+            'date',
+            'keyword',
+            DB::raw('SUM(access_num) as total_access')
+        )
+            ->where(DB::raw('SUBSTRING(date, 1, 6)'), '>=', $fromDateStr)
+            ->where(DB::raw('SUBSTRING(date, 1, 6)'), '<=', $toDateStr)
+            ->from(DB::raw("(
+                SELECT itemid, SUBSTRING(date, 1, 6) as date, keyword1 AS keyword, keywordnum1 AS access_num
+                FROM keysearch_ranking
+                WHERE SUBSTRING(date, 1, 6) >= '".$fromDateStr."' AND SUBSTRING(date, 1, 6) <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, SUBSTRING(date, 1, 6) as date, keyword2, keywordnum2
+                FROM keysearch_ranking
+                WHERE SUBSTRING(date, 1, 6) >= '".$fromDateStr."' AND SUBSTRING(date, 1, 6) <= '".$toDateStr."'
+                UNION ALL
+                SELECT itemid, SUBSTRING(date, 1, 6) as date, keyword3, keywordnum3
+                FROM keysearch_ranking
+                WHERE SUBSTRING(date, 1, 6) >= '".$fromDateStr."' AND SUBSTRING(date, 1, 6) <= '".$toDateStr."'
+            ) as subquery"))
+            ->groupBy('itemid', 'date', 'keyword')
+            ->get();
+        $itemsIds = ! is_null($aggregatedData) ? $aggregatedData->pluck('itemid')->unique()->toArray() : [];
+        $aggregatedData = ! is_null($aggregatedData) ? $aggregatedData->groupBy('itemid')->toArray() : [];
+        // Get item info
+        $itemsInfo = collect();
+        if (! empty($itemsIds)) {
+            $itemsData = ItemsData::where('store_id', $storeId)
+                ->whereIn('item_id', $itemsIds)
+                ->where(DB::raw('SUBSTRING(date, 1, 6)'), '>=', $fromDateStr)
+                ->where(DB::raw('SUBSTRING(date, 1, 6)'), '<=', $toDateStr)
+                ->select('item_id', 'mng_number', 'item_name', 'items_data_all_id');
+            $itemsDataAllIds = ! is_null($itemsData) ? $itemsData->pluck('items_data_all_id')->unique()->toArray() : [];
+
+            $itemsDataAll = ItemsDataAll::whereIn('items_data_all.items_data_all_id', $itemsDataAllIds)
+                ->rightJoinSub($itemsData, 'items_data', function ($join) {
+                    $join->on('items_data_all.items_data_all_id', '=', 'items_data.items_data_all_id');
+                })
+                ->select(
+                    'items_data.item_id',
+                    'items_data.mng_number',
+                    'items_data.item_name',
+                    DB::raw('SUM(items_data_all.visit_all) as total_access')
+                )
+                ->groupBy(
+                    'items_data.item_id',
+                    'items_data.mng_number',
+                    'items_data.item_name',
+                )
+                ->orderByDesc('total_access')
+                ->skip(($page - 1) * $perPage)
+                ->take($perPage)
+                ->get();
+            $itemsDataAll = ! is_null($itemsDataAll) ? $itemsDataAll->toArray() : [];
+
+            foreach ($itemsDataAll as $itemData) {
+                $totalAccess = Arr::get($itemData, 'total_access', 1);
+                $topItemsKeywords = Arr::get($aggregatedData, Arr::get($itemData, 'item_id', ''), []);
+                if (count($topItemsKeywords) > 0) {
+                    // Merged data and sum keyword access to build table data
+                    $topItemsKeywords = collect($topItemsKeywords)->groupBy('keyword')->map(function ($group) {
+                        return [
+                            'keyword' => $group[0]['keyword'],
+                            'total_access' => $group->sum('total_access'),
+                        ];
+                    })->values()->all();
+                }
+                $tableKeywords = collect();
+
+                $chartItemsReportSearch = collect();
+                if (count($topItemsKeywords) > 0) {
+                    $totalAccess = collect($topItemsKeywords)->sum('total_access');
+
+                    //Build chart items report search
+                    $chartKeywordsItems = Arr::get($aggregatedData, Arr::get($itemData, 'item_id', ''), []);
+                    if (count($chartKeywordsItems) > 0) {
+                        $chartKeywordsByDate = collect($chartKeywordsItems)->groupBy('date')->toArray();
+                        foreach ($chartKeywordsByDate as $date => $chartItem) {
+                            $listKeywordsInChart = [];
+                            $listKeywordsInChart['date'] = substr($date, 0, 4).'/'.substr($date, 4, 2);
+                            foreach ($chartItem as $keywordChartItem) {
+                                if (! is_null(Arr::get($keywordChartItem, 'keyword'))) {
+                                    $listKeywordsInChart[Arr::get($keywordChartItem, 'keyword')] = Arr::get($keywordChartItem, 'total_access', 0);
+                                }
+                            }
+                            $chartItemsReportSearch->add($listKeywordsInChart);
+                        }
+                    }
+                }
+                foreach ($topItemsKeywords as $keywordsItem) {
+                    $keywordsAccess = Arr::get($keywordsItem, 'total_access', 1);
+                    if (! is_null(Arr::get($keywordsItem, 'keyword'))) {
+                        $tableKeywords->add([
+                            'keyword' => Arr::get($keywordsItem, 'keyword', ''),
+                            'value' => $keywordsAccess,
+                            'rate' => round($keywordsAccess / $totalAccess * 100, 2),
+                        ]);
+                    }
+                }
+
+                $itemsInfo->add([
+                    'store_id' => $storeId,
+                    'from_date' => $fromDate,
+                    'to_date' => $toDate,
+                    'product' => [
+                        'total_access' => $totalAccess,
+                        'mng_number' => Arr::get($itemData, 'mng_number', ''),
+                        'item_name' => Arr::get($itemData, 'item_name', ''),
+                        'table_report_serach_by_product' => $tableKeywords,
+                        'chart_report_search_by_product' => $chartItemsReportSearch,
+                    ],
+                ]);
+            }
+        }
+        $itemsInfo = $itemsInfo->sortByDesc('product.total_access');
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => $itemsInfo,
         ]);
     }
 }
