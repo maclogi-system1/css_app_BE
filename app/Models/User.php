@@ -139,7 +139,9 @@ class User extends Authenticatable
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'image_path' => Storage::url($this->profile_photo_path),
+            'image_path' => ! empty($this->profile_photo_path)
+                ? Storage::url($this->profile_photo_path)
+                : getUserImageInitial($this->id, $this->name),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

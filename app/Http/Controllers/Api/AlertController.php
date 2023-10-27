@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Contracts\AlertRepository;
+use App\Support\PermissionHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -19,7 +20,9 @@ class AlertController extends Controller
      */
     public function index(Request $request)
     {
-        $result = $this->alertRepository->getList($request->query());
+        $params = $request->query();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $result = $this->alertRepository->getList($params);
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
