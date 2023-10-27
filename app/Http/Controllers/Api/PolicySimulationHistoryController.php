@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PolicyResource;
 use App\Http\Resources\PolicySimulationHistoryResource;
-use App\Models\PolicySimulationHistory;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\PolicyRepository;
@@ -37,8 +36,9 @@ class PolicySimulationHistoryController extends Controller
         return $policySimulationHistories;
     }
 
-    public function show(Request $request, PolicySimulationHistory $policySimulationHistory)
+    public function show(Request $request, string $id)
     {
+        $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
         $simulation = $this->policyRepository->find($policySimulationHistory->policy_id);
 
         if ($simulation->isProcessDone()) {
