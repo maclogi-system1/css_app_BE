@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Team;
 use App\Models\User;
 use App\Policies\CompanyPolicy;
+use App\Policies\ShopPolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -31,7 +32,10 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<string, string[]>
      */
     protected array $gates = [
-//        'update-post' => [TeamPolicy::class, 'update'],//example
+        'view-shop' => [ShopPolicy::class, 'view'],
+        'create-shop' => [ShopPolicy::class, 'create'],
+        'update-shop' => [ShopPolicy::class, 'update'],
+        'delete-shop' => [ShopPolicy::class, 'delete'],
     ];
 
     /**
@@ -58,8 +62,8 @@ class AuthServiceProvider extends ServiceProvider
             return $user->isAdmin() ? true : null;
         });
 
-        foreach ($this->gates as $ability => $argument) {
-            Gate::define($ability, $argument);
+        foreach ($this->gates as $ability => $arguments) {
+            Gate::define($ability, $arguments);
         }
     }
 }

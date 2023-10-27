@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Contracts\ShopRepository;
 use App\Repositories\Contracts\TaskRepository;
+use App\Support\PermissionHelper;
 use App\Support\TaskCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,8 +15,9 @@ use Illuminate\Support\Collection;
 class TaskController extends Controller
 {
     public function __construct(
-        private TaskRepository $taskRepository,
-        private TaskCsv $taskCsv,
+        protected TaskCsv $taskCsv,
+        protected TaskRepository $taskRepository,
+        protected ShopRepository $shopRepository
     ) {
     }
 
@@ -23,7 +26,9 @@ class TaskController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $result = $this->taskRepository->getList($request->query());
+        $params = $request->query();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $result = $this->taskRepository->getList($params);
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
