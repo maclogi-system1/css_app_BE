@@ -32,7 +32,7 @@ class StorePred2mService extends Service
             ->where('pred_id', $storePred2mId)
             ->whereBetween('date', [
                 $dateRangeFilter['from_date']->format('Y-m-d'),
-                $dateRangeFilter['to_date']->format('Y-m-d'),
+                $dateRangeFilter['to_date']->addMonths(2)->format('Y-m-d'),
             ])
             ->select(
                 'store_id',
