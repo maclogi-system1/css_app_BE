@@ -65,5 +65,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'dynamic_connection' => \App\Http\Middleware\DynamicDatabaseConnection::class,
+        'check_shop_permission_by_store_id_parameter' => \App\Http\Middleware\CheckShopPermissionByStoreIdParameter::class,
+        'check_shop_permission_by_store_id_in_body' => \App\Http\Middleware\CheckShopPermissionByStoreIdInBody::class,
     ];
 }

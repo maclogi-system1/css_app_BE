@@ -89,9 +89,6 @@ class PolicyController extends Controller
 
     /**
      * Stores many newly created policies in storage by storeId.
-     *
-     * @deprecated This method will be replaced by the storeMultiple method.
-     * StoreId will be transmitted directly in each policy.
      */
     public function storeMultipleByStoreId(Request $request, string $storeId): JsonResponse
     {
@@ -145,9 +142,6 @@ class PolicyController extends Controller
 
     /**
      * Stores a newly created simulation policy in storage by storeId.
-     *
-     * @deprecated This method will be replaced by the storeMultiple method.
-     * StoreId will be transmitted directly in each policy.
      */
     public function storeSimulationByStoreId(
         StorePolicySimulationRequest $request,
@@ -164,6 +158,7 @@ class PolicyController extends Controller
 
     /**
      * Stores many newly created policies in storage.
+     * @deprecated
      */
     public function storeMultiple(Request $request): JsonResponse
     {
@@ -243,9 +238,9 @@ class PolicyController extends Controller
         ], Response::HTTP_BAD_REQUEST);
     }
 
-    /*
-    * Delete multiple policies at the same time.
-    */
+    /**
+     * Delete multiple policies at the same time.
+     */
     public function deleteMultiple(Request $request): JsonResponse
     {
         $result = $this->policyRepository->deleteMultiple($request->query('policy_ids', []));
