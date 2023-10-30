@@ -136,7 +136,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         $singleJobRepository = app(SingleJobRepository::class);
         $result = $singleJobRepository->getListByStore(
             $storeId,
-            $filters + ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]
+            array_merge($filters, ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]),
         );
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
@@ -157,7 +157,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $policies = $this->handleFilterCategory($this->queryBuilder(), $category)
                 ->whereIn('single_job_id', $singleJobIds)
-                ->paginate();
+                ->paginate(Arr::get($filters, 'per_page', 10));
 
             foreach ($policies->items() as $item) {
                 $singleJobMatches = $singleJobs->filter(fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id);
