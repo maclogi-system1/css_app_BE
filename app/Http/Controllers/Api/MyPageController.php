@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProfitReferenceRequest;
 use App\Repositories\Contracts\MyPageRepository;
+use App\Support\PermissionHelper;
 use Illuminate\Http\Response;
 
 class MyPageController extends Controller
@@ -27,7 +28,10 @@ class MyPageController extends Controller
      */
     public function getStoreProfitReference(StoreProfitReferenceRequest $request)
     {
-        $result = $this->myPageRepository->getStoreProfitReference($request->all());
+        $params = $request->all();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+
+        $result = $this->myPageRepository->getStoreProfitReference($params);
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -42,7 +46,10 @@ class MyPageController extends Controller
      */
     public function getStoreProfitTable(StoreProfitReferenceRequest $request)
     {
-        $result = $this->myPageRepository->getStoreProfitTable($request->all());
+        $params = $request->all();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+
+        $result = $this->myPageRepository->getStoreProfitTable($params);
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -57,7 +64,10 @@ class MyPageController extends Controller
      */
     public function getTasks(StoreProfitReferenceRequest $request)
     {
-        $result = $this->myPageRepository->getTasks($request->all());
+        $params = $request->all();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+
+        $result = $this->myPageRepository->getTasks($params);
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -72,7 +82,10 @@ class MyPageController extends Controller
      */
     public function getAlerts(StoreProfitReferenceRequest $request)
     {
-        $result = $this->myPageRepository->getAlerts($request->all());
+        $params = $request->all();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+
+        $result = $this->myPageRepository->getAlerts($params);
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -84,7 +97,10 @@ class MyPageController extends Controller
 
     public function getSales4QuadrantMap(StoreProfitReferenceRequest $request)
     {
-        $result = $this->myPageRepository->getSales4QuadrantMap($request->all());
+        $params = $request->all();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+
+        $result = $this->myPageRepository->getSales4QuadrantMap($params);
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),

@@ -15,6 +15,6 @@ class LinkedUserInfo extends Model
 
     public function cssUser(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->whereNull('deleted_at');
     }
 }

@@ -43,6 +43,8 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
+        $filters = $this->prepareFilterData($filters);
+
         $this->enableUseWith(['chatwork', 'company', 'teams', 'roles', 'permissions'], $filters);
 
         if ($role = Arr::pull($filters, 'search.role')) {
@@ -93,9 +95,10 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function find($id, array $columns = ['*'], array $filters = []): ?User
     {
+        $filters = $this->prepareFilterData($filters);
         $this->enableUseWith(['chatwork', 'teams', 'roles', 'permissions'], $filters);
 
-        $this->useWith(['company']);
+        $this->useWith(['company', 'roles', 'roles.permissions']);
 
         return $this->queryBuilder()->where('id', $id)->first($columns);
     }
@@ -410,5 +413,16 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function getUsersByIds(array $userIds): Collection
     {
         return $this->model()->newQuery()->whereIn('id', $userIds)->get();
+    }
+
+    public function prepareFilterData(array $filters): array
+    {
+        $withs = Arr::get($filters, 'with');
+        if (! empty($withs) && in_array('role', $withs)) {
+            $withs[] = 'roles';
+            Arr::set($filters, 'with', array_filter($withs, fn ($with) => $with != 'role'));
+        }
+
+        return $filters;
     }
 }
