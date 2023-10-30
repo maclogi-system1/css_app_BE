@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\MqSheet;
+use App\Models\PolicySimulationHistory;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -27,6 +28,15 @@ interface MqAccountingRepository extends Repository
      * Get a list comparing the actual values with the expected values.
      */
     public function getListCompareActualsWithExpectedValues(string $storeId, array $filters = []): array;
+
+    /**
+     * Get a list comparing the actual values with the expected values.
+     */
+    public function getListCompareSimulationWithExpectedValues(
+        string $storeId,
+        PolicySimulationHistory $policySimulationHistory,
+        array $filters = []
+    ): array;
 
     /**
      * Read and parse csv file contents.
