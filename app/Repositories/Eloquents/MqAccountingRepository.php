@@ -9,11 +9,13 @@ use App\Models\MqCost;
 use App\Models\MqKpi;
 use App\Models\MqSheet;
 use App\Models\MqUserTrend;
+use App\Models\PolicySimulationHistory;
 use App\Repositories\Contracts\MqAccountingRepository as MqAccountingRepositoryContract;
 use App\Repositories\Repository;
 use App\Support\MqAccountingCsv;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\MqAccountingService;
+use App\WebServices\AI\StorePred2mService;
 use App\WebServices\AI\StorePred36mService;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
@@ -87,6 +89,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
 
     public function __construct(
         protected MqAccountingService $mqAccountingService,
+        protected StorePred2mService $storePred2mService,
         protected StorePred36mService $storePred36mService,
     ) {
     }
@@ -165,6 +168,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->where('mq_sheet_id', $mqSheetId)
             ->get()
             ->map(function ($item) {
+                $item->date_year_month = $item->year.'/'.sprintf('%02d', $item->month);
                 $item->fixed_cost = is_null($item->fixed_cost)
                     ? $item->mqCost?->cost_sum + ($item->csv_usage_fee ?? 0) + ($item->store_opening_fee ?? 0)
                     : $item->fixed_cost;
@@ -212,6 +216,44 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             'expected_mq_accounting' => $expectedMqAccounting,
             'difference' => $difference,
             'difference_fraction' => $differenceFraction,
+        ];
+    }
+
+    /**
+     * Get a list comparing the simulation values with the expected values.
+     */
+    public function getListCompareSimulationWithExpectedValues(
+        string $storeId,
+        PolicySimulationHistory $policySimulationHistory,
+        array $filters = []
+    ): array {
+        $resultStorePred2m = [];
+        if ($storePred2mId = $policySimulationHistory?->store_pred_2m) {
+            $result = $this->storePred2mService->getStorePred2m($storePred2mId, [
+                'from_date' => $policySimulationHistory->execution_time,
+                'to_date' => $policySimulationHistory->undo_time,
+            ]);
+
+            if ($result->get('success')) {
+                $resultStorePred2m = $result->get('data')->map(function ($item) {
+                    [$year, $month] = explode('/', $item->date_year_month);
+
+                    $item->year = $year;
+                    $item->month = $month;
+                    $item->mq_kpi = [
+                        'sales_amnt' => $item->sales_amnt,
+                    ];
+
+                    return $item;
+                });
+            }
+        }
+
+        $expectedMqAccounting = $this->getListByStore($storeId, $filters)->toArray();
+
+        return [
+            'actual_mq_accounting' => $resultStorePred2m,
+            'expected_mq_accounting' => $expectedMqAccounting,
         ];
     }
 

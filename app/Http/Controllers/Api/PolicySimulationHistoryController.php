@@ -48,8 +48,9 @@ class PolicySimulationHistoryController extends Controller
                 'to_date' => $simulation->simulation_end_date,
                 'mq_sheet_id' => $mqSheet->id,
             ];
-            $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareActualsWithExpectedValues(
+            $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareSimulationWithExpectedValues(
                 $simulation->store_id,
+                $policySimulationHistory,
                 $filters,
             );
         }
