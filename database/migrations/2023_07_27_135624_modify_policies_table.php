@@ -21,9 +21,7 @@ return new class extends Migration
             $table->decimal('simulation_product_priority', 12, 6)->default(0)->after('simulation_store_priority');
 
             // Modify column
-            $table->string('name', 100)->nullable(true)->change();
-            $table->dateTime('start_date')->nullable(true)->change();
-            $table->dateTime('end_date')->nullable(true)->change();
+            $table->string('name', 100)->nullable()->change();
 
             // Rename column
             $table->renameColumn('start_date', 'simulation_start_date');
