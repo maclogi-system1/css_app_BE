@@ -129,7 +129,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
             $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($users);
 
-            Arr::set($filters, 'filters.manager', $ossUserIds);
+            Arr::set($filters, 'filters.manager', implode(',', $ossUserIds));
         }
 
         /** @var \App\Repositories\Contracts\SingleJobRepository */
