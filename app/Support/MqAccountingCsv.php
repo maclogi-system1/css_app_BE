@@ -517,9 +517,9 @@ class MqAccountingCsv
     private function getTheDifferenceRatio($expected, $actual, bool $isFraction = false)
     {
         if ($isFraction) {
-            return $actual ? $expected.' / '.$actual : '';
+            return $actual ? round($expected / $actual, 4) : 0;
         }
 
-        return $actual ? round($expected / $actual, 2) : 0;
+        return $actual - $expected;
     }
 }
