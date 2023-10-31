@@ -383,7 +383,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
-                    'has_banner' => Arr::get($data, 'has_banner', 2),
+                    'has_banner' => Arr::get($data, 'has_banner', 2) ?? 2,
                     'remark' => Arr::get($data, 'remark'),
                     'catch_copy_pc_text' => Arr::get($data, 'catch_copy_pc_text'),
                     'catch_copy_pc_error' => Arr::get($data, 'catch_copy_pc_error'),
