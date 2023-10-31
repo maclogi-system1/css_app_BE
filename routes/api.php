@@ -260,6 +260,7 @@ Route::middleware([
         ->controller(KpiController::class)
         ->group(function () {
             Route::get('/summary/{storeId}', 'summary')->name('summary');
+            Route::get('/chart-kpi-trends/{storeId}', 'chartKpiTrends')->name('chart-kpi-trends');
             Route::get('/chart-user-trends/{storeId}', 'chartUserTrends')->name('chart-user-trends');
             Route::get('/total-user-access/{storeId}', 'totalUserAccess')->name('total-user-access');
             Route::get('/chart-user-access/{storeId}', 'chartUserAccess')->name('chart-user-access');

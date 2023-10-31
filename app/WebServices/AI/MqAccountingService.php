@@ -395,4 +395,52 @@ class MqAccountingService extends Service
             )
             ->first();
     }
+
+    /**
+     * Query daily analytics KPI summary data from AI DB.
+     */
+    public function getChartKpiTrends($storeId, array $filters = []): Collection
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $fromDate = $dateRangeFilter['from_date']->format('Y-m');
+        $toDate = $dateRangeFilter['to_date']->format('Y-m');
+        $fromDateStr = str_replace('-', '', date('Ym', strtotime($fromDate)));
+        $toDateStr = str_replace('-', '', date('Ym', strtotime($toDate)));
+
+        $result = ShopAnalyticsMonthly::where('store_id', $storeId)
+                    ->whereRaw('date >= ? AND date <= ?', [$fromDateStr, $toDateStr])
+                    ->join('shop_analytics_monthly_sales_amnt as sales', 'sales.sales_amnt_id', '=', 'shop_analytics_monthly.sales_amnt_id')
+                    ->join('shop_analytics_monthly_access_num as shop_access', 'shop_access.access_num_id', '=', 'shop_analytics_monthly.access_num_id')
+                    ->join('shop_analytics_monthly_conversion_rate as conversion_rate', 'conversion_rate.conversion_rate_id', '=', 'shop_analytics_monthly.conversion_rate_id')
+                    ->join('shop_analytics_monthly_sales_amnt_per_user as sales_per_user', 'sales_per_user.sales_amnt_per_user_id', '=', 'shop_analytics_monthly.sales_amnt_per_user_id')
+                    ->selectRaw('
+                        store_id,
+                        date,
+                        SUM(sales.all_value) as sales_amnt,
+                        SUM(shop_access.all_value) as access_num,
+                        AVG(conversion_rate.all_rate) as conversion_rate,
+                        AVG(sales_per_user.all_value) as sales_amnt_per_user
+                    ')
+                    ->groupBy('store_id', 'date')
+                    ->get();
+        $result = ! is_null($result) ? $result->toArray() : [];
+
+        $data = collect();
+        foreach ($result as $kpiItem) {
+            $salesAmnt = ! is_null(Arr::get($kpiItem, 'sales_amnt', 0)) ? intval(Arr::get($kpiItem, 'sales_amnt', 0)) : 0;
+            $accessNum = ! is_null(Arr::get($kpiItem, 'access_num', 0)) ? intval(Arr::get($kpiItem, 'access_num', 0)) : 0;
+            $conversionRate = ! is_null(Arr::get($kpiItem, 'conversion_rate', 0)) ? floatval(Arr::get($kpiItem, 'conversion_rate', 0)) : 0;
+            $salesAmntPerUser = ! is_null(Arr::get($kpiItem, 'sales_amnt_per_user', 0)) ? floatval(Arr::get($kpiItem, 'sales_amnt_per_user', 0)) : 0;
+            $date = Arr::get($kpiItem, 'date', '');
+            $data->add([
+                'date' => substr($date, 0, 4).'/'.substr($date, 4, 2),
+                'sales_amnt' => $salesAmnt,
+                'access_num' => $accessNum,
+                'conversion_rate' => round($conversionRate, 2),
+                'sales_amnt_per_user' => round($salesAmntPerUser, 2),
+            ]);
+        }
+
+        return $data;
+    }
 }
