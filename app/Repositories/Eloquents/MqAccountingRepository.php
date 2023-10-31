@@ -252,8 +252,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         $expectedMqAccounting = $this->getListByStore($storeId, $filters)->toArray();
 
         return [
-            'actual_mq_accounting' => $resultStorePred2m,
-            'expected_mq_accounting' => $expectedMqAccounting,
+            'store_pred_2m' => $resultStorePred2m,
+            'mq_accounting' => $expectedMqAccounting,
         ];
     }
 
