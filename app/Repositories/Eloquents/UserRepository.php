@@ -43,38 +43,48 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
+        $filters = $this->prepareFilterData($filters);
+
         $this->enableUseWith(['chatwork', 'company', 'teams', 'roles', 'permissions'], $filters);
 
         if ($role = Arr::pull($filters, 'search.role')) {
-            $this->useHas(['roles' => function (Builder $query) use ($role) {
-                $query->orSearches([
-                    'display_name' => $role,
-                    'name' => $role,
-                ]);
-            }]);
+            $this->useHas([
+                'roles' => function (Builder $query) use ($role) {
+                    $query->orSearches([
+                        'display_name' => $role,
+                        'name' => $role,
+                    ]);
+                },
+            ]);
         }
 
         if ($role = Arr::pull($filters, 'filter.role')) {
-            $this->useHas(['roles' => function (Builder $query) use ($role) {
-                $query->where('display_name', $role)
-                    ->orWhere('name', $role);
-            }]);
+            $this->useHas([
+                'roles' => function (Builder $query) use ($role) {
+                    $query->where('display_name', $role)
+                        ->orWhere('name', $role);
+                },
+            ]);
         }
 
         if ($company = Arr::pull($filters, 'search.company')) {
-            $this->useHas(['company' => function (Builder $query) use ($company) {
-                $query->orSearches([
-                    'company_id' => $company,
-                    'name' => $company,
-                ]);
-            }]);
+            $this->useHas([
+                'company' => function (Builder $query) use ($company) {
+                    $query->orSearches([
+                        'company_id' => $company,
+                        'name' => $company,
+                    ]);
+                },
+            ]);
         }
 
         if ($company = Arr::pull($filters, 'filter.company')) {
-            $this->useHas(['company' => function (Builder $query) use ($company) {
-                $query->where('id', $company)
-                    ->orWhere('name', $company);
-            }]);
+            $this->useHas([
+                'company' => function (Builder $query) use ($company) {
+                    $query->where('id', $company)
+                        ->orWhere('name', $company);
+                },
+            ]);
         }
 
         return parent::getList($filters, $columns);
@@ -85,9 +95,10 @@ class UserRepository extends Repository implements UserRepositoryContract
      */
     public function find($id, array $columns = ['*'], array $filters = []): ?User
     {
+        $filters = $this->prepareFilterData($filters);
         $this->enableUseWith(['chatwork', 'teams', 'roles', 'permissions'], $filters);
 
-        $this->useWith(['company']);
+        $this->useWith(['company', 'roles', 'roles.permissions']);
 
         return $this->queryBuilder()->where('id', $id)->first($columns);
     }
@@ -108,9 +119,9 @@ class UserRepository extends Repository implements UserRepositoryContract
 
             if (! is_null($deletedUser)) {
                 $deletedUser->forceFill(Arr::only($data, $this->model()->getFillable()) + [
-                    'deleted_at' => null,
-                    'email_verified_at' => null,
-                ])->saveQuietly();
+                        'deleted_at' => null,
+                        'email_verified_at' => null,
+                    ])->saveQuietly();
                 $user = $deletedUser;
             } else {
                 $user = $this->model();
@@ -348,8 +359,8 @@ class UserRepository extends Repository implements UserRepositoryContract
     private function updateVerifiedUser(User $user, array $input)
     {
         $user->forceFill($input + [
-            'email_verified_at' => null,
-        ])->saveQuietly();
+                'email_verified_at' => null,
+            ])->saveQuietly();
 
         $this->sendEmailVerificationNotification($user);
 
@@ -386,7 +397,7 @@ class UserRepository extends Repository implements UserRepositoryContract
         $users = $linkedServiceUser->with(['cssUser'])
             ->whereIn('linked_service_user_id', $linkedUserIds)
             ->get()
-            ->pluck('cssUser');
+            ->pluck('cssUser')->filter();
 
         return $users;
     }
@@ -402,5 +413,16 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function getUsersByIds(array $userIds): Collection
     {
         return $this->model()->newQuery()->whereIn('id', $userIds)->get();
+    }
+
+    public function prepareFilterData(array $filters): array
+    {
+        $withs = Arr::get($filters, 'with');
+        if (! empty($withs) && in_array('role', $withs)) {
+            $withs[] = 'roles';
+            Arr::set($filters, 'with', array_filter($withs, fn ($with) => $with != 'role'));
+        }
+
+        return $filters;
     }
 }

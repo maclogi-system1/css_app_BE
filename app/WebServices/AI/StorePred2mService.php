@@ -32,8 +32,14 @@ class StorePred2mService extends Service
             ->where('pred_id', $storePred2mId)
             ->whereBetween('date', [
                 $dateRangeFilter['from_date']->format('Y-m-d'),
-                $dateRangeFilter['to_date']->format('Y-m-d'),
+                $dateRangeFilter['to_date']->addMonths(2)->format('Y-m-d'),
             ])
+            ->select(
+                'store_id',
+                DB::raw("DATE_FORMAT(`date`, '%Y/%m') as date_year_month"),
+                DB::raw('SUM(`pred_sales_amnt`) as sales_amnt')
+            )
+            ->groupBy('store_id', DB::raw("DATE_FORMAT(`date`, '%Y/%m')"))
             ->get();
 
         return collect([
@@ -61,5 +67,26 @@ class StorePred2mService extends Service
             'status' => 200,
             'data' => $preSalesAmnt,
         ]);
+    }
+
+    public function getListByStore(string $storeId, array $filters = [])
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+
+        $preSalesAmnt = DB::connection(DatabaseConnectionConstant::INFERENCE_CONNECTION)
+            ->table('store_pred_2m')
+            ->where('store_id', $storeId)
+            ->whereBetween('date', [
+                $dateRangeFilter['from_date']->format('Y-m-d'),
+                $dateRangeFilter['to_date']->format('Y-m-d'),
+            ])
+            ->select(
+                DB::raw('SUM(pred_sales_amnt) as pred_sales_amnt'),
+                DB::raw("DATE_FORMAT(`date`, '%Y-%m') as year_month"),
+            )
+            ->groupBy("DATE_FORMAT(`date`, '%Y-%m')")
+            ->get();
+
+        return $preSalesAmnt;
     }
 }

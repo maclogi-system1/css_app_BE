@@ -22,8 +22,6 @@ return new class extends Migration
 
             // Modify column
             $table->string('name', 100)->nullable()->change();
-            $table->dateTime('start_date')->nullable()->change();
-            $table->dateTime('end_date')->nullable()->change();
 
             // Rename column
             $table->renameColumn('start_date', 'simulation_start_date');

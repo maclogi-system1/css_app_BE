@@ -40,8 +40,8 @@ class UserController extends Controller
             }
 
             if (! $viewCompanyUserInfoPerm && $context->hasPermissionTo('view_my_user_info')) {
-                $filters = [];
                 $withs = Arr::get($filters, 'with');
+                $filters = [];
                 Arr::set($filters, 'filter.email', $context->email);
 
                 if (! empty($withs)) {

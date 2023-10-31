@@ -67,19 +67,11 @@ class MqAccounting extends Model
     {
         if ($fromDate <= $toDate) {
             $query->where(function ($query) use ($fromDate, $toDate) {
-                $fromYear = $fromDate->year;
-                $fromMonth = $fromDate->month;
-                $from = "{$fromYear}-{$fromMonth}-01";
-
-                $toYear = $toDate->year;
-                $toMonth = $toDate->month;
-                $to = "{$toYear}-{$toMonth}-01";
-
                 $query->whereRaw("
-                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') >= DATE('".$from."')
+                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-".$fromDate->lastOfMonth()->day."'), '%Y-%m-%d') >= DATE('".$fromDate->format('Y-m-d')."')
                 ")
                 ->whereRaw("
-                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-01'), '%Y-%m-%d') <= DATE('".$to."')
+                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-".$toDate->lastOfMonth()->day."'), '%Y-%m-%d') <= DATE('".$toDate->format('Y-m-d')."')
                 ");
             });
         }

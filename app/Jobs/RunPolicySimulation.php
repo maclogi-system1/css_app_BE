@@ -77,10 +77,11 @@ class RunPolicySimulation implements ShouldQueue
     private function handleSimulations()
     {
         $result = [];
+        $timezone = config('app.timezone');
 
         foreach ($this->data as $simulation) {
-            $startDate = Carbon::parse($simulation['simulation_start_date']);
-            $endDate = Carbon::parse($simulation['simulation_end_date']);
+            $startDate = Carbon::create($simulation['simulation_start_date'])->setTimezone($timezone);
+            $endDate = Carbon::create($simulation['simulation_end_date'])->setTimezone($timezone);
 
             $result[] = $this->callApiRunPolicySimulation([
                 'store_id' => $this->storeId,
@@ -96,8 +97,8 @@ class RunPolicySimulation implements ShouldQueue
             ]) + [
                 'policy_id' => $simulation['id'],
                 'name' => $simulation['name'],
-                'start_date' => $startDate,
-                'end_date' => $endDate,
+                'start_date' => $startDate->format('Y-m-d H:i:s'),
+                'end_date' => $endDate->format('Y-m-d H:i:s'),
             ];
         }
 

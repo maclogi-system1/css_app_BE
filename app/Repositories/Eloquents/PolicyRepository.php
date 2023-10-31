@@ -129,14 +129,14 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
             $ossUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($users);
 
-            Arr::set($filters, 'filters.manager', $ossUserIds);
+            Arr::set($filters, 'filters.manager', implode(',', $ossUserIds));
         }
 
         /** @var \App\Repositories\Contracts\SingleJobRepository */
         $singleJobRepository = app(SingleJobRepository::class);
         $result = $singleJobRepository->getListByStore(
             $storeId,
-            $filters + ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]
+            array_merge($filters, ['per_page' => -1, 'with' => ['job_group.jobGroupAssignee']]),
         );
         $category = Arr::has($filters, 'category') ? str(Arr::get($filters, 'category')) : null;
 
@@ -157,7 +157,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
             $policies = $this->handleFilterCategory($this->queryBuilder(), $category)
                 ->whereIn('single_job_id', $singleJobIds)
-                ->paginate();
+                ->paginate(Arr::get($filters, 'per_page', 10));
 
             foreach ($policies->items() as $item) {
                 $singleJobMatches = $singleJobs->filter(fn ($sj) => Arr::get($sj, 'id') == $item->single_job_id);
@@ -383,7 +383,7 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
                     'undo_time' => Arr::get($data, 'undo_time'),
                     'type_item_url' => Arr::get($data, 'type_item_url'),
                     'item_urls' => preg_replace('/ *\, */', ',', Arr::get($data, 'item_urls', '')),
-                    'has_banner' => Arr::get($data, 'has_banner', 2),
+                    'has_banner' => Arr::get($data, 'has_banner', 2) ?? 2,
                     'remark' => Arr::get($data, 'remark'),
                     'catch_copy_pc_text' => Arr::get($data, 'catch_copy_pc_text'),
                     'catch_copy_pc_error' => Arr::get($data, 'catch_copy_pc_error'),

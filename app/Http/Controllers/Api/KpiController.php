@@ -66,6 +66,16 @@ class KpiController extends Controller
     }
 
     /**
+     * Get KPI summary KPI performance summary.
+     */
+    public function chartKpiTrends(Request $request, string $storeId): JsonResponse
+    {
+        $kpiTrends = $this->mqKpiRepository->getChartKpiTrends($storeId, $request->query());
+
+        return response()->json($kpiTrends);
+    }
+
+    /**
      * Get data user trends from AI.
      */
     public function chartUserTrends(Request $request, string $storeId): JsonResponse
