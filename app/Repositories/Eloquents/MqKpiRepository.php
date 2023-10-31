@@ -12,6 +12,7 @@ use App\WebServices\AI\MqAccountingService;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class MqKpiRepository extends Repository implements MqKpiRepositoryContract
 {
@@ -141,5 +142,15 @@ class MqKpiRepository extends Repository implements MqKpiRepositoryContract
             })->first();
 
         return $mqKPI;
+    }
+
+    /**
+     * Get KPI summary (KPI target achievement rate, KPI performance summary).
+     */
+    public function getChartKpiTrends(string $storeId, array $filters = []): Collection
+    {
+        $result = $this->mqAccountingService->getChartKpiTrends($storeId, $filters);
+
+        return $result ?? collect();
     }
 }

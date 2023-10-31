@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\MqKpi;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 interface MqKpiRepository extends Repository
 {
@@ -18,4 +19,9 @@ interface MqKpiRepository extends Repository
     public function getOptions(): array;
 
     public function getKPIByDate(string $storeId, Carbon $date): ?MqKpi;
+
+    /**
+     * Get data for KPI trends (monthly).
+     */
+    public function getChartKpiTrends(string $storeId, array $filters = []): Collection;
 }
