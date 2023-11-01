@@ -11,6 +11,7 @@ use App\WebServices\AI\StorePred2mService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 
 class PolicySimulationHistoryRepository extends Repository implements PolicySimulationHistoryRepositoryContract
 {
@@ -72,7 +73,7 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
             return null;
         }
 
-        $policySimulationHistory->pred_sales_amnt = 0;
+        $predSalesAmnt = 0;
 
         if ($storePred2mId = $policySimulationHistory?->store_pred_2m) {
             $resultStorePred2m = $this->storePred2mService->getTotalSales($storePred2mId, [
@@ -80,7 +81,7 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
                 'to_date' => $policySimulationHistory->undo_time,
             ]);
             if ($resultStorePred2m->get('success')) {
-                $policySimulationHistory->pred_sales_amnt = $resultStorePred2m->get('data');
+                $predSalesAmnt = $resultStorePred2m->get('data');
             }
         }
 
@@ -88,13 +89,22 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
         $mqAccountingRepository = app(MqAccountingRepository::class);
         $mqSalesAmnt = $mqAccountingRepository->getSalesAmntByStore($policySimulationHistory->policy->store_id, [
             'from_date' => $policySimulationHistory->execution_time,
-            'to_date' => $policySimulationHistory->undo_time,
+            'to_date' => Carbon::create($policySimulationHistory->undo_time)->addMonths(2)->format('Y-m-d H:i:s'),
         ]);
 
-        $policySimulationHistory->mq_sales_amnt = $mqSalesAmnt;
-        $policySimulationHistory->growth_rate_prediction = $mqSalesAmnt
-            ? round($policySimulationHistory->pred_sales_amnt / $mqSalesAmnt, 2) - 1
+
+        $growthRatePrediction = $mqSalesAmnt
+            ? round($predSalesAmnt / $mqSalesAmnt, 2) - 1
             : 0;
+
+        if ($policySimulationHistory->sale_effect != $growthRatePrediction) {
+            $policySimulationHistory->sale_effect = $growthRatePrediction;
+            $policySimulationHistory->save();
+        }
+
+        $policySimulationHistory->mq_sales_amnt = $mqSalesAmnt;
+        $policySimulationHistory->pred_sales_amnt = $predSalesAmnt;
+        $policySimulationHistory->growth_rate_prediction = $growthRatePrediction;
 
         return $policySimulationHistory;
     }
