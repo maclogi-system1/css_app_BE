@@ -35,15 +35,17 @@ class ShopRepository extends Repository implements ShopRepositoryContract
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
-        $filters = ['with' => [
-                'shopCredential',
-                'projectDirectors',
-                'projectDesigners',
-                'projectConsultants',
-                'projectManagers',
-                'projectPersonInCharges',
-                'createdUser',
-            ]] + $filters;
+        $filters = [
+                'with' => [
+                    'shopCredential',
+                    'projectDirectors',
+                    'projectDesigners',
+                    'projectConsultants',
+                    'projectManagers',
+                    'projectPersonInCharges',
+                    'createdUser',
+                ],
+            ] + $filters;
 
         $filterManagers = Arr::get($filters, 'filters.manager');
         if (! empty($filterManagers)) {
@@ -221,27 +223,29 @@ class ShopRepository extends Repository implements ShopRepositoryContract
             $listConvert = ['directors', 'designers', 'consultants', 'managers', 'person_in_charges'];
             $singleConvert = ['created_by'];
 
-            if (! empty($shop['is_css'])) {
-                foreach ($listConvert as $item) {
-                    if (! empty($shop[$item])) {
-                        $userIds = collect($shop[$item])->pluck('id')->toArray();
-                        $shop[$item] = $this->getUserRepository()->getListByLinkedUserIds($userIds)->map(function (User $user) {
-                            return $user->getFieldForOSS();
-                        })->toArray();
-                    }
+            foreach ($listConvert as $item) {
+                if (! empty($shop[$item])) {
+                    $userIds = collect($shop[$item])->pluck('id')->toArray();
+                    $shop[$item] = $this->getUserRepository()->getListByLinkedUserIds($userIds)->map(function (
+                        User $user
+                    ) {
+                        return $user->getFieldForOSS();
+                    })->values()->toArray();
                 }
+            }
 
-                foreach ($singleConvert as $item) {
-                    if (! empty($shop[$item])) {
-                        $userId = collect($shop[$item])->get('id');
-                        if ($userId) {
-                            /** @var Collection $users */
-                            $users = $this->getUserRepository()->getListByLinkedUserIds([$userId])->map(function (User $user) {
-                                return $user->getFieldForOSS();
-                            });
-                            if ($users->count()) {
-                                $shop[$item] = $users->first();
-                            }
+            foreach ($singleConvert as $item) {
+                if (! empty($shop[$item])) {
+                    $userId = collect($shop[$item])->get('id');
+                    if ($userId) {
+                        /** @var Collection $users */
+                        $users = $this->getUserRepository()->getListByLinkedUserIds([$userId])->map(function (
+                            User $user
+                        ) {
+                            return $user->getFieldForOSS();
+                        });
+                        if ($users->count()) {
+                            $shop[$item] = $users->first();
                         }
                     }
                 }

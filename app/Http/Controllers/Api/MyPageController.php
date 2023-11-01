@@ -31,7 +31,7 @@ class MyPageController extends Controller
         $params = $request->all();
         $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getStoreProfitReference($params);
+        $result = $this->myPageRepository->getStoreProfitReference(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -49,7 +49,7 @@ class MyPageController extends Controller
         $params = $request->all();
         $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getStoreProfitTable($params);
+        $result = $this->myPageRepository->getStoreProfitTable(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -67,7 +67,7 @@ class MyPageController extends Controller
         $params = $request->all();
         $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getTasks($params);
+        $result = $this->myPageRepository->getTasks(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -85,7 +85,7 @@ class MyPageController extends Controller
         $params = $request->all();
         $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getAlerts($params);
+        $result = $this->myPageRepository->getAlerts(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -100,7 +100,7 @@ class MyPageController extends Controller
         $params = $request->all();
         $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getSales4QuadrantMap($params);
+        $result = $this->myPageRepository->getSales4QuadrantMap(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),

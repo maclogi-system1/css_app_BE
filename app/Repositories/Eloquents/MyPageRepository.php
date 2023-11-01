@@ -100,9 +100,9 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
 
     public function getStoreProfitReference(array $params): Collection
     {
-        $ossManager = $this->prepareDataStoreProfit($params);
+        $params = $this->prepareDataStoreProfit($params);
 
-        $result = $this->myPageService->getStoreProfitReference(array_merge($params, ['manager' => implode(',', $ossManager)]));
+        $result = $this->myPageService->getStoreProfitReference($params);
         if (! $result->get('success')) {
             return $result;
         }
@@ -132,12 +132,9 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
 
     public function getStoreProfitTable(array $params): Collection
     {
-        $ossManager = $this->prepareDataStoreProfit($params);
+        $params = $this->prepareDataStoreProfit($params);
 
-        $result = $this->myPageService->getStoreProfitTable(array_merge($params, [
-            'manager' => implode(',', $ossManager),
-        ]));
-
+        $result = $this->myPageService->getStoreProfitTable($params);
         if (! $result->get('success')) {
             return $result;
         }
@@ -208,6 +205,11 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
         return app(TaskRepository::class);
     }
 
+    public function getUserRepository() : Contracts\UserRepository
+    {
+        return app(Contracts\UserRepository::class);
+    }
+
     public function getShopAnalyticsByDate(Collection|array $storeIds, Carbon $date): object
     {
         return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
@@ -270,25 +272,34 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
     {
         $manager = array_filter(explode(',', Arr::get($params, 'manager', '')));
         $storeGroup = Arr::get($params, 'store_group');
-        $teams = array_filter(explode(',', Arr::get($params, 'teams', '')));
-        $teamUserIds = [];
-        if ($storeGroup == 'team' && ! empty($teams)) {
-            /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
-            $teamRepository = app(\App\Repositories\Contracts\TeamRepository::class);
-            $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teams);
+        $userId = Arr::pull($params, 'user_id');
+        if (in_array($storeGroup, ['team', 'store_in_charge']) && $userId) {
+            $user = $this->getUserRepository()->find($userId);
+            if ($user) { //user login
+                if ('team' == $storeGroup) {
+                    $teamIds = $user->teams->pluck('id')->toArray();
+                    /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
+                    $teamRepository = app(\App\Repositories\Contracts\TeamRepository::class);
+                    $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamIds);
+                    $manager = array_merge($manager, $teamUserIds);
+                }
+
+                if ('store_in_charge' == $storeGroup) {
+                    $manager = [$userId];
+                }
+            }
         }
 
-        return $this->getLinkedUserInfoRepository()->getOssUserIdsByCssUserIds($manager + $teamUserIds);
+        $ossManager = $this->getLinkedUserInfoRepository()->getOssUserIdsByCssUserIds($manager);
+
+        return array_merge($params, ['manager' => implode(',', $ossManager)]);
     }
 
     public function getTasks(array $params): Collection
     {
-        $ossManager = $this->prepareDataStoreProfit($params);
+        $params = $this->prepareDataStoreProfit($params);
 
-        $result = $this->myPageService->getTasks(array_merge($params, [
-            'manager' => implode(',', $ossManager),
-        ]));
-
+        $result = $this->myPageService->getTasks($params);
         if (! $result->get('success')) {
             return $result;
         }
@@ -301,19 +312,15 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
 
     public function getAlerts(array $params): Collection
     {
-        $ossManager = $this->prepareDataStoreProfit($params);
+        $params = $this->prepareDataStoreProfit($params);
 
-        return $this->myPageService->getAlerts(array_merge($params, [
-            'manager' => implode(',', $ossManager),
-        ]));
+        return $this->myPageService->getAlerts($params);
     }
 
     public function getSales4QuadrantMap(array $params): Collection
     {
-        $ossManager = $this->prepareDataStoreProfit($params);
-        $result = $this->myPageService->getStoreProfitTable(array_merge($params, [
-            'manager' => implode(',', $ossManager),
-        ]));
+        $params = $this->prepareDataStoreProfit($params);
+        $result = $this->myPageService->getStoreProfitTable($params);
 
         if (! $result->get('success')) {
             return $result;
