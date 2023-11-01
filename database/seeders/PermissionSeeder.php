@@ -62,7 +62,7 @@ class PermissionSeeder extends Seeder
                 'create_company_user_info', 'view_company_user_info', 'edit_company_user_info', 'delete_company_user_info',
                 'view_all_company_shops', 'create_all_company_shops', 'edit_all_company_shops', 'delete_all_company_shops',
                 'mq_accountings', 'kpi_dashboard', 'policy_management', 'ai_policy_simulation',
-                'create_all_macros',
+                'create_all_macros', 'view_roles',
             ]);
         })->values());
 
@@ -71,7 +71,7 @@ class PermissionSeeder extends Seeder
                 'view_my_user_info', 'edit_my_user_info',
                 'view_shops', 'view_company_contract_shops', 'edit_shops',
                 'mq_accountings', 'kpi_dashboard', 'policy_management', 'ai_policy_simulation',
-                'view_macros', 'edit_macros', 'delete_macros',
+                'view_macros', 'edit_macros', 'delete_macros', 'view_roles',
             ]);
         })->values());
 
