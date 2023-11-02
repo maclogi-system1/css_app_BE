@@ -35,6 +35,9 @@ class PolicySimulationHistoryResource extends JsonResource
             'policy' => $this->whenLoaded('policy', fn () => new PolicyResource($this->resource->policy)),
             'store_pred_2m' => $this->resource?->store_pred_2m,
             'items_pred_2m' => $this->resource?->items_pred_2m,
+            'mq_sales_amnt' => $this->resource->mq_sales_amnt,
+            'pred_sales_amnt' => $this->resource->pred_sales_amnt,
+            'growth_rate_prediction' => $this->resource->growth_rate_prediction,
         ];
     }
 }
