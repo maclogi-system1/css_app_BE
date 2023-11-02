@@ -27,4 +27,9 @@ interface PolicySimulationHistoryRepository extends Repository
      * Generate data to add policies from history.
      */
     public function makeDataPolicy(PolicySimulationHistory $policySimulationHistory): array;
+
+    /**
+     * Get data charting the relationship between sales and rate.
+     */
+    public function chartSalesAndRateByStore(string $storeId);
 }

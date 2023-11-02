@@ -367,16 +367,6 @@ class PolicyController extends Controller
     }
 
     /**
-     * Get data to add policies from simulation.
-     *
-     * @deprecated
-     */
-    public function getPolicyDataFromSimulation(Policy $policySimulation): JsonResponse
-    {
-        return response()->json($this->policyRepository->makeDataPolicyFromSimulation($policySimulation));
-    }
-
-    /**
      * Get a list of policies whose start and end times match a store's simulations.
      */
     public function matchesSimulation(GetMatchesSimulationRequest $request): JsonResource
