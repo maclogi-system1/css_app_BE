@@ -36,7 +36,7 @@ class PolicySimulationHistoryController extends Controller
         return $policySimulationHistories;
     }
 
-    public function show(Request $request, string $id)
+    public function show(Request $request, string $id): JsonResource
     {
         $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
         $simulation = $this->policyRepository->find($policySimulationHistory->policy_id);
@@ -55,10 +55,13 @@ class PolicySimulationHistoryController extends Controller
             );
         }
 
+        $chartSalesAndRate = $this->policySimulationHistoryRepository->chartSalesAndRateByStore($simulation->store_id);
+
         $policyResource = (new PolicyResource($simulation))
             ->additional([
                 'history' => new PolicySimulationHistoryResource($policySimulationHistory),
                 'mq_accountings' => $mqAccountingActualsAndExpected ?? [],
+                'chart_sales_rate' => $chartSalesAndRate,
             ]);
 
         return $policyResource;

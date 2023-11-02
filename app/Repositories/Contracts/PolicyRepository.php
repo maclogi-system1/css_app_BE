@@ -110,13 +110,6 @@ interface PolicyRepository extends Repository
     public function workBreakdownStructure(string $storeId, array $filters);
 
     /**
-     * Generate data to add policies from simulation.
-     *
-     * @deprecated
-     */
-    public function makeDataPolicyFromSimulation(Policy $simulation): array;
-
-    /**
      * Get a list of policies whose start and end times match a store's simulations.
      */
     public function getMatchesSimulation(string $storeId): Collection;

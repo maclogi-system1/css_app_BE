@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\InferenceRealData\SuggestPolicies;
+use App\Models\KpiRealData\ShopAnalyticsDaily;
 use App\Models\Policy;
 use App\Models\PolicySimulationHistory;
 use App\Repositories\Contracts\MqAccountingRepository;
@@ -202,5 +203,35 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
         }
 
         return $result;
+    }
+
+    /**
+     * Get data charting the relationship between sales and rate.
+     */
+    public function chartSalesAndRateByStore(string $storeId)
+    {
+        return Policy::with('rules')->where('store_id', $storeId)
+            ->where('category', Policy::SIMULATION_CATEGORY)
+            ->get()
+            ->map(function ($item) {
+                $startDate = $item['simulation_start_date'];
+                $endDate = $item['simulation_end_date'];
+
+                $shopAnalyticsDailyAllValue = ShopAnalyticsDaily::where('store_id', $item->store_id)
+                    ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$startDate}'")
+                    ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$endDate}'")
+                    ->join(
+                        'shop_analytics_daily_sales_num as sadsn',
+                        'sadsn.sales_num_id',
+                        '=',
+                        'shop_analytics_daily.sales_num_id'
+                    )
+                    ->sum('sadsn.all_value');
+
+                return [
+                    'policy_value' => $item->rules->sum('value'),
+                    'all_value_sum' => $shopAnalyticsDailyAllValue,
+                ];
+            });
     }
 }
