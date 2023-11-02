@@ -92,7 +92,6 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
             'to_date' => Carbon::create($policySimulationHistory->undo_time)->addMonths(2)->format('Y-m-d H:i:s'),
         ]);
 
-
         $growthRatePrediction = $mqSalesAmnt
             ? round($predSalesAmnt / $mqSalesAmnt, 2) - 1
             : 0;

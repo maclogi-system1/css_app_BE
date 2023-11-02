@@ -38,7 +38,7 @@ interface PolicyRepository extends Repository
     /**
      * Handle data validation to update/create policy.
      */
-    public function handleValidation(array $data, int $index): array;
+    public function handleValidation(array $data, int $index, bool $isValidateUpdate = false): array;
 
     /**
      * Handle data validation to create simulation policy.

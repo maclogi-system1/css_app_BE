@@ -88,6 +88,57 @@ class PolicyController extends Controller
     }
 
     /**
+     * Update multi policy of store.
+     */
+    public function update(Request $request, string $storeId): JsonResponse
+    {
+        $numberFailures = 0;
+        $errors = [];
+        $status = Response::HTTP_OK;
+        $jobGroups = [];
+
+        foreach ($request->post() as $index => $data) {
+            $validated = $this->policyRepository->handleValidation($data + ['store_id' => $storeId], $index, true);
+            if (isset($validated['error'])) {
+                $errors[] = $validated['error'];
+                $status = $status != Response::HTTP_BAD_REQUEST
+                    ? Response::HTTP_UNPROCESSABLE_ENTITY
+                    : Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+
+                continue;
+            }
+
+            $result = $this->policyRepository->update($validated, Policy::find(Arr::get($data, 'policy_id')));
+
+            if (is_null($result)) {
+                $errors[] = [
+                    'index' => $index,
+                    'row' => $index + 1,
+                    'messages' => [
+                        'record' => "Something went wrong! Can't edit policy.",
+                    ],
+                ];
+                $status = Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+            } else {
+                $this->jobGroupRepository->handleStartEndTime(
+                    Arr::get($result, 'job_group_id'),
+                    $data,
+                    $jobGroups
+                );
+            }
+        }
+        $this->jobGroupRepository->updateTime($jobGroups);
+
+        return response()->json([
+            'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
+            'number_of_failures' => $numberFailures,
+            'errors' => $errors,
+        ], $status);
+    }
+
+    /**
      * Stores many newly created policies in storage by storeId.
      */
     public function storeMultipleByStoreId(Request $request, string $storeId): JsonResponse

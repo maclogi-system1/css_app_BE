@@ -181,6 +181,7 @@ Route::middleware([
                 ->name('get-list-by-store');
 
             Route::post('/{storeId}', 'storeMultipleByStoreId')->name('store-multiple-by-store-id');
+            Route::put('/update/{storeId}', 'update')->name('update');
         });
 
     Route::prefix('policies')
