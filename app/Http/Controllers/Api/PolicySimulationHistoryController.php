@@ -57,10 +57,21 @@ class PolicySimulationHistoryController extends Controller
 
         $policyResource = (new PolicyResource($simulation))
             ->additional([
-                'history' => $policySimulationHistory,
+                'history' => new PolicySimulationHistoryResource($policySimulationHistory),
                 'mq_accountings' => $mqAccountingActualsAndExpected ?? [],
             ]);
 
         return $policyResource;
+    }
+
+    /**
+     * Generate data to add policies
+     */
+    public function getPolicyData(string $id): JsonResponse
+    {
+        $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
+        $policyData = $this->policySimulationHistoryRepository->makeDataPolicy($policySimulationHistory);
+
+        return response()->json($policyData);
     }
 }
