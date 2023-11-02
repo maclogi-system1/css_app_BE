@@ -29,8 +29,12 @@ class DynamicDatabaseConnection
     public function getAndSetConnectionConfiguration()
     {
         $password = SecretsManagerService::getPasswordCache();
+        $connections = DatabaseConnectionConstant::EXTERNAL_CONNECTIONS;
+        if (app()->environment('production')) {
+            $connections[config('database.default')] = config('database.default');
+        }
 
-        foreach (DatabaseConnectionConstant::EXTERNAL_CONNECTIONS as $connectionName) {
+        foreach ($connections as $connectionName) {
             Config::set("database.connections.{$connectionName}.password", $password);
             DB::purge($connectionName);
             DB::reconnect($connectionName);

@@ -15,9 +15,9 @@ class DatabaseConnectionConstant
     public const INFERENCE_CONNECTION = 'inference_real_data';
 
     public const EXTERNAL_CONNECTIONS = [
-        self::KPI_CONNECTION => 'kpi_real_data',
-        self::POLICY_CONNECTION => 'policy_real_data',
-        self::INFERENCE_CONNECTION => 'inference_real_data',
+        self::KPI_CONNECTION => self::KPI_CONNECTION,
+        self::POLICY_CONNECTION => self::POLICY_CONNECTION,
+        self::INFERENCE_CONNECTION => self::INFERENCE_CONNECTION,
     ];
 
     public static function reconnectable(Throwable $e)
