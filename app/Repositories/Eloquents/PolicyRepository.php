@@ -696,6 +696,8 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
 
     /**
      * Generate data to add policies from simulation.
+     *
+     * @deprecated
      */
     public function makeDataPolicyFromSimulation(Policy $simulation): array
     {
@@ -728,10 +730,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'item_name_text' => null,
             'item_name_text_error' => null,
             'point_magnification' => null,
-            'point_start_date' => $simulationStartDate->format('Y-m-d'),
-            'point_start_time' => $simulationStartDate->hour,
-            'point_end_date' => $simulationEndDate->format('Y-m-d'),
-            'point_end_time' => $simulationEndDate->hour,
+            'point_start_date' => null,
+            'point_start_time' => null,
+            'point_end_date' => null,
+            'point_end_time' => null,
             'point_error' => null,
             'point_operational' => null,
             'discount_type' => null,
@@ -743,10 +745,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             'double_price_text' => null,
             'shipping_fee' => null,
             'stock_specify' => null,
-            'time_sale_start_date' => $simulationStartDate->format('Y-m-d'),
-            'time_sale_start_time' => $simulationStartDate->format('H:i'),
-            'time_sale_end_date' => $simulationEndDate->format('Y-m-d'),
-            'time_sale_end_time' => $simulationEndDate->format('H:i'),
+            'time_sale_start_date' => null,
+            'time_sale_start_time' => null,
+            'time_sale_end_date' => null,
+            'time_sale_end_time' => null,
             'is_unavailable_for_search' => null,
             'description_for_pc' => null,
             'description_for_sp' => null,

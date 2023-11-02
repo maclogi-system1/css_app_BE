@@ -24,19 +24,17 @@ class PolicySimulationHistoryResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'policy_id' => $this->resource->policy_id,
-            'manager' => $this->resource->manager,
+            'manager' => $this->whenLoaded('manager', fn () => $this->resource->manager->name),
             'title' => $this->resource->title,
-            'job_title' => $this->resource->job_title,
             'execution_time' => $this->resource->execution_time,
             'undo_time' => $this->resource->undo_time,
             'creation_date' => $this->resource->creation_date,
             'sale_effect' => $this->resource->sale_effect,
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
-            'name' => $this->resource->name,
-            'simulation' => $this->whenLoaded('policy', fn () => new PolicyResource($this->resource->policy)),
-            'store_pred_2m' => $this->resource?->store_pred_2m_data,
-            'items_pred_2m' => $this->resource?->items_pred_2m_data,
+            'policy' => $this->whenLoaded('policy', fn () => new PolicyResource($this->resource->policy)),
+            'store_pred_2m' => $this->resource?->store_pred_2m,
+            'items_pred_2m' => $this->resource?->items_pred_2m,
         ];
     }
 }

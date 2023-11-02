@@ -368,6 +368,8 @@ class PolicyController extends Controller
 
     /**
      * Get data to add policies from simulation.
+     *
+     * @deprecated
      */
     public function getPolicyDataFromSimulation(Policy $policySimulation): JsonResponse
     {

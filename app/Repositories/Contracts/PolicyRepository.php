@@ -111,6 +111,8 @@ interface PolicyRepository extends Repository
 
     /**
      * Generate data to add policies from simulation.
+     *
+     * @deprecated
      */
     public function makeDataPolicyFromSimulation(Policy $simulation): array;
 

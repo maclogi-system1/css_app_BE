@@ -192,6 +192,7 @@ Route::middleware([
             Route::post('/simulation', 'storeSimulation')
                 ->name('store-simulation')
                 ->middleware(['check_shop_permission_by_store_id_in_body']);
+            // deprecated
             Route::get('/simulation/{policySimulation}/policy-data', 'getPolicyDataFromSimulation')
                 ->name('simulation.policy-data');
             Route::get('/matches-simulation', 'matchesSimulation');
@@ -203,6 +204,7 @@ Route::middleware([
         ->group(function () {
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
             Route::get('/history/{id}', 'show')->name('show');
+            Route::get('/policy-data/{id}', 'getPolicyData')->name('policy-data');
         });
 
     Route::prefix('policy-attachments')
