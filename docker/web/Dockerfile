@@ -47,7 +47,8 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY php.ini /usr/local/etc/php/
 
 RUN chmod +x /usr/local/bin/start-container
-RUN chown -R www-dev:www-dev /var/www/html
+RUN chown -R www-dev:dialout /var/www/html
+RUN chmod -R 777 /var/www/html
 
 EXPOSE 80 443
 
