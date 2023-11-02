@@ -1,32 +1,17 @@
 FROM php:8.2-apache
 
 ARG WWWGROUP
-ARG NODE_VERSION=20
-ARG APP_HOST=localhost
 
 ENV WWWUSER 1337
 ENV ENABLE_SSL false
-ENV XDEBUG_MODE off
-ENV XDEBUG_CONFIG client_host=host.docker.internal
 
 # Install packages
 RUN apt-get update && apt-get install -y sudo git curl zip unzip supervisor sqlite3 libcap2-bin libpng-dev libpq-dev libzip-dev vim
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && curl -sLS https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm \
     && mkdir -p /etc/apt/keyrings/ \
     && apt-get update \
     && apt-get install -y default-mysql-client
-
-# Install xdebug
-RUN yes | pecl install xdebug \
-    && echo "zend_extension=$(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini \
-    && echo "xdebug.remote_enable=${XDEBUG_MODE}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-    && echo "xdebug.${XDEBUG_CONFIG}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-    && echo "xdebug.remote_autostart=off" >> /usr/local/etc/php/conf.d/xdebug.ini \
-    && echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/xdebug.ini
 
 # Install imagick
 RUN apt-get update && apt-get install -y libmagickwand-dev --no-install-recommends
@@ -62,6 +47,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY php.ini /usr/local/etc/php/
 
 RUN chmod +x /usr/local/bin/start-container
+RUN chown -R www-dev:www-dev /var/www/html
 
 EXPOSE 80 443
 

@@ -17,8 +17,8 @@ class Policy extends Model
     public const SIMULATION_CATEGORY = 3;
     public const AI_RECOMMENDATION_CATEGORY = 4;
     public const CATEGORIES = [
-        self::MEASURES_CATEGORY => '施策一覧',
-        self::PROJECT_CATEGORY => 'プロジェクト一覧',
+        self::MEASURES_CATEGORY => '施策',
+        self::PROJECT_CATEGORY => 'プロジェクト',
         self::SIMULATION_CATEGORY => '施策シミュレーション',
         self::AI_RECOMMENDATION_CATEGORY => '提案',
     ];

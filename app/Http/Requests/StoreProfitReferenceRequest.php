@@ -24,7 +24,6 @@ class StoreProfitReferenceRequest extends FormRequest
     {
         return [
             'store_group' => ['nullable', Rule::in(['all', 'team', 'store_in_charge'])],
-            'teams' => ['nullable', 'required_if:store_group,team'],
         ];
     }
 }
