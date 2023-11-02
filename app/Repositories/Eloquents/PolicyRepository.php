@@ -305,14 +305,18 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Handle data validation to update/create policy.
      */
-    public function handleValidation(array $data, int $index): array
+    public function handleValidation(array $data, int $index, bool $isValidateUpdate = false): array
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
         /** @var \App\Repositories\Contracts\JobGroupRepository */
         $jobGroupRepository = app(JobGroupRepository::class);
 
-        $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        if ($isValidateUpdate) {
+            $ossErrorMessages = $jobGroupRepository->validateUpdate($this->getDataForJobGroup($data));
+        } else {
+            $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        }
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
