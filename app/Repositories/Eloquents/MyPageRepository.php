@@ -165,9 +165,6 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 'total_sales_the_previous_day' => $totalSalesThePreviousDay,
                 'total_sales_the_month' => $totalSalesTheMonth,
                 'total_sales_the_last_year' => $totalSalesTheLastYear,
-                'total_sales_achievement_rate' => $totalSalesCurrentTheMonthMQ
-                    ? round(100 * $totalSalesTheMonth / $totalSalesCurrentTheMonthMQ, 2)
-                    : 0,
                 'variable_cost_sum' => $shopCost->variable_cost_sum ?? 0,
                 'cost_sum' => $shopCost->cost_sum ?? 0,
                 'sum_profit' => $shopCost->sum_profit ?? 0,
@@ -175,7 +172,10 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 'sales_target' => $this->mqKpiRepository->getKPIByDate($shop['store_id'], now())?->sales_amnt ?? 0,
                 'sales_forecast' => $salesForecast,
                 'sales_consumption_rate' => ($salesForecast * $totalSalesTheMonth)
-                    ? round(100 * $totalSalesToday / $salesForecast * $totalSalesTheMonth, 2)
+                    ? round(100 * $totalSalesThePreviousDay / $salesForecast * $totalSalesTheMonth, 2)
+                    : 0,
+                'total_sales_achievement_rate' => $totalSalesCurrentTheMonthMQ
+                    ? round(100 * ($totalSalesTheMonth / $totalSalesCurrentTheMonthMQ), 2)
                     : 0,
             ];
 
