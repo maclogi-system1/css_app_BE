@@ -314,6 +314,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $macroConfiguration->fill(Arr::except($data, 'macro_type'));
             $macroConfiguration->save();
 
+            $usersAndTeams = explode(',', preg_replace('/ *\, */', ',', Arr::get($data, 'users_teams')));
+            $users = array_map(
+                fn ($user) => str_replace('user@', '', $user),
+                array_filter($usersAndTeams, fn ($item) => str($item)->startsWith('user@'))
+            );
+            $teams = array_map(
+                fn ($team) => str_replace('team@', '', $team),
+                array_filter($usersAndTeams, fn ($item) => str($item)->startsWith('team@'))
+            );
+            $macroConfiguration->users()->sync($users);
+            $macroConfiguration->teams()->sync($teams);
+
             // Save graph configuration
             $hasGraphConfig = false;
             if (
