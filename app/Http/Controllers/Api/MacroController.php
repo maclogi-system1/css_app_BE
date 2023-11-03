@@ -211,7 +211,7 @@ class MacroController extends Controller
      */
     public function getOptions(Request $request): JsonResponse
     {
-        $options = $this->macroConfigurationRepository->getOptions();
+        $options = $this->macroConfigurationRepository->getOptions($request->query('store_id'));
 
         return response()->json($options);
     }

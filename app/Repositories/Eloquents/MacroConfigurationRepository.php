@@ -8,6 +8,9 @@ use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Contracts\MacroTemplateRepository;
+use App\Repositories\Contracts\ShopRepository;
+use App\Repositories\Contracts\TeamRepository;
+use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\Support\Traits\ColumnTypeHandler;
 use App\WebServices\AI\MqAccountingService;
@@ -212,7 +215,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function find($id, array $columns = ['*']): ?MacroConfiguration
     {
-        $macroConfiguration = $this->queryBuilder()->with(['graph', 'templates'])->where('id', $id)->first($columns);
+        $macroConfiguration = $this->queryBuilder()
+            ->with(['graph', 'templates', 'users', 'teams'])
+            ->where('id', $id)
+            ->first($columns);
 
         if (is_null($macroConfiguration)) {
             return null;
@@ -244,6 +250,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['status'] = MacroConstant::MACRO_STATUS_NOT_READY;
             $macroConfiguration = $this->model()->fill($data);
             $macroConfiguration->save();
+
+            $usersAndTeams = explode(',', preg_replace('/ *\, */', ',', Arr::get($data, 'users_teams')));
+            $users = array_map(
+                fn ($user) => str_replace('user@', '', $user),
+                array_filter($usersAndTeams, fn ($item) => str($item)->startsWith('user@'))
+            );
+            $teams = array_map(
+                fn ($team) => str_replace('team@', '', $team),
+                array_filter($usersAndTeams, fn ($item) => str($item)->startsWith('team@'))
+            );
+            $macroConfiguration->users()->sync($users);
+            $macroConfiguration->teams()->sync($teams);
 
             if (
                 Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_GRAPH_DISPLAY
@@ -389,7 +407,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Get a list of the option for select.
      */
-    public function getOptions(): array
+    public function getOptions(?string $storeId = null): array
     {
         $macroTypes = collect(MacroConstant::MACRO_TYPES)
             ->map(fn ($label, $value) => compact('value', 'label'))
@@ -431,6 +449,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ->values();
 
         return [
+            'shops' => $this->getShopsForSelect(),
+            'teams_users' => $this->getUserAndTeamForSelect($storeId),
             'macro_types' => $macroTypes,
             'comparison_operators' => $typeOperators,
             'date_condition' => $dateConditions,
@@ -444,6 +464,66 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             'graph_types' => $graphTypes,
             'position_display' => $positionDisplay,
         ];
+    }
+
+    /**
+     * Get a list of shops for selection.
+     */
+    private function getShopsForSelect()
+    {
+        $result = $this->shopService->getList([
+            'per_page' => -1,
+        ]);
+
+        if ($result->get('success')) {
+            $additions = [
+                ['value' => '__all__', 'label' => '全店舗'],
+                ['value' => '__shop_owner__', 'label' => '担当店舗'],
+            ];
+
+            return array_merge($additions, array_map(fn ($shop) => [
+                'value' => $shop['store_id'],
+                'label' => $shop['name'],
+            ], $result->get('data')->get('shops')));
+        }
+
+        return [];
+    }
+
+    /**
+     * Get the list of teams and users for the selection.
+     */
+    private function getUserAndTeamForSelect(?string $storeId = null)
+    {
+        /** @var \App\Repositories\Contracts\TeamRepository */
+        $teamRepository = app(TeamRepository::class);
+        $teams = $teamRepository->getList(['per_page' => -1])->map(fn ($team) => [
+            'value' => 'team@'.$team->id,
+            'label' => $team->name,
+            'type' => 'team',
+        ]);
+
+        if ($storeId) {
+            /** @var \App\Repositories\Contracts\ShopRepository */
+            $shopRepository = app(ShopRepository::class);
+            $users = array_map(fn ($user) => [
+                'value' => 'user@'.$user['value'],
+                'label' => $user['label'],
+                'email' => $user['email'],
+                'type' => 'user',
+            ], Arr::get($shopRepository->getUsers(['store_id' => $storeId, 'per_page' => -1]), 'users', []));
+        } else {
+            /** @var \App\Repositories\Contracts\UserRepository */
+            $userRepository = app(UserRepository::class);
+            $users = $userRepository->getList(['per_page' => -1])->map(fn ($user) => [
+                'value' => 'user@'.$user->id,
+                'label' => $user->name,
+                'email' => $user->email,
+                'type' => 'user',
+            ]);
+        }
+
+        return $teams->merge($users)->toArray();
     }
 
     /**

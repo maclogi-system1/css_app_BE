@@ -35,7 +35,7 @@ interface MacroConfigurationRepository extends Repository
     /**
      * Get a list of the option for select.
      */
-    public function getOptions(): array;
+    public function getOptions(?string $storeId = null): array;
 
     /**
      * Build query from conditions of a specified macro configuration.
