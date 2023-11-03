@@ -49,6 +49,7 @@ return [
             'tasks' => [
                 'list' => '/tasks',
                 'create' => '/tasks',
+                'detail' => '/tasks/{id}',
                 'update' => '/tasks/{id}',
                 'delete' => '/tasks/{id}',
                 'options' => '/tasks/options',
