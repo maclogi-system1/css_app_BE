@@ -174,6 +174,13 @@ class TaskRepository extends Repository implements TaskRepositoryContract
                 });
             }
 
+            if (! empty($task['created_user'])) {
+                $createdUserId = Arr::get($task['created_user'], 'id');
+                $task['created_user'] = $this->getUserRepository()->getListByLinkedUserIds([$createdUserId])->map(function (User $user) {
+                    return $user->getFieldForOSS();
+                })?->first();
+            }
+
             return $task;
         });
     }
@@ -196,7 +203,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
     {
         $result = $this->taskService->delete($storeId, $taskId);
 
-        if (in_array($result->get('status'), [Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_NOT_FOUND])) {
+        if (in_array($result->get('status'), [Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_NOT_FOUND, Response::HTTP_BAD_REQUEST])) {
             $errors = $result->get('data')->get('message');
             if (! is_array($errors)) {
                 $errors = ['message' => $errors];
@@ -223,5 +230,29 @@ class TaskRepository extends Repository implements TaskRepositoryContract
     public function getUserRepository(): UserRepository
     {
         return app(UserRepository::class);
+    }
+
+    public function getTask(int $taskId): ?Collection
+    {
+        $result = $this->taskService->getTask($taskId);
+        if (in_array($result->get('status'), [Response::HTTP_UNPROCESSABLE_ENTITY, Response::HTTP_NOT_FOUND])) {
+            $errors = $result->get('data')->get('message');
+            if (! is_array($errors)) {
+                $errors = ['message' => $errors];
+            }
+
+            return collect([
+                'status' => $result->get('status'),
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            $task = $result->get('data');
+
+            return $this->handleTaskAssignees(collect($task));
+        }
+
+        return null;
     }
 }

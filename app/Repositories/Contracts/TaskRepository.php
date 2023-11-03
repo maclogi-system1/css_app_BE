@@ -40,4 +40,6 @@ interface TaskRepository extends Repository
      * Convert user oss to css.
      */
     public function handleTaskAssignees(Collection $data): Collection;
+
+    public function getTask(int $taskId): ?Collection;
 }
