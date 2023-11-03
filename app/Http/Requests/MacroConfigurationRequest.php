@@ -32,6 +32,7 @@ class MacroConfigurationRequest extends FormRequest
             'time_conditions.applicable_date' => ['required', 'after_or_equal:'.now()->format('Y-m-d')],
             'time_conditions.schedule' => [Rule::requiredIf(fn () => empty($this->input('time_conditions.designation')))],
             'graph' => ['nullable'],
+            'users_teams' => ['nullable', 'string'],
         ];
 
         $this->setRuleForSimulation($rules);

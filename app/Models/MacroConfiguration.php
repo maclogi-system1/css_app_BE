@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
 
@@ -44,7 +45,8 @@ class MacroConfiguration extends Model
                 $item['label'] = trans('macro-labels.'.Arr::get($item, 'field'));
 
                 return $item;
-            })->values()
+            })
+            ->values()
             ->toArray();
         $condition['conditions'] = $conditions;
 
@@ -105,5 +107,15 @@ class MacroConfiguration extends Model
     public function taskTemplates(): HasMany
     {
         return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_TASK_ISSUE);
+    }
+
+    public function users(): MorphToMany
+    {
+        return $this->morphedByMany(User::class, 'macroable');
+    }
+
+    public function teams(): MorphToMany
+    {
+        return $this->morphedByMany(Team::class, 'macroable');
     }
 }

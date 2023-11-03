@@ -60,6 +60,8 @@ class MacroConfigurationResource extends JsonResource
             'status' => $this->status,
             'status_display' => Arr::get(MacroConstant::MACRO_STATES, $this->status),
             'created_by' => $this->whenLoaded('user'),
+            'users' => $this->whenLoaded('users', fn () => UserResource::collection($this->resource->users)),
+            'teams' => $this->whenLoaded('teams', fn () => TeamResource::collection($this->resource->teams)),
         ] + $additionalField;
     }
 }
