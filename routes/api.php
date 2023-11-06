@@ -28,17 +28,20 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
 use Illuminate\Support\Facades\Route;
 
-Route::any('/test', fn(\Illuminate\Http\Request $request) => [
+Route::any('/test', fn (\Illuminate\Http\Request $request) => [
     'headers' => $request->header(),
     'body' => $request->all(),
 ]);
-Route::post('/login', [LoginController::class, 'login'])->name('login');
-Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
-    ->name('send-password-reset-link');
-Route::post('/password-reset-token', [PasswordController::class, 'getPasswordResetToken'])
-    ->name('password-reset-token');
-Route::post('/reset-password', [PasswordController::class, 'reset'])
-    ->name('reset-password');
+
+Route::middleware(['dynamic_connection'])->group(function () {
+    Route::post('/login', [LoginController::class, 'login'])->name('login');
+    Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
+        ->name('send-password-reset-link');
+    Route::post('/password-reset-token', [PasswordController::class, 'getPasswordResetToken'])
+        ->name('password-reset-token');
+    Route::post('/reset-password', [PasswordController::class, 'reset'])
+        ->name('reset-password');
+});
 
 Route::middleware([
     'auth:sanctum',
