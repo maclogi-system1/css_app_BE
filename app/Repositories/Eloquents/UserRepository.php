@@ -59,12 +59,21 @@ class UserRepository extends Repository implements UserRepositoryContract
         }
 
         if ($role = Arr::pull($filters, 'filter.role')) {
-            $this->useHas([
-                'roles' => function (Builder $query) use ($role) {
-                    $query->where('display_name', $role)
-                        ->orWhere('name', $role);
-                },
-            ]);
+            if (is_array($role)) {
+                $this->useHas([
+                    'roles' => function (Builder $query) use ($role) {
+                        $query->whereIn('display_name', $role)
+                            ->orWhereIn('name', $role);
+                    },
+                ]);
+            } else {
+                $this->useHas([
+                    'roles' => function (Builder $query) use ($role) {
+                        $query->where('display_name', $role)
+                            ->orWhere('name', $role);
+                    },
+                ]);
+            }
         }
 
         if ($company = Arr::pull($filters, 'search.company')) {

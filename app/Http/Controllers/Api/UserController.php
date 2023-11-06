@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Role;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepository;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +37,7 @@ class UserController extends Controller
 
             if ($viewCompanyUserInfoPerm) {
                 Arr::set($filters, 'filter.company', $context->company_id);
+                Arr::set($filters, 'filter.role', [Role::COMPANY_ADMINISTRATOR_ROLE, Role::GENERAL_USER_ROLE]);
                 Arr::forget($filters, ['search.company', 'searches.company', 'filters.company']);
             }
 
