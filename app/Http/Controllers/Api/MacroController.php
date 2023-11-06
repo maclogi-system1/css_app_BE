@@ -12,6 +12,7 @@ use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Repositories\Contracts\TaskRepository;
+use App\Support\PermissionHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,8 +31,10 @@ class MacroController extends Controller
 
     public function index(Request $request): JsonResource
     {
+        $params = $request->query();
+        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
         $macroConfigurations = MacroConfigurationResource::collection(
-            $this->macroConfigurationRepository->getList($request->query())
+            $this->macroConfigurationRepository->getList($params)
         );
         $macroConfigurations->wrap('macro_configurations');
 

@@ -50,11 +50,32 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function getList(array $filters = [], array $columns = ['*'])
     {
+        $filterConditions = [];
         $perPage = Arr::get($filters, 'per_page', 10);
 
         $owner = Arr::get($filters, 'owner', '');
         if (! empty($owner)) {
             $filters['filters'] = ['created_by' => $owner];
+        }
+        $shopFilters = [];
+        $shopFilterKeys = [
+            'projects.parent_id',
+            'projects.is_contract',
+            'projects.created_by',
+        ];
+        if (isset($filters['filters'])) {
+            if (! is_null(Arr::get($filters['filters'], 'projects.parent_id'))) {
+                $shopFilters['projects.parent_id'] = Arr::get($filters['filters'], 'projects.parent_id');
+            }
+            if (! is_null(Arr::get($filters['filters'], 'projects.is_contract'))) {
+                $shopFilters['projects.is_contract'] = Arr::get($filters['filters'], 'projects.is_contract');
+            }
+            if (! is_null(Arr::get($filters['filters'], 'projects.created_by'))) {
+                $shopFilters['projects.created_by'] = Arr::get($filters['filters'], 'projects.created_by');
+            }
+
+            $macroFilters = collect($filters['filters'])->except($shopFilterKeys)->toArray();
+            $filters['filters'] = $macroFilters;
         }
 
         $macroConfigurations = parent::getList($filters, $columns);
@@ -62,9 +83,16 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         $storeIds = collect($macroConfigurations->items())
             ->pluck('store_ids')
             ->join(',');
+        $storeIdCondition = Arr::get($filters, 'store_id', '');
+        if (! empty($storeIdCondition)) {
+            $storeIds .= ','.$storeIdCondition;
+            $filterConditions += ['store_id' => $storeIdCondition];
+        }
+
+        $shopFilters['shop_url'] = $storeIds;
         $shopResponse = $this->shopService->getList([
             'per_page' => -1,
-            'filters' => ['shop_url' => $storeIds],
+            'filters' => $shopFilters,
         ]);
 
         if ($shopResponse->get('success')) {
@@ -84,7 +112,6 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             }
         }
 
-        $filterConditions = [];
         $keyword = Arr::get($filters, 'keyword', '');
         if (! empty($keyword)) {
             $filterConditions += ['keyword' => $keyword];
@@ -734,6 +761,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     {
         $keyword = Arr::get($filterConditions, 'keyword', '');
         $shopName = Arr::get($filterConditions, 'shop_name', '');
+        $storeId = Arr::get($filterConditions, 'store_id', '');
         $result = $macroConfigurations;
 
         if (! empty($keyword)) {
@@ -771,6 +799,14 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 $storeIds = explode(',', $item->store_ids);
 
                 return ! empty(array_intersect($filteredShopStoreIds, $storeIds));
+            });
+        }
+
+        if (! empty($storeId)) {
+            $result = $macroConfigurations->filter(function ($item) use ($storeId) {
+                $storeIds = explode(',', $item->store_ids);
+
+                return in_array($storeId, $storeIds);
             });
         }
 
