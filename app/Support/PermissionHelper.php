@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Gate;
 
 class PermissionHelper
 {
-    public static function getDataViewShopsWithPermission(User $user, array $params): array
+    public static function getDataViewShopsWithPermission(User $user, array $params, bool $needConvertUser = true): array
     {
         if (! $user->can('view_all_shops')) {
             $viewAllCompanyShopPermission = $user->can('view_all_company_shops');
@@ -29,11 +29,15 @@ class PermissionHelper
                 }
 
                 if (! $viewCompanyContractShops && $user->can('view_shops')) {
-                    /** @var LinkedUserInfoRepository $linkedUserInfoRepository */
-                    $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-                    $convertUserId = $linkedUserInfoRepository->getOssUserIdsByCssUserIds([$user->id]);
+                    $convertUserId = [$user->id];
+                    if ($needConvertUser) {
+                        /** @var LinkedUserInfoRepository $linkedUserInfoRepository */
+                        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+                        $convertUserId = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($convertUserId);
+                    }
+
                     if ($convertUserId = Arr::get($convertUserId, 0)) {
-                        $params['filters']['projects.created_by'] = $convertUserId;
+                        $params['manager'] = $convertUserId;
                     }
                 }
             }
@@ -76,14 +80,11 @@ class PermissionHelper
         }
 
         $shop = $shopResult->get('data')->get('data');
-        $createdById = Arr::get($shop, 'created_by.id');
 
         $managers = Arr::get($shop, 'managers', []);
         $managerIds = collect($managers)->pluck('id')->toArray();
 
-        $authorizedIds = array_merge([$createdById], $managerIds);
-
-        Gate::forUser($user)->authorize('update-shop', [$shop['company_id'], $authorizedIds]);
+        Gate::forUser($user)->authorize('update-shop', [$shop['company_id'], $managerIds]);
 
         return true;
     }

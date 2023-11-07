@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProfitReferenceRequest;
+use App\Models\User;
 use App\Repositories\Contracts\MyPageRepository;
 use App\Support\PermissionHelper;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 
 class MyPageController extends Controller
 {
@@ -29,9 +31,12 @@ class MyPageController extends Controller
     public function getStoreProfitReference(StoreProfitReferenceRequest $request)
     {
         $params = $request->all();
-        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $params = $this->filterDataWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getStoreProfitReference(array_merge($params, ['user_id' => $request->user()->id]));
+        $result = $this->myPageRepository->getStoreProfitReference(array_merge(
+            $params,
+            ['user_id' => $request->user()->id]
+        ));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -47,9 +52,12 @@ class MyPageController extends Controller
     public function getStoreProfitTable(StoreProfitReferenceRequest $request)
     {
         $params = $request->all();
-        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $params = $this->filterDataWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getStoreProfitTable(array_merge($params, ['user_id' => $request->user()->id]));
+        $result = $this->myPageRepository->getStoreProfitTable(array_merge(
+            $params,
+            ['user_id' => $request->user()->id]
+        ));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -65,7 +73,7 @@ class MyPageController extends Controller
     public function getTasks(StoreProfitReferenceRequest $request)
     {
         $params = $request->all();
-        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $params = $this->filterDataWithPermission($request->user(), $params);
 
         $result = $this->myPageRepository->getTasks(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
@@ -83,7 +91,7 @@ class MyPageController extends Controller
     public function getAlerts(StoreProfitReferenceRequest $request)
     {
         $params = $request->all();
-        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $params = $this->filterDataWithPermission($request->user(), $params);
 
         $result = $this->myPageRepository->getAlerts(array_merge($params, ['user_id' => $request->user()->id]));
         if (! $result->get('success')) {
@@ -98,9 +106,12 @@ class MyPageController extends Controller
     public function getSales4QuadrantMap(StoreProfitReferenceRequest $request)
     {
         $params = $request->all();
-        $params = PermissionHelper::getDataViewShopsWithPermission($request->user(), $params);
+        $params = $this->filterDataWithPermission($request->user(), $params);
 
-        $result = $this->myPageRepository->getSales4QuadrantMap(array_merge($params, ['user_id' => $request->user()->id]));
+        $result = $this->myPageRepository->getSales4QuadrantMap(array_merge(
+            $params,
+            ['user_id' => $request->user()->id]
+        ));
         if (! $result->get('success')) {
             return response()->json([
                 'message' => __('Something went wrong!. Please try again'),
@@ -108,5 +119,16 @@ class MyPageController extends Controller
         }
 
         return response()->json($result->get('data'));
+    }
+
+    protected function filterDataWithPermission(User $user, array $params): array
+    {
+        $params = PermissionHelper::getDataViewShopsWithPermission($user, $params, false);
+        if ($user->cannot(['view_all_shops', 'view_all_company_shops', 'view_company_contract_shops'])
+            && $user->can('view_shops')) {
+            Arr::forget($params, ['store_group']);
+        }
+
+        return $params;
     }
 }
