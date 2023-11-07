@@ -2,7 +2,6 @@
 
 namespace App\WebServices\AI;
 
-use App\Constants\DatabaseConnectionConstant;
 use App\Models\KpiRealData\ItemsData;
 use App\Models\KpiRealData\ItemsSales;
 use App\Support\Traits\HasMqDateTimeHandler;
@@ -31,7 +30,7 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)->table('items_data as id')
+        $itemsData = DB::kpiTable('items_data as id')
             ->where('id.store_id', $storeId)
             ->where('id.catalog_id', '!=', '')
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id.items_data_all_id')
@@ -72,24 +71,23 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date');
         $toDate = Arr::get($dateRangeFilter, 'to_date');
 
-        return DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
-            ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
-                $query->from('items_data', 'id2')
-                    ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
-                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
-                        $query->whereIn('id2.catalog_id', $categoryIdsArr);
-                    })
-                    ->where('id2.store_id', $storeId)
-                    ->where('id2.catalog_id', '!=', '')
-                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
-                    ->groupBy('id2.catalog_id')
-                    ->select(
-                        'id2.catalog_id',
-                        DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
-                        DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
-                    );
-            }, 'id1')
+        return DB::kpiTable(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+            $query->from('items_data', 'id2')
+                ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
+                ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                    $query->whereIn('id2.catalog_id', $categoryIdsArr);
+                })
+                ->where('id2.store_id', $storeId)
+                ->where('id2.catalog_id', '!=', '')
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                ->groupBy('id2.catalog_id')
+                ->select(
+                    'id2.catalog_id',
+                    DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
+                    DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
+                );
+        }, 'id1')
             ->joinSub(function ($query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_sales', 'is2')
                     ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
@@ -128,23 +126,22 @@ class CategoryAnalysisService extends Service
         $fromDate = Arr::get($dateRangeFilter, 'from_date')->format('Y-m-d');
         $toDate = Arr::get($dateRangeFilter, 'to_date')->format('Y-m-d');
 
-        $data = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
-            ->table(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
-                $query->from('items_data', 'id2')
-                    ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
-                    ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
-                        $query->whereIn('id2.catalog_id', $categoryIdsArr);
-                    })
-                    ->where('id2.store_id', $storeId)
-                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                    ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
-                    ->groupBy('id2.date')
-                    ->select(
-                        'id2.date',
-                        DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
-                        DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
-                    );
-            }, 'id1')
+        $data = DB::kpiTable(function (Builder $query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
+            $query->from('items_data', 'id2')
+                ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id2.items_data_all_id')
+                ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
+                    $query->whereIn('id2.catalog_id', $categoryIdsArr);
+                })
+                ->where('id2.store_id', $storeId)
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                ->groupBy('id2.date')
+                ->select(
+                    'id2.date',
+                    DB::raw('SUM(`ida`.`visit_all`) as visit_all'),
+                    DB::raw('SUM(`ida`.`sales_all`) as sales_all'),
+                );
+        }, 'id1')
             ->leftjoinSub(function ($query) use ($storeId, $fromDate, $toDate, $categoryIdsArr) {
                 $query->from('items_sales', 'is2')
                     ->when(! empty($categoryIdsArr), function ($query) use ($categoryIdsArr) {
@@ -206,8 +203,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsDataTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsData = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
-            ->table('items_data', 'id1')
+        $itemsData = DB::kpiTable('items_data', 'id1')
             ->where('id1.store_id', $storeId)
             ->join('items_data_all as ida', 'ida.items_data_all_id', '=', 'id1.items_data_all_id')
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
@@ -244,8 +240,7 @@ class CategoryAnalysisService extends Service
 
     protected function getItemsSalesTrend($storeId, $fromDate, $toDate, array $categoryIdsArr = [])
     {
-        $itemsSales = DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)
-            ->table('items_sales', 'is1')
+        $itemsSales = DB::kpiTable('items_sales', 'is1')
             ->where('is1.store_id', $storeId)
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
                 $query->whereIn('is1.catalog_id', $categoryIdsArr);
@@ -445,5 +440,28 @@ class CategoryAnalysisService extends Service
             'status' => 200,
             'data' => collect($data)->values()->all(),
         ]);
+    }
+
+    /**
+     * Get the total number of categories for each store.
+     */
+    public function getTotalCategoryOfStores(array $filters = [])
+    {
+        $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
+
+        return DB::kpiTable('items_data')
+            ->where('catalog_id', '!=', '')
+            ->whereNotNull('catalog_id')
+            ->where('date', 'like', "{$currentDate}%")
+            ->select(
+                'store_id',
+                DB::raw('COUNT(DISTINCT catalog_id) as total_cate'),
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as date_ym"),
+            )
+            ->groupBy(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m')"),
+            )
+            ->get();
     }
 }
