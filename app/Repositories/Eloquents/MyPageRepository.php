@@ -290,9 +290,14 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
             }
         }
 
-        $ossManager = $this->getLinkedUserInfoRepository()->getOssUserIdsByCssUserIds($manager);
+        $ossManager = [];
+        if (! empty($manager)) {
+            $ossManager = $this->getLinkedUserInfoRepository()->getOssUserIdsByCssUserIds($manager);
+        }
 
-        return array_merge($params, ['manager' => implode(',', $ossManager)]);
+        return array_merge($params, ! empty($ossManager)
+            ? ['manager' => implode(',', $ossManager)]
+            : []);
     }
 
     public function getTasks(array $params): Collection
