@@ -78,29 +78,10 @@ class PermissionHelper
         $shop = $shopResult->get('data')->get('data');
         $createdById = Arr::get($shop, 'created_by.id');
 
-        $directors = Arr::get($shop, 'directors', []);
-        $directorIds = collect($directors)->pluck('id')->toArray();
-
-        $designers = Arr::get($shop, 'designers', []);
-        $designerIds = collect($designers)->pluck('id')->toArray();
-
-        $consultants = Arr::get($shop, 'consultants', []);
-        $consultantIds = collect($consultants)->pluck('id')->toArray();
-
         $managers = Arr::get($shop, 'managers', []);
         $managerIds = collect($managers)->pluck('id')->toArray();
 
-        $personInCharges = Arr::get($shop, 'person_in_charges', []);
-        $personInChargeIds = collect($personInCharges)->pluck('id')->toArray();
-
-        $authorizedIds = array_merge(
-            $directorIds,
-            $designerIds,
-            $consultantIds,
-            [$createdById],
-            $managerIds,
-            $personInChargeIds
-        );
+        $authorizedIds = array_merge([$createdById], $managerIds);
 
         Gate::forUser($user)->authorize('update-shop', [$shop['company_id'], $authorizedIds]);
 
