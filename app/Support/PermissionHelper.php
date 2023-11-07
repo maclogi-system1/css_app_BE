@@ -60,4 +60,50 @@ class PermissionHelper
 
         return true;
     }
+
+    /**
+     * @param  User  $user
+     * @param  string  $storeId
+     * @return JsonResponse|true
+     */
+    public static function checkUpdateShopPermission(User $user, string $storeId): bool|JsonResponse
+    {
+        /** @var ShopRepository $shopRepository */
+        $shopRepository = app(ShopRepository::class);
+        $shopResult = $shopRepository->find($storeId);
+        if (! $shopResult?->get('success')) {
+            return response()->json(['message' => __('Shop not found')], Response::HTTP_NOT_FOUND);
+        }
+
+        $shop = $shopResult->get('data')->get('data');
+        $createdById = Arr::get($shop, 'created_by.id');
+
+        $directors = Arr::get($shop, 'directors', []);
+        $directorIds = collect($directors)->pluck('id')->toArray();
+
+        $designers = Arr::get($shop, 'designers', []);
+        $designerIds = collect($designers)->pluck('id')->toArray();
+
+        $consultants = Arr::get($shop, 'consultants', []);
+        $consultantIds = collect($consultants)->pluck('id')->toArray();
+
+        $managers = Arr::get($shop, 'managers', []);
+        $managerIds = collect($managers)->pluck('id')->toArray();
+
+        $personInCharges = Arr::get($shop, 'person_in_charges', []);
+        $personInChargeIds = collect($personInCharges)->pluck('id')->toArray();
+
+        $authorizedIds = array_merge(
+            $directorIds,
+            $designerIds,
+            $consultantIds,
+            [$createdById],
+            $managerIds,
+            $personInChargeIds
+        );
+
+        Gate::forUser($user)->authorize('update-shop', [$shop['company_id'], $authorizedIds]);
+
+        return true;
+    }
 }

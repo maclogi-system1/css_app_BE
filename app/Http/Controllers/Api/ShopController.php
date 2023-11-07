@@ -8,7 +8,6 @@ use App\Support\PermissionHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 
 class ShopController extends Controller
@@ -56,15 +55,7 @@ class ShopController extends Controller
 
     public function update(string $storeId, Request $request): JsonResponse
     {
-        $shopResult = $this->shopRepository->find($storeId);
-        if (! $shopResult?->get('success')) {
-            return response()->json(['message' => __('Shop not found')], Response::HTTP_NOT_FOUND);
-        }
-
-        $shop = $shopResult->get('data')->get('data');
-        $createdById = Arr::get($shop, 'created_by.id');
-
-        Gate::forUser($request->user())->authorize('update-shop', [$shop['company_id'], [$createdById]]);
+        PermissionHelper::checkUpdateShopPermission($request->user(), $storeId);
 
         $result = $this->shopRepository->update($storeId, $request->all());
 
