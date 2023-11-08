@@ -145,6 +145,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'gift_available_point' => $valueChain->gift_available_point,
                 'delivery_on_specified_day_point' => $valueChain->delivery_on_specified_day_point,
                 'delivery_preparation_period_point' => $valueChain->delivery_preparation_period_point,
+                'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point,
                 'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point,
                 'average' => round((
                     $valueChain->compatible_point
@@ -155,8 +156,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                     + $valueChain->gift_available_point
                     + $valueChain->delivery_on_specified_day_point
                     + $valueChain->delivery_preparation_period_point
+                    + $valueChain->shipping_on_the_specified_date_point
                     + $valueChain->shipping_according_to_the_delivery_date_point
-                ) / 9, 2),
+                ) / 10, 2),
             ],
             'orders' => [
                 'system_introduction' => $valueChain->system_introduction_point,
@@ -210,16 +212,21 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $date = Carbon::create(Arr::get($filters, 'current_date'));
         $ratingPointCategory = $this->getRatingPointCategory($storeId, $filters);
         $ratingPointProduct = $this->getRatingPointProduct($storeId, $filters);
-        $ratingPointOccupancyRate = $this->getOccupancyRate($storeId, $filters);
+        $ratingPointProductUtilizationRate = $this->getProductUtilizationRate($storeId, $filters);
         $ratingPointCostRate = $this->getRatingPointCostRate($storeId, $filters);
+        $ratingPointLtv2yAmnt = $this->getRatingPointLtv2yAmnt($storeId, $filters);
+        $ratingPointReSalesNumRate = $this->getReSalesNumRate($storeId, $filters);
 
         $data = [
             'store_id' => $storeId,
             'date' => $date,
             'number_of_categories_point' => $ratingPointCategory,
             'number_of_items_point' => $ratingPointProduct,
-            'product_utilization_rate_point' => $ratingPointOccupancyRate,
+            'product_utilization_rate_point' => $ratingPointProductUtilizationRate,
             'product_cost_rate_point' => $ratingPointCostRate,
+
+            're_sales_num_rate' => $ratingPointReSalesNumRate,
+            'ltv_point' => $ratingPointLtv2yAmnt,
         ];
 
         $valueChain = $this->model()->create($data);
@@ -295,46 +302,50 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    public function getOccupancyRate(string $storeId, array $filters = [])
+    public function getProductUtilizationRate(string $storeId, array $filters = [])
     {
-        $occupancyRateOfStore = $this->productAnalysisService->getUtilizationRate($filters);
-        $totalShop = $occupancyRateOfStore->count();
+        $utilizationRateOfStore = $this->productAnalysisService->getUtilizationRate($filters);
+        $totalShop = $utilizationRateOfStore->count();
 
         if (! $totalShop) {
             return 1;
         }
 
-        $averageProductUtilizationRate = $occupancyRateOfStore->reduce(
-            fn (?int $carry, $item) => $carry + $item->occupancy_rate,
+        $averageProductUtilizationRate = $utilizationRateOfStore->reduce(
+            fn (?int $carry, $item) => $carry + $item->utilization_rate,
             0,
-        );
+        ) / $totalShop;
         $standardDeviation = 0;
 
-        foreach ($occupancyRateOfStore as $item) {
-            $standardDeviation += pow($item->occupancy_rate - $averageProductUtilizationRate, 2);
+        foreach ($utilizationRateOfStore as $item) {
+            $standardDeviation += pow($item->utilization_rate - $averageProductUtilizationRate, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $occupancyRateOfAStore = $occupancyRateOfStore->where('store_id', $storeId)->first()?->occupancy_rate;
+        $utilizationRateOfAStore = $utilizationRateOfStore->where('store_id', $storeId)->first()?->utilization_rate;
 
         return match (true) {
-            $occupancyRateOfAStore >= 2 * $standardDeviation => 5,
-            $occupancyRateOfAStore >= $standardDeviation && $occupancyRateOfAStore < 2 * $standardDeviation => 4,
-            $occupancyRateOfAStore >= 0 && $occupancyRateOfAStore < $standardDeviation => 3,
-            $occupancyRateOfAStore >= -$standardDeviation && $occupancyRateOfAStore <= 0 => 2,
-            $occupancyRateOfAStore < -$standardDeviation => 1,
+            $utilizationRateOfAStore >= 2 * $standardDeviation => 5,
+            $utilizationRateOfAStore >= $standardDeviation && $utilizationRateOfAStore < 2 * $standardDeviation => 4,
+            $utilizationRateOfAStore >= 0 && $utilizationRateOfAStore < $standardDeviation => 3,
+            $utilizationRateOfAStore >= -$standardDeviation && $utilizationRateOfAStore <= 0 => 2,
+            $utilizationRateOfAStore < -$standardDeviation => 1,
         };
     }
 
     private function getRatingPointCostRate(string $storeId, array $filters = [])
     {
         $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
-        $mqAccounting = $this->mqAccountingService->getListByStore($storeId, [
-            'from_date' => $currentDate,
-            'to_date' => $currentDate,
+        $result = $this->mqAccountingService->getList([
+            'store_id' => $storeId,
+            'year_month' => $currentDate,
         ]);
+        $costRate = 0;
 
-        $costRate = Arr::get(Arr::first($mqAccounting), 'mq_cost.cost_price_rate') * 100;
+        if ($result->get('success')) {
+            $mqAccounting = $result->get('data')->first();
+            $costRate = ($mqAccounting?->mq_cost?->cost_price_rate ?? 0) * 100;
+        }
 
         return match (true) {
             $costRate < 20 => 5,
@@ -342,6 +353,81 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $costRate > 40 && $costRate <= 50 => 3,
             $costRate > 50 && $costRate <= 70 => 2,
             $costRate > 70 => 1,
+        };
+    }
+
+    private function getRatingPointLtv2yAmnt(string $storeId, array $filters = [])
+    {
+        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
+        $result = $this->mqAccountingService->getList([
+            'year_month' => $currentDate,
+        ]);
+        $mqAccounting = collect();
+
+        if ($result->get('success')) {
+            $mqAccounting = $result->get('data');
+        }
+
+        $totalShop = $mqAccounting->count();
+
+        if (! $totalShop) {
+            return 1;
+        }
+        dd($mqAccounting);
+
+        $averageLtv2yAmnt = $mqAccounting->reduce(
+            fn (?int $carry, $item) => $carry + $item->mqCost->ltv_2y_amnt,
+            0,
+        ) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($mqAccounting as $item) {
+            $standardDeviation += pow($item->mqCost->ltv_2y_amnt - $averageLtv2yAmnt, 2);
+        }
+
+        $standardDeviation = sqrt($standardDeviation / $totalShop);
+        $ltv2yAmnt = $mqAccounting->where('store_id', $storeId)->first()?->mqCost?->ltv_2y_amnt ?? 0;
+
+        return match (true) {
+            $ltv2yAmnt >= 2 * $standardDeviation => 5,
+            $ltv2yAmnt >= $standardDeviation && $ltv2yAmnt < 2 * $standardDeviation => 4,
+            $ltv2yAmnt >= 0 && $ltv2yAmnt < $standardDeviation => 3,
+            $ltv2yAmnt >= -$standardDeviation && $ltv2yAmnt <= 0 => 2,
+            $ltv2yAmnt < -$standardDeviation => 1,
+        };
+    }
+
+    private function getReSalesNumRate(string $storeId, array $filters = [])
+    {
+        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
+        $mqAccounting = $this->mqAccountingService->getListReSalesNum([
+            'year_month' => $currentDate,
+        ]);
+        $totalShop = $mqAccounting->count();
+
+        if (! $totalShop) {
+            return 1;
+        }
+
+        $averageReSalesNum = $mqAccounting->reduce(
+            fn (?int $carry, $item) => $carry + $item->re_sales_num_rate,
+            0,
+        ) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($mqAccounting as $item) {
+            $standardDeviation += pow($item->re_sales_num_rate - $averageReSalesNum, 2);
+        }
+
+        $standardDeviation = sqrt($standardDeviation / $totalShop);
+        $reSalesNumRate = $mqAccounting->where('store_id', $storeId)->first()?->re_sales_num_rate ?? 0;
+
+        return match (true) {
+            $reSalesNumRate >= 2 * $standardDeviation => 5,
+            $reSalesNumRate >= $standardDeviation && $reSalesNumRate < 2 * $standardDeviation => 4,
+            $reSalesNumRate >= 0 && $reSalesNumRate < $standardDeviation => 3,
+            $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
+            $reSalesNumRate < -$standardDeviation => 1,
         };
     }
 }

@@ -1227,7 +1227,7 @@ class ProductAnalysisService extends Service
             ->joinSub($salesAllGt1, 'id2', 'id1.store_id', '=', 'id2.store_id')
             ->select(
                 'id1.store_id',
-                DB::raw('(id1.total_prod - id2.total_prod) as occupancy_rate')
+                DB::raw('(id1.total_prod - id2.total_prod) as utilization_rate')
             )
             ->get();
     }

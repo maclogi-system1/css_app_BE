@@ -124,7 +124,7 @@ class ValueChain extends Model
         'google_access_point', 'instagram_access_point', 'compatible_point', 'shipping_fee_point',
         'shipping_ratio_point', 'mail_service_point', 'bundling_ratio_point', 'gift_available_point',
         'delivery_on_specified_day_point', 'delivery_preparation_period_point',
-        'shipping_according_to_the_delivery_date_point',
+        'shipping_on_the_specified_date_point', 'shipping_according_to_the_delivery_date_point',
         'system_introduction_point', 'order_through_rate_point', 'number_of_people_in_charge_of_ordering_point',
         'thank_you_email_point', 'what_s_included_point', 'follow_email_point', 'order_email_point',
         'shipping_email_point', 'few_user_complaints_point', 'email_newsletter', 'rpp_cvr_rate_point',
