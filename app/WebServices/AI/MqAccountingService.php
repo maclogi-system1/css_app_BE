@@ -18,6 +18,41 @@ class MqAccountingService extends Service
 {
     use HasMqDateTimeHandler;
 
+    public function getList(array $filters = [])
+    {
+        $storeId = Arr::get($filters, 'store_id');
+        $yearMonth = Arr::get($filters, 'year_month');
+
+        $mqAccountings = MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
+            ->when($yearMonth, function ($query, $yearMonth) {
+                [$year, $month] = explode('-', $yearMonth);
+                $query->where([
+                    'year' => $year,
+                    'month' => $month,
+                ]);
+            })
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
+            ->get()
+            ->map(function ($item) {
+                $item->store_opening_fee = $item->mqCost->opening_fee;
+                $item->csv_usage_fee = $item->mqCost->csv_usage_fee;
+                $item->ltv_2y_amnt = $item->mqCost->ltv_2y_amnt;
+                $item->lim_cpa = $item->mqCost->lim_cpa;
+                $item->cpo_via_ad = $item->mqCost->cpo_via_ad;
+                $item->fixed_cost = $item->mqCost?->cost_sum;
+
+                return $item;
+            });
+
+        return collect([
+            'success' => true,
+            'status' => 200,
+            'data' => $mqAccountings,
+        ]);
+    }
+
     public function getListByStore(string $storeId, array $filters = [])
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
@@ -442,5 +477,29 @@ class MqAccountingService extends Service
         }
 
         return $data;
+    }
+
+    public function getListReSalesNum(array $filters = [])
+    {
+        $yearMonth = Arr::get($filters, 'year_month');
+
+        return MqAccounting::join(
+            'mq_user_trends as mut',
+            'mut.mq_user_trends_id',
+            '=',
+            'mq_accounting.mq_user_trends_id'
+        )
+            ->when($yearMonth, function ($query, $yearMonth) {
+                [$year, $month] = explode('-', $yearMonth);
+                $query->where([
+                    'year' => $year,
+                    'month' => $month,
+                ]);
+            })
+            ->select(
+                'store_id',
+                DB::raw('mut.re_sales_num / (mut.re_sales_num + mut.new_sales_num) as re_sales_num_rate'),
+            )
+            ->get();
     }
 }
