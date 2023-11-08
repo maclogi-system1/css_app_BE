@@ -102,11 +102,6 @@ class ValueChain extends Model
         '商品別効果測定と、商品除外などの対応ができているか',
     ];
 
-    public const EMAIL_NEWSLETTER_VALUES = [
-        '開封率',
-        'CVR',
-    ];
-
     public const REVIEW_MEASURES_VALUES = [
         'なし',
         'クーポン',
@@ -127,7 +122,7 @@ class ValueChain extends Model
         'shipping_on_the_specified_date_point', 'shipping_according_to_the_delivery_date_point',
         'system_introduction_point', 'order_through_rate_point', 'number_of_people_in_charge_of_ordering_point',
         'thank_you_email_point', 'what_s_included_point', 'follow_email_point', 'order_email_point',
-        'shipping_email_point', 'few_user_complaints_point', 'email_newsletter', 'rpp_cvr_rate_point',
+        'shipping_email_point', 'few_user_complaints_point', 'email_newsletter_point', 're_sales_num_rate_point',
         'review_writing_rate', 'review_measures', 'line_official_point', 'instagram_followers', 'ltv_point',
     ];
 
@@ -221,15 +216,6 @@ class ValueChain extends Model
     {
         $items = array_filter(explode(',', $this->rpp_ad_operation));
         $totalItems = count(static::RPP_AD_OPERATION_VALUES);
-        $multiplier = 5 / $totalItems;
-
-        return round($multiplier * count($items), 2) ?: 1.00;
-    }
-
-    public function getEmailNewsletterPointAttribute()
-    {
-        $items = array_filter(explode(',', $this->email_newsletter));
-        $totalItems = count(static::EMAIL_NEWSLETTER_VALUES);
         $multiplier = 5 / $totalItems;
 
         return round($multiplier * count($items), 2) ?: 1.00;

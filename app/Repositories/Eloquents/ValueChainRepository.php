@@ -188,7 +188,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ],
             'crm' => [
                 'email_newsletter_point' => $valueChain->email_newsletter_point,
-                'rpp_cvr_rate_point' => $valueChain->rpp_cvr_rate_point,
+                're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point,
                 'review_writing_rate_point' => $valueChain->review_writing_rate_point,
                 'review_measures_point' => $valueChain->review_measures_point,
                 'line_official' => $valueChain->line_official_point,
@@ -196,7 +196,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'ltv_point' => $valueChain->ltv_point,
                 'average' => round((
                     $valueChain->email_newsletter_point
-                    + $valueChain->rpp_cvr_rate_point
+                    + $valueChain->re_sales_num_rate_point
                     + $valueChain->review_writing_rate_point
                     + $valueChain->review_measures_point
                     + $valueChain->line_official_point
@@ -225,7 +225,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'product_utilization_rate_point' => $ratingPointProductUtilizationRate,
             'product_cost_rate_point' => $ratingPointCostRate,
 
-            're_sales_num_rate' => $ratingPointReSalesNumRate,
+            're_sales_num_rate_point' => $ratingPointReSalesNumRate,
             'ltv_point' => $ratingPointLtv2yAmnt,
         ];
 

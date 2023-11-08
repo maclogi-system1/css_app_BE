@@ -89,7 +89,7 @@ return new class extends Migration
             $table->decimal('few_user_complaints_point', 3)->default(1.00);
 
             // CRM
-            $table->string('email_newsletter', 500)->nullable();
+            $table->decimal('email_newsletter_point', 3)->default(1.00);
             $table->decimal('rpp_cvr_rate_point', 3)->default(1.00); //Repeat rate
             $table->integer('review_writing_rate')->default(0); //Review writing rate
             $table->string('review_measures', 500)->nullable(); //Review measures
