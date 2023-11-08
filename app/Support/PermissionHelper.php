@@ -26,19 +26,14 @@ class PermissionHelper
                 if ($viewCompanyContractShops) {
                     $params['filters']['projects.parent_id'] = $user->company_id;
                     $params['filters']['projects.is_contract'] = 1;
+
+                    if ($user->can('view_shops')) {
+                        $params = self::convertManagerUser($user->id, $params, true, true);
+                    }
                 }
 
                 if (! $viewCompanyContractShops && $user->can('view_shops')) {
-                    $convertUserId = [$user->id];
-                    if ($needConvertUser) {
-                        /** @var LinkedUserInfoRepository $linkedUserInfoRepository */
-                        $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
-                        $convertUserId = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($convertUserId);
-                    }
-
-                    if ($convertUserId = Arr::get($convertUserId, 0)) {
-                        $params['manager'] = $convertUserId;
-                    }
+                    $params = self::convertManagerUser($user->id, $params, $needConvertUser);
                 }
             }
         }
@@ -87,5 +82,27 @@ class PermissionHelper
         Gate::forUser($user)->authorize('update-shop', [$shop['company_id'], $managerIds]);
 
         return true;
+    }
+
+    protected static function convertManagerUser(int $userId, array $params, bool $needConvertUser, bool $isOwnManager = false): array
+    {
+        $convertUserIds = [$userId];
+        if ($needConvertUser) {
+            /** @var LinkedUserInfoRepository $linkedUserInfoRepository */
+            $linkedUserInfoRepository = app(LinkedUserInfoRepository::class);
+            $convertUserIds = $linkedUserInfoRepository->getOssUserIdsByCssUserIds($convertUserIds);
+        }
+
+        if ($convertUserId = Arr::get($convertUserIds, 0)) {
+            if ($isOwnManager) {
+                $params['own_manager'] = $convertUserId;
+
+                return $params;
+            }
+
+            $params['manager'] = $convertUserId;
+        }
+
+        return $params;
     }
 }
