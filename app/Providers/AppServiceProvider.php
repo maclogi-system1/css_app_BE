@@ -14,6 +14,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Http::class => \App\Mixin\HttpMixin::class,
         \Illuminate\Support\Str::class => \App\Mixin\StrMixin::class,
         \Illuminate\Support\Collection::class => \App\Mixin\CollectionMixin::class,
+        \Illuminate\Database\DatabaseManager::class => \App\Mixin\DatabaseManagerMixin::class,
     ];
 
     /**

@@ -1144,8 +1144,7 @@ class ProductAnalysisService extends Service
                 'items_sales.item_no,
                 SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as current_month_sales,
                 SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as previous_month_sales,
-                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as month_before_previous_sales
-            ',
+                SUM(CASE WHEN SUBSTRING(items_sales.date, 1, 6) = ? THEN sales_amnt ELSE 0 END) as month_before_previous_sales',
                 [$currentYearMonth, $previousYearMonth, $monthBeforePreviousYearMonth]
             )
             ->groupBy('items_sales.item_no');
@@ -1181,5 +1180,55 @@ class ProductAnalysisService extends Service
             'status' => 200,
             'data' => collect($data)->values()->all(),
         ]);
+    }
+
+    /**
+     * Get the total number of products for each store.
+     */
+    public function getTotalProductOfStores(array $filters = [])
+    {
+        $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
+
+        return DB::kpiTable('items_data')
+            ->where('item_id', '!=', '')
+            ->where('date', 'like', "{$currentDate}%")
+            ->select(
+                'store_id',
+                DB::raw('COUNT(DISTINCT item_id) as total_prod'),
+            )
+            ->groupBy(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m')"),
+            )
+            ->get();
+    }
+
+    public function getUtilizationRate(array $filters = [])
+    {
+        $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
+        $registered = DB::kpiTable('items_data', 'id')
+            ->where('item_id', '!=', '')
+            ->where('date', 'like', "{$currentDate}%")
+            ->select(
+                'store_id',
+                DB::raw('COUNT(DISTINCT item_id) as total_prod'),
+            )
+            ->groupBy(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m')"),
+            );
+        $salesAllGt1 = $registered->clone()
+            ->join('items_data_all as ida', function ($join) {
+                $join->on('ida.items_data_all_id', '=', 'id.items_data_all_id')
+                    ->where('ida.sales_all', '>', 1);
+            });
+
+        return DB::kpiTable($registered, 'id1')
+            ->joinSub($salesAllGt1, 'id2', 'id1.store_id', '=', 'id2.store_id')
+            ->select(
+                'id1.store_id',
+                DB::raw('(id1.total_prod - id2.total_prod) as occupancy_rate')
+            )
+            ->get();
     }
 }

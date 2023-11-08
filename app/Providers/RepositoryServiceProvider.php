@@ -50,6 +50,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\ItemsPerformanceAnalyticsRepository::class => \App\Repositories\Eloquents\ItemsPerformanceAnalyticsRepository::class,
         \App\Repositories\Contracts\CategoriesPerformanceAnalyticsRepository::class => \App\Repositories\Eloquents\CategoriesPerformanceAnalyticsRepository::class,
         \App\Repositories\Contracts\MyPageRepository::class => \App\Repositories\Eloquents\MyPageRepository::class,
+        \App\Repositories\Contracts\ValueChainRepository::class => \App\Repositories\Eloquents\ValueChainRepository::class,
     ];
 
     /**

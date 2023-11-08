@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
+use App\Http\Controllers\Api\ValueChainController;
 use Illuminate\Support\Facades\Route;
 
 Route::any('/test', fn(\Illuminate\Http\Request $request) => [
@@ -431,5 +432,13 @@ Route::middleware([
             Route::get('/alerts', [MyPageController::class, 'getAlerts'])->name('alerts');
             Route::get('/sales-4-quadrant-map', [MyPageController::class, 'getSales4QuadrantMap'])
                 ->name('sales-4-quadrant-map');
+        });
+
+    Route::prefix('value-chain')
+        ->name('value-chain.')
+        ->controller(ValueChainController::class)
+        ->withoutMiddleware('check_shop_permission_by_store_id_parameter')
+        ->group(function () {
+            Route::get('monthly-evaluation/{storeId}', 'chartMonthlyEvaluation');
         });
 });
