@@ -85,7 +85,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'category_page_point' => $valueChain->category_page_point,
                 'header_point' => $valueChain->header_point,
                 'product_page_point' => $valueChain->product_page_point,
-                'product_page_conversion_rate' => $valueChain->product_page_conversion_rate,
+                'product_page_conversion_rate' => $valueChain->product_page_conversion_rate_point,
                 'product_thumbnail_point' => $valueChain->product_thumbnail_point,
                 'access_number_point' => $valueChain->access_number_point,
                 'featured_products_point' => $valueChain->featured_products_point,
@@ -96,7 +96,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                     + $valueChain->category_page_point
                     + $valueChain->header_point
                     + $valueChain->product_page_point
-                    + $valueChain->product_page_conversion_rate
+                    + $valueChain->product_page_conversion_rate_point
                     + $valueChain->product_thumbnail_point
                     + $valueChain->access_number_point
                     + $valueChain->featured_products_point
@@ -224,7 +224,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
 
         $valueChain = $this->model()->create($data);
 
-        return $valueChain;
+        return $valueChain->refresh();
     }
 
     /**
