@@ -91,10 +91,10 @@ return new class extends Migration
             // CRM
             $table->string('email_newsletter', 500)->nullable();
             $table->decimal('rpp_cvr_rate_point', 3)->default(1.00); //Repeat rate
-            $table->string('review_writing_rate', 500)->nullable(); //Review writing rate
+            $table->integer('review_writing_rate')->default(0); //Review writing rate
             $table->string('review_measures', 500)->nullable(); //Review measures
             $table->decimal('line_official_point', 3)->default(1.00); //LINE official
-            $table->string('instagram_followers', 500)->nullable(); //Number of Instagram followers
+            $table->integer('instagram_followers')->default(0); //Number of Instagram followers
             $table->decimal('ltv_point', 3)->default(1.00); //LTV
 
             $table->timestamps();
