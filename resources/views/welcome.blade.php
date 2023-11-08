@@ -6,6 +6,8 @@
 
         <title>{{ config('app.name') }}</title>
 
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
@@ -28,7 +30,8 @@
                 width: 100vw;
                 height: 100vh;
                 flex-direction: column;
-                color: #d1d5db;
+                color: #fff;
+                text-shadow: #d1d5db 1px 1px 8px;
             }
             .app-name {
                 font-size: 3rem;
