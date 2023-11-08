@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('value_chains', function (Blueprint $table) {
-            $table->renameColumn('rpp_cvr_rate_point', 're_sales_num_rate');
+            $table->renameColumn('rpp_cvr_rate_point', 're_sales_num_rate_point');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('value_chains', function (Blueprint $table) {
-            $table->renameColumn('re_sales_num_rate', 'rpp_cvr_rate_point');
+            $table->renameColumn('re_sales_num_rate_point', 'rpp_cvr_rate_point');
         });
     }
 };
