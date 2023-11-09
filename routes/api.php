@@ -439,6 +439,7 @@ Route::middleware([
         ->controller(ValueChainController::class)
         ->withoutMiddleware('check_shop_permission_by_store_id_parameter')
         ->group(function () {
-            Route::get('monthly-evaluation/{storeId}', 'chartMonthlyEvaluation');
+            Route::get('monthly-evaluation/{storeId}', 'monthlyEvaluation');
+            Route::get('chart-evaluate/{storeId}', 'chartEvaluate');
         });
 });
