@@ -43,6 +43,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         return $this->model()->where('store_id', $storeId)
             ->whereDate('date', '>=', $dateRangeFilter['from_date']->format('Y-m-d'))
             ->whereDate('date', '<=', $dateRangeFilter['to_date']->format('Y-m-d'))
+            ->orderBy('date')
             ->get();
     }
 
