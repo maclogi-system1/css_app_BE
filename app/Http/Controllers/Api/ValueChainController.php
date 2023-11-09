@@ -18,14 +18,14 @@ class ValueChainController extends Controller
     ) {
     }
 
-    public function chartMonthlyEvaluation(Request $request, string $storeId): JsonResponse
+    public function monthlyEvaluation(Request $request, string $storeId): JsonResponse
     {
         $filters = $request->query();
         $currentDate = $request->query('current_date', now()->format('Y-m'));
         $lastMonth = Carbon::create($currentDate)->subMonth()->format('Y-m');
 
-        $chartData = $this->valueChainRepository->chartMonthlyEvaluation($storeId, $filters);
-        $chartDataLastMonth = $this->valueChainRepository->chartMonthlyEvaluation(
+        $chartData = $this->valueChainRepository->monthlyEvaluation($storeId, $filters);
+        $chartDataLastMonth = $this->valueChainRepository->monthlyEvaluation(
             $storeId,
             ['current_date' => $lastMonth] + $filters,
         );
@@ -37,7 +37,7 @@ class ValueChainController extends Controller
         }
 
         $contractDate = Carbon::create(Arr::get($shop, 'contract_date'))->format('Y-m');
-        $chartDataContractDate = $this->valueChainRepository->chartMonthlyEvaluation(
+        $chartDataContractDate = $this->valueChainRepository->monthlyEvaluation(
             $storeId,
             ['current_date' => $contractDate] + $filters,
         );
@@ -65,6 +65,18 @@ class ValueChainController extends Controller
             'comprehensive_evaluation' => round($comprehensiveEvaluation, 2),
             'comprehensive_evaluation_last_month' => round($comprehensiveEvaluationLastMonth, 2),
             'comprehensive_evaluation_contract_date' => round($comprehensiveEvaluationContractDate, 2),
+        ]);
+    }
+
+    /**
+     * Get the list of monthly evaluation scores for the chart.
+     */
+    public function chartEvaluate(Request $request, string $storeId)
+    {
+        $chart = $this->valueChainRepository->chartEvaluate($storeId, $request->query());
+
+        return response()->json([
+            'chart' => $chart,
         ]);
     }
 }

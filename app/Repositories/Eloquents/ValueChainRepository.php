@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Models\ValueChain;
 use App\Repositories\Contracts\ValueChainRepository as ValueChainRepositoryContract;
 use App\Repositories\Repository;
+use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\CategoryAnalysisService;
 use App\WebServices\AI\MqAccountingService;
 use App\WebServices\AI\ProductAnalysisService;
@@ -14,6 +15,8 @@ use Illuminate\Support\Carbon;
 
 class ValueChainRepository extends Repository implements ValueChainRepositoryContract
 {
+    use HasMqDateTimeHandler;
+
     public function __construct(
         protected CategoryAnalysisService $categoryAnalysisService,
         protected ProductAnalysisService $productAnalysisService,
@@ -31,6 +34,19 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     }
 
     /**
+     * Get the list of value chains by store.
+     */
+    public function getListByStore(string $storeId, array $filters = [])
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+
+        return $this->model()->where('store_id', $storeId)
+            ->whereDate('date', '>=', $dateRangeFilter['from_date']->format('Y-m-d'))
+            ->whereDate('date', '<=', $dateRangeFilter['to_date']->format('Y-m-d'))
+            ->get();
+    }
+
+    /**
      * Get value chain detail by store.
      */
     public function getDetailByStore(string $storeId, array $filters = []): ?ValueChain
@@ -43,9 +59,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     }
 
     /**
-     * Get data for monthly evaluation chart.
+     * Get data for monthly evaluation.
      */
-    public function chartMonthlyEvaluation(string $storeId, array $filters = [])
+    public function monthlyEvaluation(string $storeId, array $filters = [])
     {
         $valueChain = $this->getDetailByStore($storeId, $filters);
 
@@ -429,5 +445,82 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
             $reSalesNumRate < -$standardDeviation => 1,
         };
+    }
+
+    /**
+     * Get the list of monthly evaluation scores for the chart.
+     */
+    public function chartEvaluate(string $storeId, array $filters = [])
+    {
+        return $this->getListByStore($storeId, $filters)->map(fn ($valueChain) => [
+            'store_id' => $valueChain->store_id,
+            'date' => $valueChain->date,
+
+            'number_of_categories_point' => $valueChain->number_of_categories_point,
+            'number_of_items_point' => $valueChain->number_of_items_point,
+            'product_utilization_rate_point' => $valueChain->product_utilization_rate_point,
+            'product_cost_rate_point' => $valueChain->product_cost_rate_point,
+            'low_product_reviews_point' => $valueChain->low_product_reviews_point,
+            'few_sold_out_items_point' => $valueChain->few_sold_out_items_point,
+
+            'purchase_form_point' => $valueChain->purchase_form_point,
+            'stock_value_point' => $valueChain->stock_value_point,
+            'product_utilization_rate_point' => $valueChain->product_utilization_rate_point,
+
+            'top_page_point' => $valueChain->top_page_point,
+            'category_page_point' => $valueChain->category_page_point,
+            'header_point' => $valueChain->header_point,
+            'product_page_point' => $valueChain->product_page_point,
+            'product_page_conversion_rate' => $valueChain->product_page_conversion_rate_point,
+            'product_thumbnail_point' => $valueChain->product_thumbnail_point,
+            'access_number_point' => $valueChain->access_number_point,
+            'featured_products_point' => $valueChain->featured_products_point,
+            'left_navigation_point' => $valueChain->left_navigation_point,
+            'header_large_banner_small_banner_point' => $valueChain->header_large_banner_small_banner_point,
+
+            'event_sales_ratio_point' => $valueChain->event_sales_ratio_point,
+            'sales_ratio_day_endings_0_5' => $valueChain->sales_ratio_day_endings_0_5_point,
+            'implementation_of_measures_point' => $valueChain->implementation_of_measures_point,
+            'coupon_effect_point' => $valueChain->coupon_effect_point,
+
+            'rpp_ad_point' => $valueChain->rpp_ad_point,
+            'rpp_ad_operation' => $valueChain->rpp_ad_operation_point,
+            'coupon_advance_point' => $valueChain->coupon_advance_point,
+            'rgroup_ad_point' => $valueChain->rgroup_ad_point,
+            'tda_ad_point' => $valueChain->tda_ad_point,
+            'sns_ad_point' => $valueChain->sns_ad_point,
+            'google_access_point' => $valueChain->google_access_point,
+            'instagram_access_point' => $valueChain->instagram_access_point,
+
+            'compatible_point' => $valueChain->compatible_point,
+            'shipping_fee_point' => $valueChain->shipping_fee_point,
+            'shipping_ratio_point' => $valueChain->shipping_ratio_point,
+            'mail_service_point' => $valueChain->mail_service_point,
+            'bundling_ratio_point' => $valueChain->bundling_ratio_point,
+            'gift_available_point' => $valueChain->gift_available_point,
+            'delivery_on_specified_day_point' => $valueChain->delivery_on_specified_day_point,
+            'delivery_preparation_period_point' => $valueChain->delivery_preparation_period_point,
+            'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point,
+            'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point,
+
+            'system_introduction' => $valueChain->system_introduction_point,
+            'order_through_rate_point' => $valueChain->order_through_rate_point,
+            'number_of_people_in_charge_of_ordering_point' => $valueChain->number_of_people_in_charge_of_ordering_point,
+
+            'thank_you_email_point' => $valueChain->thank_you_email_point,
+            'what_s_included_point' => $valueChain->what_s_included_point,
+            'follow_email_point' => $valueChain->follow_email_point,
+            'order_email_point' => $valueChain->order_email_point,
+            'shipping_email_point' => $valueChain->shipping_email_point,
+            'few_user_complaints_point' => $valueChain->few_user_complaints_point,
+
+            'email_newsletter_point' => $valueChain->email_newsletter_point,
+            're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point,
+            'review_writing_rate_point' => $valueChain->review_writing_rate_point,
+            'review_measures_point' => $valueChain->review_measures_point,
+            'line_official' => $valueChain->line_official_point,
+            'instagram_followers_point' => $valueChain->instagram_followers_point,
+            'ltv_point' => $valueChain->ltv_point,
+        ]);
     }
 }
