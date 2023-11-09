@@ -420,7 +420,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         if (! $totalShop) {
             return 0;
         }
-        dd($mqAccounting);
 
         $averageLtv2yAmnt = $mqAccounting->reduce(
             fn (?int $carry, $item) => $carry + $item->mqCost->ltv_2y_amnt,
