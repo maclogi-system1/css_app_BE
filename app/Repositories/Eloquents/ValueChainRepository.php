@@ -58,6 +58,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ->first();
     }
 
+    public function create(array $data)
+    {
+        $valueChain = $this->model()->fill($data);
+        $valueChain->save();
+
+        return $valueChain->refresh();
+    }
+
     /**
      * Get data for monthly evaluation.
      */
@@ -226,40 +234,60 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     public function handleCreateDefault(string $storeId, array $filters = [])
     {
         $date = Carbon::create(Arr::get($filters, 'current_date'));
-        $ratingPointCategory = $this->getRatingPointCategory($storeId, $filters);
-        $ratingPointProduct = $this->getRatingPointProduct($storeId, $filters);
-        $ratingPointProductUtilizationRate = $this->getProductUtilizationRate($storeId, $filters);
-        $ratingPointCostRate = $this->getRatingPointCostRate($storeId, $filters);
-        $ratingPointLtv2yAmnt = $this->getRatingPointLtv2yAmnt($storeId, $filters);
-        $ratingPointReSalesNumRate = $this->getReSalesNumRate($storeId, $filters);
 
-        $data = [
+        return $this->create([
             'store_id' => $storeId,
             'date' => $date,
-            'number_of_categories_point' => $ratingPointCategory,
-            'number_of_items_point' => $ratingPointProduct,
-            'product_utilization_rate_point' => $ratingPointProductUtilizationRate,
-            'product_cost_rate_point' => $ratingPointCostRate,
 
-            're_sales_num_rate_point' => $ratingPointReSalesNumRate,
-            'ltv_point' => $ratingPointLtv2yAmnt,
-        ];
+            'number_of_categories_point' => $this->getRatingPointCategory($storeId, $filters),
+            'number_of_items_point' => $this->getRatingPointProduct($storeId, $filters),
+            'product_utilization_rate_point' => $this->getProductUtilizationRate($storeId, $filters),
+            'product_cost_rate_point' => $this->getRatingPointCostRate($storeId, $filters),
+            'low_product_reviews_point' => 0,
+            'few_sold_out_items_point' => 0,
 
-        $valueChain = $this->model()->create($data);
+            'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($storeId, $filters),
+            'access_number_point' => 0,
 
-        return $valueChain->refresh();
+            'event_sales_ratio_point' => 0,
+            'sales_ratio_day_endings_0_5_point' => 0,
+            'coupon_effect_point' => 0,
+            'rpp_ad_point' => 0,
+            'coupon_advance_point' => 0,
+            'rgroup_ad_point' => 0,
+            'tda_ad_point' => 0,
+            'sns_ad_point' => 0,
+            'google_access_point' => 0,
+            'instagram_access_point' => 0,
+
+            'shipping_fee_point' => 0,
+            'shipping_ratio_point' => 0,
+            'bundling_ratio_point' => 0,
+            'delivery_on_specified_day_point' => 0,
+            'delivery_preparation_period_point' => 0,
+            'shipping_according_to_the_delivery_date_point' => 0,
+
+            'few_user_complaints_point' => 0,
+
+            'email_newsletter_point' => 0,
+            're_sales_num_rate_point' => $this->getReSalesNumRate($storeId, $filters),
+            'review_writing_rate' => 0,
+            'line_official_point' => 0,
+            'instagram_followers' => 0,
+            'ltv_point' => $this->getRatingPointLtv2yAmnt($storeId, $filters),
+        ]);
     }
 
     /**
      * Get the rating of the category.
      */
-    private function getRatingPointCategory(string $storeId, array $filters = [])
+    public function getRatingPointCategory(string $storeId, array $filters = [])
     {
         $totalCatategoryOfStores = $this->categoryAnalysisService->getTotalCategoryOfStores($filters);
         $totalShop = $totalCatategoryOfStores->count();
 
         if (! $totalShop) {
-            return 1;
+            return 0;
         }
 
         $categoryAverage = $totalCatategoryOfStores->reduce(
@@ -287,13 +315,13 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     /**
      * Get the rating of the product.
      */
-    private function getRatingPointProduct(string $storeId, array $filters = [])
+    public function getRatingPointProduct(string $storeId, array $filters = [])
     {
         $totalProductOfStores = $this->productAnalysisService->getTotalProductOfStores($filters);
         $totalShop = $totalProductOfStores->count();
 
         if (! $totalShop) {
-            return 1;
+            return 0;
         }
 
         $productAverage = $totalProductOfStores->reduce(
@@ -324,7 +352,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $totalShop = $utilizationRateOfStore->count();
 
         if (! $totalShop) {
-            return 1;
+            return 0;
         }
 
         $averageProductUtilizationRate = $utilizationRateOfStore->reduce(
@@ -349,7 +377,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    private function getRatingPointCostRate(string $storeId, array $filters = [])
+    public function getRatingPointCostRate(string $storeId, array $filters = [])
     {
         $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
         $result = $this->mqAccountingService->getList([
@@ -372,7 +400,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    private function getRatingPointLtv2yAmnt(string $storeId, array $filters = [])
+    public function getRatingPointLtv2yAmnt(string $storeId, array $filters = [])
     {
         $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
         $result = $this->mqAccountingService->getList([
@@ -387,7 +415,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $totalShop = $mqAccounting->count();
 
         if (! $totalShop) {
-            return 1;
+            return 0;
         }
         dd($mqAccounting);
 
@@ -413,7 +441,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    private function getReSalesNumRate(string $storeId, array $filters = [])
+    public function getReSalesNumRate(string $storeId, array $filters = [])
     {
         $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
         $mqAccounting = $this->mqAccountingService->getListReSalesNum([
@@ -422,7 +450,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $totalShop = $mqAccounting->count();
 
         if (! $totalShop) {
-            return 1;
+            return 0;
         }
 
         $averageReSalesNum = $mqAccounting->reduce(
@@ -444,6 +472,37 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $reSalesNumRate >= 0 && $reSalesNumRate < $standardDeviation => 3,
             $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
             $reSalesNumRate < -$standardDeviation => 1,
+        };
+    }
+
+    public function getRatingPointProductPageConversionRate(string $storeId, array $filters = [])
+    {
+        $productPageConversionRate = $this->productAnalysisService->getProductConversionRate($filters);
+        $totalShop = $productPageConversionRate->count();
+
+        if (! $totalShop) {
+            return 0;
+        }
+
+        $averageReSalesNum = $productPageConversionRate->reduce(
+            fn (?int $carry, $item) => $carry + $item->conversion_rate,
+            0,
+        ) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($productPageConversionRate as $item) {
+            $standardDeviation += pow($item->conversion_rate - $averageReSalesNum, 2);
+        }
+
+        $standardDeviation = sqrt($standardDeviation / $totalShop);
+        $conversionRate = $productPageConversionRate->where('store_id', $storeId)->first()?->conversion_rate ?? 0;
+
+        return match (true) {
+            $conversionRate >= 2 * $standardDeviation => 5,
+            $conversionRate >= $standardDeviation && $conversionRate < 2 * $standardDeviation => 4,
+            $conversionRate >= 0 && $conversionRate < $standardDeviation => 3,
+            $conversionRate >= -$standardDeviation && $conversionRate <= 0 => 2,
+            $conversionRate < -$standardDeviation => 1,
         };
     }
 

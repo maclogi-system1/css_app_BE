@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function (Request $request) {
+    dd(app(\App\WebServices\AI\ProductAnalysisService::class)->getProductConversionRate(['current_date' => '2023-01']));
     return view('welcome');
 });
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');

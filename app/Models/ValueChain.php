@@ -9,6 +9,20 @@ class ValueChain extends Model
 {
     use HasFactory;
 
+    public const PURCHASE_FORM_VALUES = [
+        5 => '自社製造',
+        3 => 'OEM',
+        1 => '仕入れ',
+    ];
+
+    public const STOCK_VALUE_VALUES = [
+        5 => '売上1ヶ月分',
+        4 => '売上2ヶ月～3ヶ月分',
+        3 => '売上4ヶ月分～5ヶ月分',
+        2 => '売上6か月分～11ヶ月分',
+        1 => '売上1年分以上',
+    ];
+
     public const TOP_PAGE_VALUES = [
         'SNSバナー',
         '商品バナー (SALE訴求)',
@@ -91,15 +105,32 @@ class ValueChain extends Model
         '値引き',
     ];
 
-    public const COUPON_EFFECT_VALUES = [
-        '取得率（取得数／クーポン期間のアクセス数）',
-        'クーポン利用率',
-    ];
-
     public const RPP_AD_OPERATION_VALUES = [
         'キーワード入札',
         '週1以上のチューニング',
         '商品別効果測定と、商品除外などの対応ができているか',
+    ];
+
+    public const GIFT_AVAILABLE_VALUES = [
+        'のし',
+        'ラッピング',
+        'カード',
+    ];
+
+    public const ORDER_THROUGH_RATE_VALUES = [
+        5 => '95%以上',
+        4 => '94%～80％',
+        3 => '79％～50％',
+        2 => '49％～30％',
+        1 => '29％以下',
+    ];
+
+    public const NUMBER_OF_PEOPLE_IN_CHARGE_OF_ORDERING_VALUES = [
+        5 => '300件/人',
+        4 => '200件/人',
+        3 => '100件/人',
+        2 => '50件/人',
+        1 => '49件/人以下',
     ];
 
     public const REVIEW_MEASURES_VALUES = [
@@ -194,10 +225,10 @@ class ValueChain extends Model
         return round($multiplier * count($items), 2) ?: 1.00;
     }
 
-    public function getCouponEffectPointAttribute()
+    public function getGiftAvailablePointAttribute()
     {
-        $items = array_filter(explode(',', $this->coupon_effect));
-        $totalItems = count(static::COUPON_EFFECT_VALUES);
+        $items = array_filter(explode(',', $this->gift_available));
+        $totalItems = count(static::GIFT_AVAILABLE_VALUES);
         $multiplier = 5 / $totalItems;
 
         return round($multiplier * count($items), 2) ?: 1.00;

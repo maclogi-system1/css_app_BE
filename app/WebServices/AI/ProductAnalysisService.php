@@ -1231,4 +1231,22 @@ class ProductAnalysisService extends Service
             )
             ->get();
     }
+
+    public function getProductConversionRate(array $filters = [])
+    {
+        $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
+
+        return DB::kpiTable('items_sales')
+            ->where('date', 'like', "{$currentDate}%")
+            ->select(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as ym"),
+                DB::raw('ROUND(AVG(`conversion_rate`), 2) as conversion_rate'),
+            )
+            ->groupBy(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m')"),
+            )
+            ->get();
+    }
 }
