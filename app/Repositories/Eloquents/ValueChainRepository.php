@@ -235,7 +235,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     {
         $date = Carbon::create(Arr::get($filters, 'current_date'));
 
-        $valueChain = $this->model()->firstOrcreate([
+        $valueChain = $this->model()->firstOrCreate([
             'store_id' => $storeId,
             'date' => $date,
         ], [
