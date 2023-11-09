@@ -235,10 +235,10 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     {
         $date = Carbon::create(Arr::get($filters, 'current_date'));
 
-        return $this->create([
+        $valueChain = $this->model()->firstOrcreate([
             'store_id' => $storeId,
             'date' => $date,
-
+        ], [
             'number_of_categories_point' => $this->getRatingPointCategory($storeId, $filters),
             'number_of_items_point' => $this->getRatingPointProduct($storeId, $filters),
             'product_utilization_rate_point' => $this->getProductUtilizationRate($storeId, $filters),
@@ -276,6 +276,8 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'instagram_followers' => 0,
             'ltv_point' => $this->getRatingPointLtv2yAmnt($storeId, $filters),
         ]);
+
+        return $valueChain->refresh();
     }
 
     /**
@@ -511,6 +513,20 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
      */
     public function chartEvaluate(string $storeId, array $filters = [])
     {
+        $shopResult = $this->shopService->find($storeId);
+        $shop = [];
+        if ($shopResult->get('success')) {
+            $shop = $shopResult->get('data')->get('data');
+        }
+
+        $contractDate = Carbon::create(Arr::get($shop, 'contract_date'));
+
+        $dateRange = $this->getDateTimeRange($contractDate, now(), ['format' => 'Y-m-d']);
+
+        foreach ($dateRange as $yearMonthDay) {
+            $this->handleCreateDefault($storeId, ['current_date' => $yearMonthDay]);
+        }
+
         return $this->getListByStore($storeId, $filters)->map(fn ($valueChain) => [
             'store_id' => $valueChain->store_id,
             'date' => $valueChain->date,
