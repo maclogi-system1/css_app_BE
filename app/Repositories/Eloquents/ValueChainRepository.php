@@ -12,6 +12,7 @@ use App\WebServices\AI\ProductAnalysisService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class ValueChainRepository extends Repository implements ValueChainRepositoryContract
 {
@@ -241,6 +242,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     public function handleCreateDefault(string $storeId, array $filters = [])
     {
         $date = Carbon::create(Arr::get($filters, 'current_date'));
+        $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate($filters);
 
         $valueChain = $this->model()->firstOrCreate([
             'store_id' => $storeId,
@@ -253,8 +255,8 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'low_product_reviews_point' => 0,
             'few_sold_out_items_point' => 0,
 
-            'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($storeId, $filters),
-            'access_number_point' => 0,
+            'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($storeId, $itemsSales),
+            'access_number_point' => $this->getRatingPointProductAccessNum($storeId, $itemsSales),
 
             'event_sales_ratio_point' => 0,
             'sales_ratio_day_endings_0_5_point' => 0,
@@ -299,14 +301,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return 0;
         }
 
-        $categoryAverage = $totalCatategoryOfStores->reduce(
+        $average = $totalCatategoryOfStores->reduce(
             fn (?int $carry, $item) => $carry + $item->total_cate,
             0
         ) / $totalShop;
         $standardDeviation = 0;
 
         foreach ($totalCatategoryOfStores as $item) {
-            $standardDeviation += pow($item->total_cate - $categoryAverage, 2);
+            $standardDeviation += pow($item->total_cate - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
@@ -333,14 +335,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return 0;
         }
 
-        $productAverage = $totalProductOfStores->reduce(
+        $average = $totalProductOfStores->reduce(
             fn (?int $carry, $item) => $carry + $item->total_prod,
             0
         ) / $totalShop;
         $standardDeviation = 0;
 
         foreach ($totalProductOfStores as $item) {
-            $standardDeviation += pow($item->total_prod - $productAverage, 2);
+            $standardDeviation += pow($item->total_prod - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
@@ -364,14 +366,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return 0;
         }
 
-        $averageProductUtilizationRate = $utilizationRateOfStore->reduce(
+        $average = $utilizationRateOfStore->reduce(
             fn (?int $carry, $item) => $carry + $item->utilization_rate,
             0,
         ) / $totalShop;
         $standardDeviation = 0;
 
         foreach ($utilizationRateOfStore as $item) {
-            $standardDeviation += pow($item->utilization_rate - $averageProductUtilizationRate, 2);
+            $standardDeviation += pow($item->utilization_rate - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
@@ -427,14 +429,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return 0;
         }
 
-        $averageLtv2yAmnt = $mqAccounting->reduce(
+        $average = $mqAccounting->reduce(
             fn (?int $carry, $item) => $carry + $item->mqCost->ltv_2y_amnt,
             0,
         ) / $totalShop;
         $standardDeviation = 0;
 
         foreach ($mqAccounting as $item) {
-            $standardDeviation += pow($item->mqCost->ltv_2y_amnt - $averageLtv2yAmnt, 2);
+            $standardDeviation += pow($item->mqCost->ltv_2y_amnt - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
@@ -461,14 +463,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return 0;
         }
 
-        $averageReSalesNum = $mqAccounting->reduce(
+        $average = $mqAccounting->reduce(
             fn (?int $carry, $item) => $carry + $item->re_sales_num_rate,
             0,
         ) / $totalShop;
         $standardDeviation = 0;
 
         foreach ($mqAccounting as $item) {
-            $standardDeviation += pow($item->re_sales_num_rate - $averageReSalesNum, 2);
+            $standardDeviation += pow($item->re_sales_num_rate - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
@@ -483,27 +485,26 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    public function getRatingPointProductPageConversionRate(string $storeId, array $filters = [])
+    public function getRatingPointProductPageConversionRate(string $storeId, Collection $itemsSales)
     {
-        $productPageConversionRate = $this->productAnalysisService->getProductConversionRate($filters);
-        $totalShop = $productPageConversionRate->count();
+        $totalShop = $itemsSales->count();
 
         if (! $totalShop) {
             return 0;
         }
 
-        $averageReSalesNum = $productPageConversionRate->reduce(
+        $average = $itemsSales->reduce(
             fn (?int $carry, $item) => $carry + $item->conversion_rate,
             0,
         ) / $totalShop;
         $standardDeviation = 0;
 
-        foreach ($productPageConversionRate as $item) {
-            $standardDeviation += pow($item->conversion_rate - $averageReSalesNum, 2);
+        foreach ($itemsSales as $item) {
+            $standardDeviation += pow($item->conversion_rate - $average, 2);
         }
 
         $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $conversionRate = $productPageConversionRate->where('store_id', $storeId)->first()?->conversion_rate ?? 0;
+        $conversionRate = $itemsSales->where('store_id', $storeId)->first()?->conversion_rate ?? 0;
 
         return match (true) {
             $conversionRate >= 2 * $standardDeviation => 5,
@@ -511,6 +512,36 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $conversionRate >= 0 && $conversionRate < $standardDeviation => 3,
             $conversionRate >= -$standardDeviation && $conversionRate <= 0 => 2,
             $conversionRate < -$standardDeviation => 1,
+        };
+    }
+
+    public function getRatingPointProductAccessNum(string $storeId, Collection $itemsSales)
+    {
+        $totalShop = $itemsSales->count();
+
+        if (! $totalShop) {
+            return 0;
+        }
+
+        $average = $itemsSales->reduce(
+            fn (?int $carry, $item) => $carry + $item->access_num,
+            0,
+        ) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($itemsSales as $item) {
+            $standardDeviation += pow($item->access_num - $average, 2);
+        }
+
+        $standardDeviation = sqrt($standardDeviation / $totalShop);
+        $accessNum = $itemsSales->where('store_id', $storeId)->first()?->access_num ?? 0;
+
+        return match (true) {
+            $accessNum >= 2 * $standardDeviation => 5,
+            $accessNum >= $standardDeviation && $accessNum < 2 * $standardDeviation => 4,
+            $accessNum >= 0 && $accessNum < $standardDeviation => 3,
+            $accessNum >= -$standardDeviation && $accessNum <= 0 => 2,
+            $accessNum < -$standardDeviation => 1,
         };
     }
 

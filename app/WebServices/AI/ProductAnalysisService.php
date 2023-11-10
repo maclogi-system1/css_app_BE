@@ -1232,7 +1232,7 @@ class ProductAnalysisService extends Service
             ->get();
     }
 
-    public function getProductConversionRate(array $filters = [])
+    public function getProductAccessNumAndConversionRate(array $filters = [])
     {
         $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
 
@@ -1242,6 +1242,7 @@ class ProductAnalysisService extends Service
                 'store_id',
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as ym"),
                 DB::raw('ROUND(AVG(`conversion_rate`), 2) as conversion_rate'),
+                DB::raw('SUM(`access_num`) as access_num'),
             )
             ->groupBy(
                 'store_id',
