@@ -59,7 +59,10 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ->first();
     }
 
-    public function create(array $data)
+    /**
+     * Handle create a new value chain.
+     */
+    public function create(array $data): ?ValueChain
     {
         $valueChain = $this->model()->fill($data);
         $valueChain->save();
@@ -232,6 +235,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         ];
     }
 
+    /**
+     * Handles creating default value chains.
+     */
     public function handleCreateDefault(string $storeId, array $filters = [])
     {
         $date = Carbon::create(Arr::get($filters, 'current_date'));
@@ -513,20 +519,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
      */
     public function chartEvaluate(string $storeId, array $filters = [])
     {
-        $shopResult = $this->shopService->find($storeId);
-        $shop = [];
-        if ($shopResult->get('success')) {
-            $shop = $shopResult->get('data')->get('data');
-        }
-
-        $contractDate = Carbon::create(Arr::get($shop, 'contract_date'));
-
-        $dateRange = $this->getDateTimeRange($contractDate, now(), ['format' => 'Y-m-d']);
-
-        foreach ($dateRange as $yearMonthDay) {
-            $this->handleCreateDefault($storeId, ['current_date' => $yearMonthDay]);
-        }
-
         return $this->getListByStore($storeId, $filters)->map(fn ($valueChain) => [
             'store_id' => $valueChain->store_id,
             'date' => Carbon::create($valueChain->date)->format('Y/m'),

@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Console\Commands\CreateMqSheetDefault;
 use App\Console\Commands\ExecuteScheduledMacros;
+use App\Jobs\CreateDefaultValueChains;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -16,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command(ExecuteScheduledMacros::class)->everyMinute();
         $schedule->command(CreateMqSheetDefault::class)->daily();
+        $schedule->command(CreateDefaultValueChains::class)->dailyAt('05:00');
     }
 
     /**
