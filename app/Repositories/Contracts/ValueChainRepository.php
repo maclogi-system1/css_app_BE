@@ -17,6 +17,16 @@ interface ValueChainRepository extends Repository
     public function getDetailByStore(string $storeId, array $filters = []): ?ValueChain;
 
     /**
+     * Handle create a new value chain.
+     */
+    public function create(array $data): ?ValueChain;
+
+    /**
+     * Handles creating default value chains.
+     */
+    public function handleCreateDefault(string $storeId, array $filters = []);
+
+    /**
      * Get data for monthly evaluation.
      */
     public function monthlyEvaluation(string $storeId, array $filters = []);
