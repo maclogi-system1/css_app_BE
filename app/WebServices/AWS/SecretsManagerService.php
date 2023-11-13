@@ -2,8 +2,12 @@
 
 namespace App\WebServices\AWS;
 
+use App\Constants\DatabaseConnectionConstant;
 use Aws\Exception\AwsException;
+use Aws\SecretsManager\SecretsManagerClient;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 class SecretsManagerService
 {
@@ -60,6 +64,41 @@ class SecretsManagerService
 
     public static function getClient()
     {
-        return app('aws')->createClient('secretsManager');
+        return new SecretsManagerClient(config('aws'));
+    }
+
+    public static function tryToConnect()
+    {
+        static::getAndSetConnectionConfiguration();
+        static::checkAndTryToConnect();
+    }
+
+    public static function getAndSetConnectionConfiguration()
+    {
+        $password = static::getPasswordCache();
+        $connections = DatabaseConnectionConstant::EXTERNAL_CONNECTIONS;
+        if (app()->environment('production')) {
+            $connections[config('database.default')] = config('database.default');
+        }
+
+        foreach ($connections as $connectionName) {
+            Config::set("database.connections.{$connectionName}.password", $password);
+            DB::purge($connectionName);
+            DB::reconnect($connectionName);
+        }
+    }
+
+    public static function checkAndTryToConnect()
+    {
+        try {
+            DB::connection(DatabaseConnectionConstant::KPI_CONNECTION)->getPdo();
+        } catch (\Throwable $e) {
+            if (DatabaseConnectionConstant::reconnectable($e)) {
+                cache()->forget('aws_secret_password');
+                static::getAndSetConnectionConfiguration();
+            } else {
+                throw $e;
+            }
+        }
     }
 }
