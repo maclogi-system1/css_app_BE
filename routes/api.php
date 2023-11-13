@@ -33,19 +33,16 @@ Route::any('/test', fn (\Illuminate\Http\Request $request) => [
     'body' => $request->all(),
 ]);
 
-Route::middleware(['dynamic_connection'])->group(function () {
-    Route::post('/login', [LoginController::class, 'login'])->name('login');
-    Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
-        ->name('send-password-reset-link');
-    Route::post('/password-reset-token', [PasswordController::class, 'getPasswordResetToken'])
-        ->name('password-reset-token');
-    Route::post('/reset-password', [PasswordController::class, 'reset'])
-        ->name('reset-password');
-});
+Route::post('/login', [LoginController::class, 'login'])->name('login');
+Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
+    ->name('send-password-reset-link');
+Route::post('/password-reset-token', [PasswordController::class, 'getPasswordResetToken'])
+    ->name('password-reset-token');
+Route::post('/reset-password', [PasswordController::class, 'reset'])
+    ->name('reset-password');
 
 Route::middleware([
     'auth:sanctum',
-    'dynamic_connection',
     'check_shop_permission_by_store_id_parameter',
 ])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
