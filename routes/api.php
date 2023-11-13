@@ -29,10 +29,11 @@ use App\Http\Controllers\Api\UserSettingController;
 use App\Http\Controllers\Api\ValueChainController;
 use Illuminate\Support\Facades\Route;
 
-Route::any('/test', fn(\Illuminate\Http\Request $request) => [
+Route::any('/test', fn (\Illuminate\Http\Request $request) => [
     'headers' => $request->header(),
     'body' => $request->all(),
 ]);
+
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/send-password-reset-link', [PasswordController::class, 'sendPasswordResetLink'])
     ->name('send-password-reset-link');
@@ -43,7 +44,6 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
 
 Route::middleware([
     'auth:sanctum',
-    // 'dynamic_connection',
     'check_shop_permission_by_store_id_parameter',
 ])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
