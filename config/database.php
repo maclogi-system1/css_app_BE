@@ -1,6 +1,7 @@
 <?php
 
 use App\Constants\DatabaseConnectionConstant;
+use App\WebServices\AWS\SecretsManagerService;
 use Illuminate\Support\Str;
 
 return [
@@ -51,7 +52,7 @@ return [
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'password' => env('APP_ENV') == 'production' ? SecretsManagerService::getPassword() : env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
@@ -101,7 +102,7 @@ return [
             'port' => env('AI_DB_PORT', '3306'),
             'database' => env('AI_DB_KPI_DATABASE', 'forge'),
             'username' => env('AI_DB_USERNAME', 'forge'),
-            'password' => env('AI_DB_PASSWORD', ''),
+            'password' => SecretsManagerService::getPassword(),
             'unix_socket' => env('AI_DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
@@ -121,7 +122,7 @@ return [
             'port' => env('AI_DB_PORT', '3306'),
             'database' => env('AI_DB_POLICY_DATABASE', 'forge'),
             'username' => env('AI_DB_USERNAME', 'forge'),
-            'password' => env('AI_DB_PASSWORD', ''),
+            'password' => SecretsManagerService::getPassword(),
             'unix_socket' => env('AI_DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
@@ -141,7 +142,7 @@ return [
             'port' => env('AI_DB_PORT', '3306'),
             'database' => env('AI_DB_INFERENCE_DATABASE', 'inference'),
             'username' => env('AI_DB_USERNAME', 'forge'),
-            'password' => env('AI_DB_PASSWORD', ''),
+            'password' => SecretsManagerService::getPassword(),
             'unix_socket' => env('AI_DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',

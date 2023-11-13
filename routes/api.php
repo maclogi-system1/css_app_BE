@@ -43,7 +43,7 @@ Route::post('/reset-password', [PasswordController::class, 'reset'])
 
 Route::middleware([
     'auth:sanctum',
-    'dynamic_connection',
+    // 'dynamic_connection',
     'check_shop_permission_by_store_id_parameter',
 ])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

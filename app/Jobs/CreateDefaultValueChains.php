@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Repositories\Contracts\ValueChainRepository;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -42,8 +41,12 @@ class CreateDefaultValueChains implements ShouldQueue
         $toDate = $this->date ?? now();
         $dateRange = $valueChainRepository->getDateTimeRange($fromDate, $toDate, ['format' => 'Y-m-d']);
 
+        logger('Create value chains for shop: '.json_encode($this->shop));
+
         foreach ($dateRange as $yearMonthDay) {
             $valueChainRepository->handleCreateDefault($storeId, ['current_date' => $yearMonthDay]);
+
+            logger("Value chain [{$storeId} - {$yearMonthDay}] has been created.");
         }
     }
 }
