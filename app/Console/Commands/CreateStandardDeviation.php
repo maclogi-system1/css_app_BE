@@ -30,6 +30,8 @@ class CreateStandardDeviation extends Command
     {
         $date = $this->option('year-month');
 
+        logger("Create standard deviation [{$date}]");
         CreateStandardDeviationJob::dispatch($date);
+        logger('Standard deviation has been created.');
     }
 }
