@@ -17,7 +17,7 @@ class RgroupAdService extends Service
             ->when($storeId, function ($query, $storeId) {
                 $query->where('store_id', $storeId);
             })
-            ->where('date', 'like', "{$currentDate}%")
+            ->whereBetween('date', ["{$currentDate}-01", "{$currentDate}-31"])
             ->join('rgroup_ad_sales_amnt as rsa', 'rsa.sales_amnt_id', '=', 'ra.sales_amnt_id')
             ->select(
                 'store_id',
