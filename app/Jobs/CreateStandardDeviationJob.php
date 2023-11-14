@@ -29,8 +29,12 @@ class CreateStandardDeviationJob implements ShouldQueue
     {
         $date = $this->yearMonth ?? now()->subMonth()->format('Y-m');
 
+        logger("Create standard deviation [{$date}]");
+
         $standardDeviationRepository->firstOrCreate([
             'date' => $date,
         ]);
+
+        logger('Standard deviation has been created.');
     }
 }
