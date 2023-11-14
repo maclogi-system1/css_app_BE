@@ -447,9 +447,13 @@ class CategoryAnalysisService extends Service
      */
     public function getTotalCategoryOfStores(array $filters = [])
     {
+        $storeId = Arr::get($filters, 'store_id');
         $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
 
         return DB::kpiTable('items_data')
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
             ->where('catalog_id', '!=', '')
             ->whereNotNull('catalog_id')
             ->where('date', 'like', "{$currentDate}%")

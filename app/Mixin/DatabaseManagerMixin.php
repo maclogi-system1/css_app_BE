@@ -17,4 +17,10 @@ class DatabaseManagerMixin
         return fn ($table, $as = null) => $this->connection(DatabaseConnectionConstant::KPI_CONNECTION)
             ->table($table, $as);
     }
+
+    public function policyTable(): Closure
+    {
+        return fn ($table, $as = null) => $this->connection(DatabaseConnectionConstant::POLICY_CONNECTION)
+            ->table($table, $as);
+    }
 }

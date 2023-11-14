@@ -2,17 +2,19 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Models\StandardDeviation;
 use App\Models\ValueChain;
+use App\Repositories\Contracts\StandardDeviationRepository;
 use App\Repositories\Contracts\ValueChainRepository as ValueChainRepositoryContract;
 use App\Repositories\Repository;
 use App\Support\Traits\HasMqDateTimeHandler;
 use App\WebServices\AI\CategoryAnalysisService;
 use App\WebServices\AI\MqAccountingService;
+use App\WebServices\AI\PolicyR2Service;
 use App\WebServices\AI\ProductAnalysisService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 class ValueChainRepository extends Repository implements ValueChainRepositoryContract
 {
@@ -23,6 +25,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         protected ProductAnalysisService $productAnalysisService,
         protected MqAccountingService $mqAccountingService,
         protected ShopService $shopService,
+        protected PolicyR2Service $policyR2Service,
     ) {
     }
 
@@ -241,27 +244,39 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
      */
     public function handleCreateDefault(string $storeId, array $filters = [])
     {
-        $date = Carbon::create(Arr::get($filters, 'current_date'));
-        $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate($filters);
+        $date = Carbon::create(Arr::get($filters, 'current_date', now()->subMonth()->format('Y-m')));
+
+        if ($date->equalTo(now())) {
+            return;
+        }
+
+        $filters['store_id'] = $storeId;
+        $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate($filters)->first();
+
+        /** @var \App\Repositories\Contracts\StandardDeviationRepository */
+        $standardDeviationRepository = app(StandardDeviationRepository::class);
+        $standardDeviation = $standardDeviationRepository->firstOrCreate([
+            'date' => $date->format('Y-m'),
+        ]);
 
         $valueChain = $this->model()->firstOrCreate([
             'store_id' => $storeId,
             'date' => $date,
         ], [
-            'number_of_categories_point' => $this->getRatingPointCategory($storeId, $filters),
-            'number_of_items_point' => $this->getRatingPointProduct($storeId, $filters),
-            'product_utilization_rate_point' => $this->getProductUtilizationRate($storeId, $filters),
+            'number_of_categories_point' => $this->getRatingPointCategory($standardDeviation, $filters),
+            'number_of_items_point' => $this->getRatingPointProduct($standardDeviation, $filters),
+            'product_utilization_rate_point' => $this->getProductUtilizationRate($standardDeviation, $filters),
             'product_cost_rate_point' => $this->getRatingPointCostRate($storeId, $filters),
             'low_product_reviews_point' => 0,
             'few_sold_out_items_point' => 0,
 
-            'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($storeId, $itemsSales),
-            'access_number_point' => $this->getRatingPointProductAccessNum($storeId, $itemsSales),
+            'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($standardDeviation, $itemsSales),
+            'access_number_point' => $this->getRatingPointProductAccessNum($standardDeviation, $itemsSales),
 
-            'event_sales_ratio_point' => 0,
-            'sales_ratio_day_endings_0_5_point' => 0,
+            'event_sales_ratio_point' => $this->getRattingPointEventSalesRatio($standardDeviation, $filters),
+            'sales_ratio_day_endings_0_5_point' => $this->getRattingPointEventSalesRatio($standardDeviation, $filters + ['endings_0_5' => true]),
             'coupon_effect_point' => 0,
-            'rpp_ad_point' => 0,
+            'rpp_ad_point' => $this->getRattingPointRppAd($standardDeviation, $filters),
             'coupon_advance_point' => 0,
             'rgroup_ad_point' => 0,
             'tda_ad_point' => 0,
@@ -292,29 +307,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     /**
      * Get the rating of the category.
      */
-    public function getRatingPointCategory(string $storeId, array $filters = [])
+    public function getRatingPointCategory(StandardDeviation $standardDeviation, array $filters = [])
     {
-        $totalCatategoryOfStores = $this->categoryAnalysisService->getTotalCategoryOfStores($filters);
-        $totalShop = $totalCatategoryOfStores->count();
+        $totalCategoryOfAStore = $this->categoryAnalysisService->getTotalCategoryOfStores($filters);
+        $standardDeviation = $standardDeviation?->number_of_categories;
 
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $totalCatategoryOfStores->reduce(
-            fn (?int $carry, $item) => $carry + $item->total_cate,
-            0
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($totalCatategoryOfStores as $item) {
-            $standardDeviation += pow($item->total_cate - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $totalCategoryOfAStore = $totalCatategoryOfStores->where('store_id', $storeId)->first()?->total_cate;
-
-        return match (true) {
+        return is_null($standardDeviation) ? 0 : match (true) {
             $totalCategoryOfAStore >= 2 * $standardDeviation => 5,
             $totalCategoryOfAStore >= $standardDeviation && $totalCategoryOfAStore < 2 * $standardDeviation => 4,
             $totalCategoryOfAStore >= 0 && $totalCategoryOfAStore < $standardDeviation => 3,
@@ -326,29 +324,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     /**
      * Get the rating of the product.
      */
-    public function getRatingPointProduct(string $storeId, array $filters = [])
+    public function getRatingPointProduct(StandardDeviation $standardDeviation, array $filters = [])
     {
-        $totalProductOfStores = $this->productAnalysisService->getTotalProductOfStores($filters);
-        $totalShop = $totalProductOfStores->count();
+        $totalProductOfAStore = $this->productAnalysisService->getTotalProductOfStores($filters);
+        $standardDeviation = $standardDeviation?->number_of_items;
 
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $totalProductOfStores->reduce(
-            fn (?int $carry, $item) => $carry + $item->total_prod,
-            0
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($totalProductOfStores as $item) {
-            $standardDeviation += pow($item->total_prod - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $totalProductOfAStore = $totalProductOfStores->where('store_id', $storeId)->first()?->total_prod;
-
-        return match (true) {
+        return is_null($standardDeviation) ? 0 : match (true) {
             $totalProductOfAStore >= 2 * $standardDeviation => 5,
             $totalProductOfAStore >= $standardDeviation && $totalProductOfAStore < 2 * $standardDeviation => 4,
             $totalProductOfAStore >= 0 && $totalProductOfAStore < $standardDeviation => 3,
@@ -357,29 +338,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
-    public function getProductUtilizationRate(string $storeId, array $filters = [])
+    public function getProductUtilizationRate(StandardDeviation $standardDeviation, array $filters = [])
     {
-        $utilizationRateOfStore = $this->productAnalysisService->getUtilizationRate($filters);
-        $totalShop = $utilizationRateOfStore->count();
+        $utilizationRateOfAStore = $this->productAnalysisService->getUtilizationRate($filters);
+        $standardDeviation = $standardDeviation?->product_utilization_rate;
 
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $utilizationRateOfStore->reduce(
-            fn (?int $carry, $item) => $carry + $item->utilization_rate,
-            0,
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($utilizationRateOfStore as $item) {
-            $standardDeviation += pow($item->utilization_rate - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $utilizationRateOfAStore = $utilizationRateOfStore->where('store_id', $storeId)->first()?->utilization_rate;
-
-        return match (true) {
+        return is_null($standardDeviation) ? 0 : match (true) {
             $utilizationRateOfAStore >= 2 * $standardDeviation => 5,
             $utilizationRateOfAStore >= $standardDeviation && $utilizationRateOfAStore < 2 * $standardDeviation => 4,
             $utilizationRateOfAStore >= 0 && $utilizationRateOfAStore < $standardDeviation => 3,
@@ -408,6 +372,91 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $costRate > 40 && $costRate <= 50 => 3,
             $costRate > 50 && $costRate <= 70 => 2,
             $costRate > 70 => 1,
+        };
+    }
+
+    public function getRatingPointProductPageConversionRate(StandardDeviation $standardDeviation, $itemsSales)
+    {
+        $standardDeviation = $standardDeviation?->product_page_conversion_rate;
+        $conversionRate = $itemsSales?->conversion_rate ?? 0;
+
+        return is_null($standardDeviation) ? 0 : match (true) {
+            $conversionRate >= 2 * $standardDeviation => 5,
+            $conversionRate >= $standardDeviation && $conversionRate < 2 * $standardDeviation => 4,
+            $conversionRate >= 0 && $conversionRate < $standardDeviation => 3,
+            $conversionRate >= -$standardDeviation && $conversionRate <= 0 => 2,
+            $conversionRate < -$standardDeviation => 1,
+        };
+    }
+
+    public function getRatingPointProductAccessNum(StandardDeviation $standardDeviation, $itemsSales)
+    {
+        $standardDeviation = $standardDeviation?->access_number;
+        $accessNum = $itemsSales?->access_num ?? 0;
+
+        return is_null($standardDeviation) ? 0 : match (true) {
+            $accessNum >= 2 * $standardDeviation => 5,
+            $accessNum >= $standardDeviation && $accessNum < 2 * $standardDeviation => 4,
+            $accessNum >= 0 && $accessNum < $standardDeviation => 3,
+            $accessNum >= -$standardDeviation && $accessNum <= 0 => 2,
+            $accessNum < -$standardDeviation => 1,
+        };
+    }
+
+    public function getRattingPointEventSalesRatio(StandardDeviation $standardDeviation, array $filters = [])
+    {
+        $endings05 = Arr::get($filters, 'endings_0_5');
+        $standardDeviation = $endings05
+            ? $standardDeviation?->sales_ratio_day_endings_0_5
+            : $standardDeviation?->event_sales_ratio;
+        $salesAmnt = $this->policyR2Service->getListEventTimePeriods($filters);
+
+        return is_null($standardDeviation) ? 0 : match (true) {
+            $salesAmnt >= 2 * $standardDeviation => 5,
+            $salesAmnt >= $standardDeviation && $salesAmnt < 2 * $standardDeviation => 4,
+            $salesAmnt >= 0 && $salesAmnt < $standardDeviation => 3,
+            $salesAmnt >= -$standardDeviation && $salesAmnt <= 0 => 2,
+            $salesAmnt < -$standardDeviation => 1,
+        };
+    }
+
+    public function getRattingPointRppAd(StandardDeviation $standardDeviation, array $filters = [])
+    {
+        $standardDeviation = $standardDeviation->rpp_ad;
+        // $rppAd =
+    }
+
+    public function getReSalesNumRate(string $storeId, array $filters = [])
+    {
+        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
+        $mqAccounting = $this->mqAccountingService->getListReSalesNum([
+            'year_month' => $currentDate,
+        ]);
+        $totalShop = $mqAccounting->count();
+
+        if (! $totalShop) {
+            return 0;
+        }
+
+        $average = $mqAccounting->reduce(
+            fn (?int $carry, $item) => $carry + $item->re_sales_num_rate,
+            0,
+        ) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($mqAccounting as $item) {
+            $standardDeviation += pow($item->re_sales_num_rate - $average, 2);
+        }
+
+        $standardDeviation = sqrt($standardDeviation / $totalShop);
+        $reSalesNumRate = $mqAccounting->where('store_id', $storeId)->first()?->re_sales_num_rate ?? 0;
+
+        return match (true) {
+            $reSalesNumRate >= 2 * $standardDeviation => 5,
+            $reSalesNumRate >= $standardDeviation && $reSalesNumRate < 2 * $standardDeviation => 4,
+            $reSalesNumRate >= 0 && $reSalesNumRate < $standardDeviation => 3,
+            $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
+            $reSalesNumRate < -$standardDeviation => 1,
         };
     }
 
@@ -448,100 +497,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $ltv2yAmnt >= 0 && $ltv2yAmnt < $standardDeviation => 3,
             $ltv2yAmnt >= -$standardDeviation && $ltv2yAmnt <= 0 => 2,
             $ltv2yAmnt < -$standardDeviation => 1,
-        };
-    }
-
-    public function getReSalesNumRate(string $storeId, array $filters = [])
-    {
-        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
-        $mqAccounting = $this->mqAccountingService->getListReSalesNum([
-            'year_month' => $currentDate,
-        ]);
-        $totalShop = $mqAccounting->count();
-
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $mqAccounting->reduce(
-            fn (?int $carry, $item) => $carry + $item->re_sales_num_rate,
-            0,
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($mqAccounting as $item) {
-            $standardDeviation += pow($item->re_sales_num_rate - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $reSalesNumRate = $mqAccounting->where('store_id', $storeId)->first()?->re_sales_num_rate ?? 0;
-
-        return match (true) {
-            $reSalesNumRate >= 2 * $standardDeviation => 5,
-            $reSalesNumRate >= $standardDeviation && $reSalesNumRate < 2 * $standardDeviation => 4,
-            $reSalesNumRate >= 0 && $reSalesNumRate < $standardDeviation => 3,
-            $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
-            $reSalesNumRate < -$standardDeviation => 1,
-        };
-    }
-
-    public function getRatingPointProductPageConversionRate(string $storeId, Collection $itemsSales)
-    {
-        $totalShop = $itemsSales->count();
-
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $itemsSales->reduce(
-            fn (?int $carry, $item) => $carry + $item->conversion_rate,
-            0,
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($itemsSales as $item) {
-            $standardDeviation += pow($item->conversion_rate - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $conversionRate = $itemsSales->where('store_id', $storeId)->first()?->conversion_rate ?? 0;
-
-        return match (true) {
-            $conversionRate >= 2 * $standardDeviation => 5,
-            $conversionRate >= $standardDeviation && $conversionRate < 2 * $standardDeviation => 4,
-            $conversionRate >= 0 && $conversionRate < $standardDeviation => 3,
-            $conversionRate >= -$standardDeviation && $conversionRate <= 0 => 2,
-            $conversionRate < -$standardDeviation => 1,
-        };
-    }
-
-    public function getRatingPointProductAccessNum(string $storeId, Collection $itemsSales)
-    {
-        $totalShop = $itemsSales->count();
-
-        if (! $totalShop) {
-            return 0;
-        }
-
-        $average = $itemsSales->reduce(
-            fn (?int $carry, $item) => $carry + $item->access_num,
-            0,
-        ) / $totalShop;
-        $standardDeviation = 0;
-
-        foreach ($itemsSales as $item) {
-            $standardDeviation += pow($item->access_num - $average, 2);
-        }
-
-        $standardDeviation = sqrt($standardDeviation / $totalShop);
-        $accessNum = $itemsSales->where('store_id', $storeId)->first()?->access_num ?? 0;
-
-        return match (true) {
-            $accessNum >= 2 * $standardDeviation => 5,
-            $accessNum >= $standardDeviation && $accessNum < 2 * $standardDeviation => 4,
-            $accessNum >= 0 && $accessNum < $standardDeviation => 3,
-            $accessNum >= -$standardDeviation && $accessNum <= 0 => 2,
-            $accessNum < -$standardDeviation => 1,
         };
     }
 
