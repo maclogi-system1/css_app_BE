@@ -298,4 +298,24 @@ class AccessSourceService extends Service
             ]),
         ]);
     }
+
+    public function getTotalAccessGoogleAndInstagram(array $filters = [])
+    {
+        $storeId = Arr::get($filters, 'store_id');
+        $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
+
+        return DB::kpiTable('access_source')
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
+            ->where('date', 'like', "{$currentDate}%")
+            ->select(
+                'store_id',
+                DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as ym"),
+                DB::raw('SUM(google) as google'),
+                DB::raw('SUM(instagram) as instagram'),
+            )
+            ->groupBy('store_id', DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m')"))
+            ->get();
+    }
 }

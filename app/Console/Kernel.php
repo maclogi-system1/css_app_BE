@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Console\Commands\CreateDefaultValueChainsForShops;
 use App\Console\Commands\CreateMqSheetDefault;
+use App\Console\Commands\CreateStandardDeviation;
 use App\Console\Commands\ExecuteScheduledMacros;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -17,7 +18,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command(ExecuteScheduledMacros::class)->everyMinute();
         $schedule->command(CreateMqSheetDefault::class)->daily();
-        $schedule->command(CreateDefaultValueChainsForShops::class)->dailyAt('05:00');
+        $schedule->command(CreateDefaultValueChainsForShops::class)->cron('0 5 3 * *');
+        $schedule->command(CreateStandardDeviation::class)->cron('0 5 1 * *');
     }
 
     /**

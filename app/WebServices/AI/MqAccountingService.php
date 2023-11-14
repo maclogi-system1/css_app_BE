@@ -25,10 +25,10 @@ class MqAccountingService extends Service
 
         $mqAccountings = MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->when($yearMonth, function ($query, $yearMonth) {
-                [$year, $month] = explode('-', $yearMonth);
+                $yearMonth = Carbon::createFromFormat('Y-m', $yearMonth);
                 $query->where([
-                    'year' => $year,
-                    'month' => $month,
+                    'year' => $yearMonth->year,
+                    'month' => $yearMonth->month,
                 ]);
             })
             ->when($storeId, function ($query, $storeId) {
@@ -482,6 +482,7 @@ class MqAccountingService extends Service
     public function getListReSalesNum(array $filters = [])
     {
         $yearMonth = Arr::get($filters, 'year_month');
+        $storeId = Arr::get($filters, 'store_id');
 
         return MqAccounting::join(
             'mq_user_trends as mut',
@@ -495,6 +496,9 @@ class MqAccountingService extends Service
                     'year' => $year,
                     'month' => $month,
                 ]);
+            })
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
             })
             ->select(
                 'store_id',

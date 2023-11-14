@@ -56,6 +56,8 @@ return new class extends Migration
             $table->string('implementation_of_measures')->nullable()
                 ->comment('5 values, each value corresponds to 1 points');
             $table->decimal('coupon_effect_point', 3)->default(0);
+
+            // 広告 | Advertisement
             $table->decimal('rpp_ad_point', 3)->default(0);
             $table->string('rpp_ad_operation')->nullable()
                 ->comment('Depends on rpp_ad_operation field. 3 values, each value corresponds to 1.66 points');
@@ -66,7 +68,7 @@ return new class extends Migration
             $table->decimal('google_access_point', 3)->default(0);
             $table->decimal('instagram_access_point', 3)->default(0);
 
-            // 広告 | Advertisement
+            // 物流 | Logistics
             $table->decimal('compatible_point', 3)->default(0);
             $table->decimal('shipping_fee_point', 3)->default(0);
             $table->decimal('shipping_ratio_point', 3)->default(0);

@@ -38,7 +38,7 @@ class CreateDefaultValueChains implements ShouldQueue
         /** @var \App\Repositories\Contracts\ValueChainRepository */
         $valueChainRepository = app(ValueChainRepository::class);
         $fromDate = Carbon::create(Arr::get($this->shop, 'contract_date'));
-        $toDate = $this->date ?? now();
+        $toDate = $this->date ?? now()->subMonth();
         $dateRange = $valueChainRepository->getDateTimeRange($fromDate, $toDate, ['format' => 'Y-m-d']);
 
         logger('Create value chains for shop: '.json_encode($this->shop));
