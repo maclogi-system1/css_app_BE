@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Jobs\CreateStandardDeviationJob;
-use App\Repositories\Contracts\StandardDeviationRepository;
 use Illuminate\Console\Command;
 
 class CreateStandardDeviation extends Command
@@ -30,8 +29,6 @@ class CreateStandardDeviation extends Command
     {
         $date = $this->option('year-month');
 
-        logger("Create standard deviation [{$date}]");
         CreateStandardDeviationJob::dispatch($date);
-        logger('Standard deviation has been created.');
     }
 }
