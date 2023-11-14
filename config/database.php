@@ -52,7 +52,7 @@ return [
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('APP_ENV') == 'production' ? SecretsManagerService::getPassword() : env('DB_PASSWORD', ''),
+            'password' => env('APP_ENV') == 'local' ? env('DB_PASSWORD', '') : SecretsManagerService::getPassword(),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
