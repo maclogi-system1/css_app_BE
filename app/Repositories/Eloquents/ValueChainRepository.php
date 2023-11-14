@@ -293,11 +293,11 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
 
             'few_user_complaints_point' => 0,
 
-            'email_newsletter_point' => 0,
+            'email_newsletter_point' => $this->getEmailNewsletterPoint($storeId, $filters),
             're_sales_num_rate_point' => $this->getReSalesNumRate($storeId, $filters),
             'review_writing_rate' => 0,
-            'line_official_point' => 0,
-            'instagram_followers' => 0,
+            'line_official_point' => $this->lineOfficial($storeId, $filters),
+            'instagram_followers' => $this->getInstagramFlow($storeId, $filters),
             'ltv_point' => $this->getRatingPointLtv2yAmnt($storeId, $filters),
         ]);
 
@@ -584,5 +584,38 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 + $valueChain->ltv_point
             ) / 7, 2),
         ]);
+    }
+
+    public function getEmailNewsletterPoint(string $storeId, array $filters): int
+    {
+        return 0;
+    }
+
+    public function getInstagramFlow(string $storeId, array $filters)
+    {
+        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
+        $result = $this->mqAccountingService->getList([
+            'store_id' => $storeId,
+            'year_month' => $currentDate,
+        ]);
+
+        $instagramFlowNum = 0;
+
+        if ($result->get('success')) {
+            $mqAccounting = $result->get('data')->first();
+            $instagramFlowNum = $mqAccounting?->mqAccessNum?->instagram_flow_num ?? 0;
+        }
+
+        return match (true) {
+            $instagramFlowNum >= 30000 => 5,
+            10000 <= $instagramFlowNum && $instagramFlowNum <= 29999 => 4,
+            5000 <= $instagramFlowNum && $instagramFlowNum <= 9999 => 3,
+            1000 <= $instagramFlowNum && $instagramFlowNum <= 4999 => 2,
+            $instagramFlowNum < 1000 => 1,
+        };
+    }
+
+    public function lineOfficial(string $storeId, array $filters)
+    {
     }
 }

@@ -25,10 +25,10 @@ class MqAccountingService extends Service
 
         $mqAccountings = MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->when($yearMonth, function ($query, $yearMonth) {
-                [$year, $month] = explode('-', $yearMonth);
+                $yearMonth = Carbon::createFromFormat('Y-m', $yearMonth);
                 $query->where([
-                    'year' => $year,
-                    'month' => $month,
+                    'year' => $yearMonth->year,
+                    'month' => $yearMonth->month,
                 ]);
             })
             ->when($storeId, function ($query, $storeId) {
