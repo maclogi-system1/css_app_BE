@@ -31,7 +31,7 @@ class CreateStandardDeviation extends Command
         $date = now()->subMonth();
 
         $standardDeviationRepository->firstOrCreate([
-            'date' => $date,
+            'date' => $date->format('Y-m'),
         ]);
     }
 }
