@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\CreateStandardDeviationJob;
 use App\Repositories\Contracts\StandardDeviationRepository;
 use Illuminate\Console\Command;
 
@@ -12,7 +13,8 @@ class CreateStandardDeviation extends Command
      *
      * @var string
      */
-    protected $signature = 'app:create-standard-deviation';
+    protected $signature = 'app:create-standard-deviation
+        {--year-month= : YYYY-MM}';
 
     /**
      * The console command description.
@@ -26,12 +28,8 @@ class CreateStandardDeviation extends Command
      */
     public function handle()
     {
-        /** @var \App\Repositories\Contracts\StandardDeviationRepository */
-        $standardDeviationRepository = app(StandardDeviationRepository::class);
-        $date = now()->subMonth();
+        $date = $this->option('year-month');
 
-        $standardDeviationRepository->firstOrCreate([
-            'date' => $date->format('Y-m'),
-        ]);
+        CreateStandardDeviationJob::dispatch($date);
     }
 }
