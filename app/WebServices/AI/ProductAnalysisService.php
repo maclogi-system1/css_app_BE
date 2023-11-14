@@ -1187,9 +1187,13 @@ class ProductAnalysisService extends Service
      */
     public function getTotalProductOfStores(array $filters = [])
     {
+        $storeId = Arr::get($filters, 'store_id');
         $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
 
         return DB::kpiTable('items_data')
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
             ->where('item_id', '!=', '')
             ->where('date', 'like', "{$currentDate}%")
             ->select(
@@ -1205,8 +1209,12 @@ class ProductAnalysisService extends Service
 
     public function getUtilizationRate(array $filters = [])
     {
+        $storeId = Arr::get($filters, 'store_id');
         $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
         $registered = DB::kpiTable('items_data', 'id')
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
             ->where('item_id', '!=', '')
             ->where('date', 'like', "{$currentDate}%")
             ->select(
@@ -1232,16 +1240,21 @@ class ProductAnalysisService extends Service
             ->get();
     }
 
-    public function getProductConversionRate(array $filters = [])
+    public function getProductAccessNumAndConversionRate(array $filters = [])
     {
+        $storeId = Arr::get($filters, 'store_id');
         $currentDate = str_replace('-', '', Arr::get($filters, 'current_date', now()->format('Y-m')));
 
         return DB::kpiTable('items_sales')
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            })
             ->where('date', 'like', "{$currentDate}%")
             ->select(
                 'store_id',
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as ym"),
                 DB::raw('ROUND(AVG(`conversion_rate`), 2) as conversion_rate'),
+                DB::raw('SUM(`access_num`) as access_num'),
             )
             ->groupBy(
                 'store_id',
