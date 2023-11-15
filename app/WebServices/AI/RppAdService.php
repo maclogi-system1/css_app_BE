@@ -17,7 +17,7 @@ class RppAdService extends Service
             ->when($storeId, function ($query, $storeId) {
                 $query->where('store_id', $storeId);
             })
-            ->where('date', 'like', "{$currentDate}%")
+            ->whereBetween('date', ["{$currentDate}-01", "{$currentDate}-31"])
             ->join('rpp_roas as rr', 'rr.rpp_roas_id', '=', 'ra.rpp_roas_id')
             ->join('rpp_cvr_rate as rc', 'rc.rpp_cvr_rate_id', '=', 'ra.rpp_cvr_rate_id')
             ->join('rpp_price_per_order as ro', 'ro.rpp_price_per_order_id', '=', 'ra.rpp_price_per_order_id')

@@ -17,7 +17,7 @@ class AdPurchaseHistoryService extends Service
             ->when($storeId, function ($query, $storeId) {
                 $query->where('store_id', $storeId);
             })
-            ->where('date', "{$currentDate}%")
+            ->whereBetween('date', ["{$currentDate}-01", "{$currentDate}-31"])
             ->select(
                 'store_id',
                 'coupon_advance_ad',

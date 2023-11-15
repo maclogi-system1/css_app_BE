@@ -456,7 +456,7 @@ class CategoryAnalysisService extends Service
             })
             ->where('catalog_id', '!=', '')
             ->whereNotNull('catalog_id')
-            ->where('date', 'like', "{$currentDate}%")
+            ->whereBetween('date', ["{$currentDate}-01", "{$currentDate}-31"])
             ->select(
                 'store_id',
                 DB::raw('COUNT(DISTINCT catalog_id) as total_cate'),

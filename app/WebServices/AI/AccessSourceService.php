@@ -308,7 +308,7 @@ class AccessSourceService extends Service
             ->when($storeId, function ($query, $storeId) {
                 $query->where('store_id', $storeId);
             })
-            ->where('date', 'like', "{$currentDate}%")
+            ->whereBetween('date', ["{$currentDate}-01", "{$currentDate}-31"])
             ->select(
                 'store_id',
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y-%m') as ym"),
