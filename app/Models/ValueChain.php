@@ -177,7 +177,7 @@ class ValueChain extends Model
         $totalItems = count(static::CATEGORY_PAGE_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getHeaderPointAttribute()
@@ -186,7 +186,7 @@ class ValueChain extends Model
         $totalItems = count(static::HEADER_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getProductPagePointAttribute()
@@ -195,7 +195,7 @@ class ValueChain extends Model
         $totalItems = count(static::PRODUCT_PAGE_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getProductThumbnailPointAttribute()
@@ -204,7 +204,7 @@ class ValueChain extends Model
         $totalItems = count(static::PRODUCT_THUMBNAIL_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getFeaturedProductsPointAttribute()
@@ -213,7 +213,7 @@ class ValueChain extends Model
         $totalItems = count(static::FEATURED_PRODUCTS_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getImplementationOfMeasuresPointAttribute()
@@ -222,7 +222,7 @@ class ValueChain extends Model
         $totalItems = count(static::IMPLEMENTATION_OF_MEASURES_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getGiftAvailablePointAttribute()
@@ -231,7 +231,7 @@ class ValueChain extends Model
         $totalItems = count(static::GIFT_AVAILABLE_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getRppAdOperationPointAttribute()
@@ -240,7 +240,7 @@ class ValueChain extends Model
         $totalItems = count(static::RPP_AD_OPERATION_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getSystemIntroductionPointAttribute()
@@ -249,7 +249,7 @@ class ValueChain extends Model
         $totalItems = count(static::RPP_AD_OPERATION_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getReviewWritingRatePointAttribute()
@@ -269,7 +269,7 @@ class ValueChain extends Model
         $totalItems = count(static::REVIEW_MEASURES_VALUES);
         $multiplier = 5 / $totalItems;
 
-        return round($multiplier * count($items), 2) ?: 1.00;
+        return round($multiplier * count($items), 2);
     }
 
     public function getInstagramFollowersPointAttribute()

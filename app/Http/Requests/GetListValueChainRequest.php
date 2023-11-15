@@ -3,11 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Support\Traits\FilterYearMonthValidationRules;
-use Illuminate\Validation\Rule;
 
-class GetMqBreakEvenPointRequest extends FormRequest
+class GetListValueChainRequest extends FormRequest
 {
     use FilterYearMonthValidationRules;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -23,8 +23,6 @@ class GetMqBreakEvenPointRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->yearMonthFromToRules() + [
-            'store_id' => [Rule::requiredIf(! $this->route('storeId')), 'string'],
-        ];
+        return $this->yearMonthFromToRules();
     }
 }
