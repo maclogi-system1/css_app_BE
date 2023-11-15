@@ -17,6 +17,11 @@ interface ValueChainRepository extends Repository
     public function getDetailByStore(string $storeId, array $filters = []): ?ValueChain;
 
     /**
+     * Format the value chain detail.
+     */
+    public function formatDetail(ValueChain $valueChain): array;
+
+    /**
      * Handle create a new value chain.
      */
     public function create(array $data): ?ValueChain;

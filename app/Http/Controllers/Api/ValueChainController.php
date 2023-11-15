@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetListValueChainRequest;
 use App\Repositories\Contracts\ShopRepository;
 use App\Repositories\Contracts\ValueChainRepository;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,16 @@ class ValueChainController extends Controller
         private ValueChainRepository $valueChainRepository,
         private ShopRepository $shopRepository,
     ) {
+    }
+
+    public function getListByStore(GetListValueChainRequest $request, string $storeId)
+    {
+        $valueChainCollection = $this->valueChainRepository->getListByStore(
+            $storeId,
+            $request->validated() + ['format_detail' => true]
+        );
+
+        return response()->json($valueChainCollection);
     }
 
     public function monthlyEvaluation(Request $request, string $storeId): JsonResponse

@@ -53,12 +53,22 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     public function getListByStore(string $storeId, array $filters = [])
     {
         $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $formatDetail = Arr::get($filters, 'format_detail', false);
 
-        return $this->model()->where('store_id', $storeId)
+        $result = $this->model()->where('store_id', $storeId)
             ->whereDate('date', '>=', $dateRangeFilter['from_date']->format('Y-m-d'))
             ->whereDate('date', '<=', $dateRangeFilter['to_date']->format('Y-m-d'))
             ->orderBy('date')
             ->get();
+
+        if ($formatDetail) {
+            return $result->map(fn ($valueChain) => [
+                'year' => Carbon::create($valueChain->date)->year,
+                'month' => Carbon::create($valueChain->date)->month,
+            ] + $this->formatDetail($valueChain, true));
+        }
+
+        return $result;
     }
 
     /**
@@ -74,28 +84,11 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     }
 
     /**
-     * Handle create a new value chain.
+     * Format the value chain detail.
      */
-    public function create(array $data): ?ValueChain
+    public function formatDetail(ValueChain $valueChain, bool $fullFields = false): array
     {
-        $valueChain = $this->model()->fill($data);
-        $valueChain->save();
-
-        return $valueChain->refresh();
-    }
-
-    /**
-     * Get data for monthly evaluation.
-     */
-    public function monthlyEvaluation(string $storeId, array $filters = [])
-    {
-        $valueChain = $this->getDetailByStore($storeId, $filters);
-
-        if (! $valueChain) {
-            $valueChain = $this->handleCreateDefault($storeId, $filters);
-        }
-
-        return [
+        $result = [
             'merchandise' => [
                 'number_of_categories_point' => $valueChain->number_of_categories_point,
                 'number_of_items_point' => $valueChain->number_of_items_point,
@@ -247,6 +240,57 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 7, 2),
             ],
         ];
+
+        if ($fullFields) {
+            $result['construction_production'] = array_merge($result['construction_production'], [
+                'top_page' => array_filter(explode(',', $valueChain->top_page)),
+                'category_page' => array_filter(explode(',', $valueChain->category_page)),
+                'header' => array_filter(explode(',', $valueChain->header)),
+                'product_page' => array_filter(explode(',', $valueChain->product_page)),
+                'product_thumbnail' => array_filter(explode(',', $valueChain->product_thumbnail)),
+                'featured_products' => array_filter(explode(',', $valueChain->featured_products)),
+            ]);
+            $result['event_sale'] = array_merge($result['event_sale'], [
+                'implementation_of_measures' => $valueChain->implementation_of_measures,
+            ]);
+            $result['advertisement'] = array_merge($result['advertisement'], [
+                'rpp_ad_operation' => $valueChain->rpp_ad_operation,
+            ]);
+            $result['logistics'] = array_merge($result['logistics'], [
+                'gift_available' => $valueChain->gift_available,
+            ]);
+            $result['crm'] = array_merge($result['crm'], [
+                'review_writing_rate' => $valueChain->review_writing_rate,
+                'review_measures' => $valueChain->review_measures,
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Handle create a new value chain.
+     */
+    public function create(array $data): ?ValueChain
+    {
+        $valueChain = $this->model()->fill($data);
+        $valueChain->save();
+
+        return $valueChain->refresh();
+    }
+
+    /**
+     * Get data for monthly evaluation.
+     */
+    public function monthlyEvaluation(string $storeId, array $filters = [])
+    {
+        $valueChain = $this->getDetailByStore($storeId, $filters);
+
+        if (! $valueChain) {
+            $valueChain = $this->handleCreateDefault($storeId, $filters);
+        }
+
+        return $this->formatDetail($valueChain);
     }
 
     /**
