@@ -46,4 +46,9 @@ class TaskService extends Service
     {
         return $this->toResponse(Http::oss()->delete(OSSService::getApiUri('tasks.delete', $taskId), ['store_id' => $storeId]));
     }
+
+    public function getTask(int $taskId)
+    {
+        return $this->toResponse(Http::oss()->get(OSSService::getApiUri('tasks.detail', $taskId)));
+    }
 }

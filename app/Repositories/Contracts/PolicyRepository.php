@@ -38,7 +38,7 @@ interface PolicyRepository extends Repository
     /**
      * Handle data validation to update/create policy.
      */
-    public function handleValidation(array $data, int $index): array;
+    public function handleValidation(array $data, int $index, bool $isValidateUpdate = false): array;
 
     /**
      * Handle data validation to create simulation policy.
@@ -108,11 +108,6 @@ interface PolicyRepository extends Repository
      * Get list of work breakdown structure.
      */
     public function workBreakdownStructure(string $storeId, array $filters);
-
-    /**
-     * Generate data to add policies from simulation.
-     */
-    public function makeDataPolicyFromSimulation(Policy $simulation): array;
 
     /**
      * Get a list of policies whose start and end times match a store's simulations.

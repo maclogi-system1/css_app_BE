@@ -305,14 +305,18 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     /**
      * Handle data validation to update/create policy.
      */
-    public function handleValidation(array $data, int $index): array
+    public function handleValidation(array $data, int $index, bool $isValidateUpdate = false): array
     {
         $validator = Validator::make($data, $this->getValidationRules($data));
 
         /** @var \App\Repositories\Contracts\JobGroupRepository */
         $jobGroupRepository = app(JobGroupRepository::class);
 
-        $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        if ($isValidateUpdate) {
+            $ossErrorMessages = $jobGroupRepository->validateUpdate($this->getDataForJobGroup($data));
+        } else {
+            $ossErrorMessages = $jobGroupRepository->validateCreate($this->getDataForJobGroup($data));
+        }
 
         if ($validator->fails() || ! empty($ossErrorMessages)) {
             return [
@@ -688,66 +692,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
         }
 
         return [];
-    }
-
-    /**
-     * Generate data to add policies from simulation.
-     */
-    public function makeDataPolicyFromSimulation(Policy $simulation): array
-    {
-        $simulationStartDate = Carbon::create($simulation->simulation_start_date);
-        $simulationEndDate = Carbon::create($simulation->simulation_end_date);
-
-        return [
-            'store_id' => $simulation->store_id,
-            'category' => Policy::AI_RECOMMENDATION_CATEGORY,
-            'immediate_reflection' => 0,
-            'status' => -5,
-            'job_group_code' => null,
-            'job_group_title' => $simulation->name,
-            'job_group_explanation' => null,
-            'managers' => [],
-            'template_id' => 0,
-            'job_title' => $simulation->name,
-            'execution_date' => $simulationStartDate->format('Y-m-d'),
-            'execution_time' => $simulationStartDate->format('H:i'),
-            'undo_date' => $simulationEndDate->format('Y-m-d'),
-            'undo_time' => $simulationEndDate->format('H:i'),
-            'type_item_url' => 0,
-            'item_urls' => null,
-            'has_banner' => 0,
-            'remark' => null,
-            'catch_copy_pc_text' => null,
-            'catch_copy_pc_error' => null,
-            'catch_copy_sp_text' => null,
-            'catch_copy_sp_error' => null,
-            'item_name_text' => null,
-            'item_name_text_error' => null,
-            'point_magnification' => null,
-            'point_start_date' => $simulationStartDate->format('Y-m-d'),
-            'point_start_time' => $simulationStartDate->hour,
-            'point_end_date' => $simulationEndDate->format('Y-m-d'),
-            'point_end_time' => $simulationEndDate->hour,
-            'point_error' => null,
-            'point_operational' => null,
-            'discount_type' => null,
-            'discount_rate' => null,
-            'discount_price' => null,
-            'discount_undo_type' => null,
-            'discount_error' => null,
-            'discount_display_price' => null,
-            'double_price_text' => null,
-            'shipping_fee' => null,
-            'stock_specify' => null,
-            'time_sale_start_date' => $simulationStartDate->format('Y-m-d'),
-            'time_sale_start_time' => $simulationStartDate->format('H:i'),
-            'time_sale_end_date' => $simulationEndDate->format('Y-m-d'),
-            'time_sale_end_time' => $simulationEndDate->format('H:i'),
-            'is_unavailable_for_search' => null,
-            'description_for_pc' => null,
-            'description_for_sp' => null,
-            'description_by_sales_method' => null,
-        ];
     }
 
     /**

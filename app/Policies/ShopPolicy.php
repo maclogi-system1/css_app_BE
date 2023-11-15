@@ -53,7 +53,7 @@ class ShopPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, int $companyId, array $createdUserIds = []): bool
+    public function update(User $user, int $companyId, array $managerUserIds = []): bool
     {
         if ($user->can('edit_all_shops')) {
             return true;
@@ -63,7 +63,7 @@ class ShopPolicy
             return true;
         }
 
-        if ($user->can('edit_shops') && in_array($user->id, $createdUserIds)) {
+        if ($user->can('edit_shops') && in_array($user->id, $managerUserIds)) {
             return true;
         }
 

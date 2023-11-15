@@ -36,7 +36,7 @@ class PolicySimulationHistoryController extends Controller
         return $policySimulationHistories;
     }
 
-    public function show(Request $request, string $id)
+    public function show(Request $request, string $id): JsonResource
     {
         $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
         $simulation = $this->policyRepository->find($policySimulationHistory->policy_id);
@@ -44,10 +44,10 @@ class PolicySimulationHistoryController extends Controller
         if ($simulation->isProcessDone()) {
             $mqSheet = $this->mqSheetRepository->getDefaultByStore($simulation->store_id);
             $filters = $request->query() + [
-                'from_date' => $policySimulationHistory->execution_time,
-                'to_date' => $policySimulationHistory->undo_time,
-                'mq_sheet_id' => $mqSheet->id,
-            ];
+                    'from_date' => $policySimulationHistory->execution_time,
+                    'to_date' => $policySimulationHistory->undo_time,
+                    'mq_sheet_id' => $mqSheet->id,
+                ];
             $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareSimulationWithExpectedValues(
                 $simulation->store_id,
                 $policySimulationHistory,
@@ -55,12 +55,26 @@ class PolicySimulationHistoryController extends Controller
             );
         }
 
+        $chartSalesAndRate = $this->policySimulationHistoryRepository->chartSalesAndRateByStore($simulation->store_id);
+
         $policyResource = (new PolicyResource($simulation))
             ->additional([
-                'history' => $policySimulationHistory,
+                'history' => new PolicySimulationHistoryResource($policySimulationHistory),
                 'mq_accountings' => $mqAccountingActualsAndExpected ?? [],
+                'chart_sales_rate' => $chartSalesAndRate,
             ]);
 
         return $policyResource;
+    }
+
+    /**
+     * Generate data to add policies.
+     */
+    public function getPolicyData(string $id): JsonResponse
+    {
+        $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
+        $policyData = $this->policySimulationHistoryRepository->makeDataPolicy($policySimulationHistory);
+
+        return response()->json($policyData);
     }
 }

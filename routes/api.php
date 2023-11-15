@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\SingleJobController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSettingController;
+use App\Http\Controllers\Api\ValueChainController;
 use Illuminate\Support\Facades\Route;
 
 Route::any('/test', fn (\Illuminate\Http\Request $request) => [
@@ -181,6 +182,7 @@ Route::middleware([
                 ->name('get-list-by-store');
 
             Route::post('/{storeId}', 'storeMultipleByStoreId')->name('store-multiple-by-store-id');
+            Route::put('/update/{storeId}', 'update')->name('update');
         });
 
     Route::prefix('policies')
@@ -191,8 +193,6 @@ Route::middleware([
             Route::post('/simulation', 'storeSimulation')
                 ->name('store-simulation')
                 ->middleware(['check_shop_permission_by_store_id_in_body']);
-            Route::get('/simulation/{policySimulation}/policy-data', 'getPolicyDataFromSimulation')
-                ->name('simulation.policy-data');
             Route::get('/matches-simulation', 'matchesSimulation');
         });
 
@@ -202,6 +202,7 @@ Route::middleware([
         ->group(function () {
             Route::get('/{storeId}', 'getListByStore')->name('get-list-by-store');
             Route::get('/history/{id}', 'show')->name('show');
+            Route::get('/policy-data/{id}', 'getPolicyData')->name('policy-data');
         });
 
     Route::prefix('policy-attachments')
@@ -431,5 +432,14 @@ Route::middleware([
             Route::get('/alerts', [MyPageController::class, 'getAlerts'])->name('alerts');
             Route::get('/sales-4-quadrant-map', [MyPageController::class, 'getSales4QuadrantMap'])
                 ->name('sales-4-quadrant-map');
+        });
+
+    Route::prefix('value-chain')
+        ->name('value-chain.')
+        ->controller(ValueChainController::class)
+        ->withoutMiddleware('check_shop_permission_by_store_id_parameter')
+        ->group(function () {
+            Route::get('monthly-evaluation/{storeId}', 'monthlyEvaluation');
+            Route::get('chart-evaluate/{storeId}', 'chartEvaluate');
         });
 });

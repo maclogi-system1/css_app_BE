@@ -47,17 +47,49 @@ class RunPolicySimulation implements ShouldQueue
             $result = $this->handleSimulations();
 
             foreach ($result as $item) {
-                $policySimulationHistoryRepository->create([
-                    'policy_id' => Arr::get($item, 'policy_id'),
-                    'title' => Arr::get($item, 'name'),
-                    'execution_time' => Arr::get($item, 'start_date'),
-                    'undo_time' => Arr::get($item, 'end_date'),
-                    'creation_date' => now(),
-                    'sale_effect' => Arr::get($item, 'sale_effect', 0),
-                    'store_pred_2m' => Arr::get($item, 'store_pred_2m', ''),
-                    'items_pred_2m' => Arr::get($item, 'items_pred_2m', ''),
-                    'manager' => $this->manager?->name,
-                ]);
+                $policyId = Arr::get($item, 'policy_id');
+                $title = Arr::get($item, 'name');
+                $storePred2m = Arr::get($item, 'store_pred_2m');
+                $itemsPred2m = Arr::get($item, 'items_pred_2m');
+                $policies = Arr::get($item, 'policies', []);
+
+                if (count($policies)) {
+                    foreach ($policies as $suggestPolicy) {
+                        $policySimulationHistoryRepository->create([
+                            'policy_id' => $policyId,
+                            'title' => $title,
+                            'execution_time' => Arr::get($suggestPolicy, 'start_date'),
+                            'undo_time' => Arr::get($suggestPolicy, 'end_date'),
+                            'creation_date' => now(),
+                            'sale_effect' => 0,
+                            'store_pred_2m' => $storePred2m,
+                            'items_pred_2m' => $itemsPred2m,
+                            'user_id' => $this->manager?->id,
+                            'class' => Arr::get($suggestPolicy, 'class'),
+                            'service' => Arr::get($suggestPolicy, 'service'),
+                            'value' => Arr::get($suggestPolicy, 'value'),
+                            'condition_1' => Arr::get($suggestPolicy, 'condition_1'),
+                            'condition_value_1' => Arr::get($suggestPolicy, 'condition_value_1'),
+                            'condition_2' => Arr::get($suggestPolicy, 'condition_2'),
+                            'condition_value_2' => Arr::get($suggestPolicy, 'condition_value_2'),
+                            'condition_3' => Arr::get($suggestPolicy, 'condition_3'),
+                            'condition_value_3' => Arr::get($suggestPolicy, 'condition_value_3'),
+                        ]);
+                    }
+                } else {
+                    $policySimulationHistoryRepository->create([
+                        'policy_id' => $policyId,
+                        'title' => $title,
+                        'execution_time' => Arr::get($item, 'start_date'),
+                        'undo_time' => Arr::get($item, 'end_date'),
+                        'creation_date' => now(),
+                        'sale_effect' => 0,
+                        'store_pred_2m' => $storePred2m,
+                        'items_pred_2m' => $itemsPred2m,
+                        'user_id' => $this->manager?->id,
+                    ]);
+                }
+
                 $simulation = Policy::find(Arr::get($item, 'policy_id'));
                 $simulation->processing_status = Policy::DONE_PROCESSING_STATUS;
                 $simulation->save();
@@ -92,6 +124,12 @@ class RunPolicySimulation implements ShouldQueue
                         'value' => $rule['value'],
                         'start_date' => $startDate->format('Y-m-d H:i'),
                         'end_date' => $endDate->format('Y-m-d H:i'),
+                        'condition_1' => $rule['condition_1'],
+                        'condition_value_1' => $rule['condition_value_1'],
+                        'condition_2' => $rule['condition_2'],
+                        'condition_value_2' => $rule['condition_value_2'],
+                        'condition_3' => $rule['condition_3'],
+                        'condition_value_3' => $rule['condition_value_3'],
                     ];
                 }, $simulation['rules']),
             ]) + [

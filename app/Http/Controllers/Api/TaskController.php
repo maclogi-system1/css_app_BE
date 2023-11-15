@@ -10,6 +10,7 @@ use App\Support\TaskCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class TaskController extends Controller
@@ -151,5 +152,16 @@ class TaskController extends Controller
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => 0,
         ]);
+    }
+
+    public function getTask(int $taskId, Request $request)
+    {
+        $result = $this->taskRepository->getTask($taskId);
+        $storeId = Arr::get($result->get('data'), 'shop.store_id');
+        if ($result instanceof Collection && ! $result->has('errors') && $storeId) {
+            PermissionHelper::checkViewShopPermission($request->user(), $storeId);
+        }
+
+        return $result;
     }
 }

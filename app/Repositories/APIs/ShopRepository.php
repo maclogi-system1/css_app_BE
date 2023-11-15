@@ -121,7 +121,11 @@ class ShopRepository extends Repository implements ShopRepositoryContract
                     return in_array($user->email, $ossShopUserEmail);
                 })
                 ->map(function ($user) {
-                    return ['value' => $user->id, 'label' => $user->name];
+                    return [
+                        'value' => $user->id,
+                        'label' => $user->name,
+                        'email' => $user->email,
+                    ];
                 })
                 ->values()
                 ->toArray();
