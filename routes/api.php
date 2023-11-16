@@ -441,6 +441,8 @@ Route::middleware([
         ->group(function () {
             Route::get('/monthly-evaluation/{storeId}', 'monthlyEvaluation');
             Route::get('/chart-evaluate/{storeId}', 'chartEvaluate');
+            Route::put('/update', 'update');
+            Route::get('/get-options', 'getOptions');
             Route::get('/{storeId}', 'getListByStore');
         });
 });

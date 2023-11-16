@@ -20,10 +20,70 @@ use App\WebServices\AI\TdaAdService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ValueChainRepository extends Repository implements ValueChainRepositoryContract
 {
     use HasMqDateTimeHandler;
+
+    protected array $validationRules = [
+        'number_of_categories_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'number_of_items_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'product_utilization_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'product_cost_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'low_product_reviews_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'few_sold_out_items_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'purchase_form_point' => ['nullable', 'integer', 'in:1,3,5'],
+        'stock_value_point' => ['nullable', 'integer', 'between:0,5'],
+        'top_page' => ['nullable', 'array'],
+        'category_page' => ['nullable', 'array'],
+        'header' => ['nullable', 'array'],
+        'product_page' => ['nullable', 'array'],
+        'product_page_conversion_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'product_thumbnail' => ['nullable', 'array'],
+        'access_number_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'featured_products' => ['nullable', 'array'],
+        'left_navigation_point' => ['required', 'integer', 'in:0,1,5'],
+        'header_large_banner_small_banner_point' => ['required', 'integer', 'in:0,1,5'],
+        'event_sales_ratio_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'sales_ratio_day_endings_0_5_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'implementation_of_measures' => ['nullable', 'array'],
+        'coupon_effect_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'rpp_ad_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'rpp_ad_operation' => ['nullable', 'array'],
+        'coupon_advance_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'rgroup_ad_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'tda_ad_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'sns_ad_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'google_access_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'instagram_access_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'compatible_point' => ['required', 'integer', 'in:0,1,5'],
+        'shipping_fee_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'shipping_ratio_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'mail_service_point' => ['required', 'integer', 'in:0,1,5'],
+        'bundling_ratio_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'gift_available' => ['nullable', 'array'],
+        'delivery_on_specified_day_point' => ['required', 'integer', 'in:0,1,5'],
+        'delivery_preparation_period_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'shipping_on_the_specified_date_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'shipping_according_to_the_delivery_date_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'system_introduction_point' => ['required', 'integer', 'in:0,1,5'],
+        'order_through_rate_point' => ['required', 'integer', 'between:0,5'],
+        'number_of_people_in_charge_of_ordering_point' => ['required', 'integer', 'between:0,5'],
+        'thank_you_email_point' => ['required', 'integer', 'in:0,1,5'],
+        'what_s_included_point' => ['required', 'integer', 'in:0,1,5'],
+        'follow_email_point' => ['required', 'integer', 'in:0,1,5'],
+        'order_email_point' => ['required', 'integer', 'in:0,1,5'],
+        'shipping_email_point' => ['required', 'integer', 'in:0,1,5'],
+        'few_user_complaints_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'email_newsletter_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        're_sales_num_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'review_writing_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'review_measures' => ['nullable', 'array'],
+        'line_official_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'instagram_followers_point' => ['required', 'decimal:0,2', 'between:0,5'],
+        'ltv_point' => ['required', 'decimal:0,2', 'between:0,5'],
+    ];
 
     public function __construct(
         protected CategoryAnalysisService $categoryAnalysisService,
@@ -63,6 +123,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
 
         if ($formatDetail) {
             return $result->map(fn ($valueChain) => [
+                'id' => $valueChain->id,
                 'year' => Carbon::create($valueChain->date)->year,
                 'month' => Carbon::create($valueChain->date)->month,
             ] + $this->formatDetail($valueChain, true));
@@ -224,18 +285,18 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'crm' => [
                 'email_newsletter_point' => $valueChain->email_newsletter_point,
                 're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point,
-                'review_writing_rate_point' => $valueChain->review_writing_rate_point,
+                'review_writing_rate_point' => $valueChain->review_writing_rate,
                 'review_measures_point' => $valueChain->review_measures_point,
                 'line_official' => $valueChain->line_official_point,
-                'instagram_followers_point' => $valueChain->instagram_followers_point,
+                'instagram_followers_point' => $valueChain->instagram_followers,
                 'ltv_point' => $valueChain->ltv_point,
                 'average' => round((
                     $valueChain->email_newsletter_point
                     + $valueChain->re_sales_num_rate_point
-                    + $valueChain->review_writing_rate_point
+                    + $valueChain->review_writing_rate
                     + $valueChain->review_measures_point
                     + $valueChain->line_official_point
-                    + $valueChain->instagram_followers_point
+                    + $valueChain->instagram_followers
                     + $valueChain->ltv_point
                 ) / 7, 2),
             ],
@@ -261,7 +322,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ]);
             $result['crm'] = array_merge($result['crm'], [
                 'review_writing_rate' => $valueChain->review_writing_rate,
-                'review_measures' => $valueChain->review_measures,
+                'review_measures' => array_filter(explode(',', $valueChain->review_measures)),
             ]);
         }
 
@@ -277,6 +338,212 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $valueChain->save();
 
         return $valueChain->refresh();
+    }
+
+    /**
+     * Handle update a specified value chain.
+     */
+    public function update(array $data, ValueChain $valueChain): ?ValueChain
+    {
+        $valueChain->fill([
+            'number_of_categories_point' => Arr::get($data, 'number_of_categories_point', 0),
+            'number_of_items_point' => Arr::get($data, 'number_of_items_point', 0),
+            'product_utilization_rate_point' => Arr::get($data, 'product_utilization_rate_point', 0),
+            'product_cost_rate_point' => Arr::get($data, 'product_cost_rate_point', 0),
+            'low_product_reviews_point' => Arr::get($data, 'low_product_reviews_point', 0),
+            'few_sold_out_items_point' => Arr::get($data, 'few_sold_out_items_point', 0),
+            'purchase_form_point' => Arr::get($data, 'purchase_form_point', 0),
+            'stock_value_point' => Arr::get($data, 'stock_value_point', 0),
+            'top_page' => Arr::join(Arr::get($data, 'top_page', []), ','),
+            'category_page' => Arr::join(Arr::get($data, 'category_page', []), ','),
+            'header' => Arr::join(Arr::get($data, 'header', []), ','),
+            'product_page' => Arr::join(Arr::get($data, 'product_page', []), ','),
+            'product_page_conversion_rate_point' => Arr::get($data, 'product_page_conversion_rate_point', 0),
+            'product_thumbnail' => Arr::join(Arr::get($data, 'product_thumbnail', []), ','),
+            'access_number_point' => Arr::get($data, 'access_number_point', 0),
+            'featured_products' => Arr::join(Arr::get($data, 'featured_products', []), ','),
+            'left_navigation_point' => Arr::get($data, 'left_navigation_point', 0),
+            'header_large_banner_small_banner_point' => Arr::get($data, 'header_large_banner_small_banner_point', 0),
+            'event_sales_ratio_point' => Arr::get($data, 'event_sales_ratio_point', 0),
+            'sales_ratio_day_endings_0_5_point' => Arr::get($data, 'sales_ratio_day_endings_0_5_point', 0),
+            'implementation_of_measures' => Arr::join(Arr::get($data, 'implementation_of_measures', []), ','),
+            'coupon_effect_point' => Arr::get($data, 'coupon_effect_point', 0),
+            'rpp_ad_point' => Arr::get($data, 'rpp_ad_point', 0),
+            'rpp_ad_operation' => Arr::join(Arr::get($data, 'rpp_ad_operation', []), ','),
+            'coupon_advance_point' => Arr::get($data, 'coupon_advance_point', 0),
+            'rgroup_ad_point' => Arr::get($data, 'rgroup_ad_point', 0),
+            'tda_ad_point' => Arr::get($data, 'tda_ad_point', 0),
+            'sns_ad_point' => Arr::get($data, 'sns_ad_point', 0),
+            'google_access_point' => Arr::get($data, 'google_access_point', 0),
+            'instagram_access_point' => Arr::get($data, 'instagram_access_point', 0),
+            'compatible_point' => Arr::get($data, 'compatible_point', 0),
+            'shipping_fee_point' => Arr::get($data, 'shipping_fee_point', 0),
+            'shipping_ratio_point' => Arr::get($data, 'shipping_ratio_point', 0),
+            'mail_service_point' => Arr::get($data, 'mail_service_point', 0),
+            'bundling_ratio_point' => Arr::get($data, 'bundling_ratio_point', 0),
+            'gift_available' => Arr::join(Arr::get($data, 'gift_available', []), ','),
+            'delivery_on_specified_day_point' => Arr::get($data, 'delivery_on_specified_day_point', 0),
+            'delivery_preparation_period_point' => Arr::get($data, 'delivery_preparation_period_point', 0),
+            'shipping_on_the_specified_date_point' => Arr::get($data, 'shipping_on_the_specified_date_point', 0),
+            'shipping_according_to_the_delivery_date_point' => Arr::get($data, 'shipping_according_to_the_delivery_date_point', 0),
+            'system_introduction_point' => Arr::get($data, 'system_introduction_point', 0),
+            'order_through_rate_point' => Arr::get($data, 'order_through_rate_point', 0),
+            'number_of_people_in_charge_of_ordering_point' => Arr::get($data, 'number_of_people_in_charge_of_ordering_point', 0),
+            'thank_you_email_point' => Arr::get($data, 'thank_you_email_point', 0),
+            'what_s_included_point' => Arr::get($data, 'what_s_included_point', 0),
+            'follow_email_point' => Arr::get($data, 'follow_email_point', 0),
+            'order_email_point' => Arr::get($data, 'order_email_point', 0),
+            'shipping_email_point' => Arr::get($data, 'shipping_email_point', 0),
+            'few_user_complaints_point' => Arr::get($data, 'few_user_complaints_point', 0),
+            'email_newsletter_point' => Arr::get($data, 'email_newsletter_point', 0),
+            're_sales_num_rate_point' => Arr::get($data, 're_sales_num_rate_point', 0),
+            'review_writing_rate' => Arr::get($data, 'review_writing_rate_point', 0),
+            'review_measures' => Arr::join(Arr::get($data, 'review_measures', []), ','),
+            'line_official_point' => Arr::get($data, 'line_official_point', 0),
+            'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
+            'ltv_point' => Arr::get($data, 'ltv_point', 0),
+        ]);
+        $valueChain->save();
+
+        return $valueChain->refresh();
+    }
+
+    public function handleValidation(array $data, $index)
+    {
+        $validator = Validator::make($data, $this->getValidationRules($data));
+
+        if ($validator->fails()) {
+            return [
+                'error' => [
+                    'id' => Arr::get($data, 'id'),
+                    'year' => Arr::get($data, 'year'),
+                    'month' => Arr::get($data, 'month'),
+                    'messages' => $validator->getMessageBag(),
+                ],
+            ];
+        }
+
+        return $validator->validated();
+    }
+
+    public function getValidationRules(array $data)
+    {
+        return [
+            'id' => ['required', 'integer'],
+            'year' => ['required', 'integer', 'max:'.now()->year, 'min:2021'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ] + $this->validationRules;
+    }
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array
+    {
+        $purchaseForm = collect(ValueChain::PURCHASE_FORM_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $stockValue = collect(ValueChain::STOCK_VALUE_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $topPage = collect(ValueChain::TOP_PAGE_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $categoryPage = collect(ValueChain::CATEGORY_PAGE_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $header = collect(ValueChain::HEADER_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $productPage = collect(ValueChain::PRODUCT_PAGE_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $productThumbnail = collect(ValueChain::PRODUCT_THUMBNAIL_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $featuredProducts = collect(ValueChain::FEATURED_PRODUCTS_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $leftNavigation = collect(ValueChain::LEFT_NAVIGATION_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $headerLargeBannerSmallBanner = collect(ValueChain::HEADER_LARGE_BANNER_SMALL_BANNER_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $implementationOfMeasures = collect(ValueChain::IMPLEMENTATION_OF_MEASURES_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $rppAdOperation = collect(ValueChain::RPP_AD_OPERATION_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $compatible = collect(ValueChain::COMPATIBLE_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $mailService = collect(ValueChain::MAIL_SERVICE_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $giftAvailable = collect(ValueChain::GIFT_AVAILABLE_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+        $deliveryOnSpecifiedDay = collect(ValueChain::DELIVERY_ON_SPECIFIED_DAY_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $systemIntroduction = collect(ValueChain::SYSTEM_INTRODUCTION_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $orderThroughRate = collect(ValueChain::ORDER_THROUGH_RATE_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $numberOfPeopleInChargeOfOrdering = collect(ValueChain::NUMBER_OF_PEOPLE_IN_CHARGE_OF_ORDERING_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $thankYouEmail = collect(ValueChain::THANK_YOU_EMAIL_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $whatSIncluded = collect(ValueChain::WHAT_S_INCLUDED_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $followEmail = collect(ValueChain::FOLLOW_EMAIL_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $orderEmail = collect(ValueChain::ORDER_EMAIL_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $shippingEmail = collect(ValueChain::SHIPPING_EMAIL_VALUES)
+            ->map(fn ($label, $value) => compact('value', 'label'))
+            ->values();
+        $reviewMeasures = collect(ValueChain::REVIEW_MEASURES_VALUES)
+            ->map(fn ($label) => ['value' => $label, 'label' => $label])
+            ->values();
+
+        return [
+            'purchase_form' => $purchaseForm,
+            'stock_value' => $stockValue,
+            'top_page' => $topPage,
+            'category_page' => $categoryPage,
+            'category_page' => $categoryPage,
+            'header' => $header,
+            'product_page' => $productPage,
+            'product_thumbnail' => $productThumbnail,
+            'featured_products' => $featuredProducts,
+            'left_navigation' => $leftNavigation,
+            'header_large_banner_small_banner' => $headerLargeBannerSmallBanner,
+            'implementation_of_measures' => $implementationOfMeasures,
+            'rpp_ad_operation' => $rppAdOperation,
+            'compatible' => $compatible,
+            'mail_service' => $mailService,
+            'gift_available' => $giftAvailable,
+            'delivery_on_specified_day' => $deliveryOnSpecifiedDay,
+            'system_introduction' => $systemIntroduction,
+            'order_through_rate' => $orderThroughRate,
+            'number_of_people_in_charge_of_ordering' => $numberOfPeopleInChargeOfOrdering,
+            'thank_you_email' => $thankYouEmail,
+            'what_s_included' => $whatSIncluded,
+            'follow_email' => $followEmail,
+            'order_email' => $orderEmail,
+            'shipping_email' => $shippingEmail,
+            'review_measures' => $reviewMeasures,
+        ];
     }
 
     /**

@@ -98,7 +98,7 @@ return new class extends Migration
             $table->integer('review_writing_rate')->default(0); //Review writing rate
             $table->string('review_measures')->nullable(); //Review measures
             $table->decimal('line_official_point', 3)->default(0); //LINE official
-            $table->decimal('instagram_followers',3 )->default(0); //Number of Instagram followers
+            $table->decimal('instagram_followers', 3)->default(0); //Number of Instagram followers
             $table->decimal('ltv_point', 3)->default(0); //LTV
 
             $table->timestamps();
