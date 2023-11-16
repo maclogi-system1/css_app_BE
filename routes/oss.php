@@ -15,6 +15,9 @@ Route::prefix('')->middleware(['auth:sanctum', 'check_shop_permission_by_store_i
             Route::put('/{storeId}', 'update')
                 ->name('update')
                 ->withoutMiddleware(['check_shop_permission_by_store_id_parameter']);
+            Route::delete('/{storeId}', 'delete')
+                ->name('delete')
+                ->withoutMiddleware(['check_shop_permission_by_store_id_parameter']);
             Route::post('/', 'create')->name('create');
             Route::get('/shop-info/{storeId}', 'getInfo')->name('shop-info');
         });

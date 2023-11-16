@@ -38,6 +38,7 @@ return [
             'shops' => [
                 'list' => '/shops',
                 'detail' => '/shops/{storeId}',
+                'delete' => '/shops/{storeId}',
                 'options' => '/shops/shop-options',
                 'update' => '/shops',
                 'create' => '/shops',
