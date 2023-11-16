@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 class GetMqAnalysisRequest extends FormRequest
 {
     use FilterYearMonthValidationRules;
+
     /**
      * Determine if the user is authorized to make this request.
      */

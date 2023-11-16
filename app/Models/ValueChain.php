@@ -97,6 +97,16 @@ class ValueChain extends Model
         '在庫切れの商品が設置されていない',
     ];
 
+    public const LEFT_NAVIGATION_VALUES = [
+        5 => '更新している',
+        1 => '更新していない',
+    ];
+
+    public const HEADER_LARGE_BANNER_SMALL_BANNER_VALUES = [
+        5 => '更新している',
+        1 => '更新していない',
+    ];
+
     public const IMPLEMENTATION_OF_MEASURES_VALUES = [
         'ポイント',
         'クーポン',
@@ -111,10 +121,30 @@ class ValueChain extends Model
         '商品別効果測定と、商品除外などの対応ができているか',
     ];
 
+    public const COMPATIBLE_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+
+    public const MAIL_SERVICE_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+
     public const GIFT_AVAILABLE_VALUES = [
         'のし',
         'ラッピング',
         'カード',
+    ];
+
+    public const DELIVERY_ON_SPECIFIED_DAY_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+
+    public const SYSTEM_INTRODUCTION_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
     ];
 
     public const ORDER_THROUGH_RATE_VALUES = [
@@ -131,6 +161,27 @@ class ValueChain extends Model
         3 => '100件/人',
         2 => '50件/人',
         1 => '49件/人以下',
+    ];
+
+    public const THANK_YOU_EMAIL_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+    public const WHAT_S_INCLUDED_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+    public const FOLLOW_EMAIL_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+    public const ORDER_EMAIL_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
+    ];
+    public const SHIPPING_EMAIL_VALUES = [
+        5 => '対応している',
+        1 => '対応していない',
     ];
 
     public const REVIEW_MEASURES_VALUES = [
@@ -252,17 +303,6 @@ class ValueChain extends Model
         return round($multiplier * count($items), 2);
     }
 
-    public function getReviewWritingRatePointAttribute()
-    {
-        return match (true) {
-            $this->review_writing_rate > 8 => 5,
-            $this->review_writing_rate >= 5 && $this->review_writing_rate <= 7.9 => 4,
-            $this->review_writing_rate >= 3 && $this->review_writing_rate <= 4.9 => 3,
-            $this->review_writing_rate >= 1 && $this->review_writing_rate <= 2.9 => 2,
-            $this->review_writing_rate < 1 => 1,
-        };
-    }
-
     public function getReviewMeasuresPointAttribute()
     {
         $items = array_filter(explode(',', $this->review_measures));
@@ -270,16 +310,5 @@ class ValueChain extends Model
         $multiplier = 5 / $totalItems;
 
         return round($multiplier * count($items), 2);
-    }
-
-    public function getInstagramFollowersPointAttribute()
-    {
-        return match (true) {
-            $this->instagram_followers > 30000 => 5,
-            $this->instagram_followers > 10000 && $this->instagram_followers <= 29999 => 4,
-            $this->instagram_followers > 5000 && $this->instagram_followers <= 9999 => 3,
-            $this->instagram_followers > 1000 && $this->instagram_followers <= 4999 => 2,
-            $this->instagram_followers <= 1000 => 1,
-        };
     }
 }

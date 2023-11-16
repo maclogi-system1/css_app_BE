@@ -27,6 +27,16 @@ interface ValueChainRepository extends Repository
     public function create(array $data): ?ValueChain;
 
     /**
+     * Handle update a specified value chain.
+     */
+    public function update(array $data, ValueChain $valueChain): ?ValueChain;
+
+    /**
+     * Get a list of the option for select.
+     */
+    public function getOptions(): array;
+
+    /**
      * Handles creating default value chains.
      */
     public function handleCreateDefault(string $storeId, array $filters = []);
