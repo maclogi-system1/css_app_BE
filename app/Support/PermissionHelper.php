@@ -84,6 +84,22 @@ class PermissionHelper
         return true;
     }
 
+    public static function checkDeleteShopPermission(User $user, string $storeId): bool|JsonResponse
+    {
+        /** @var ShopRepository $shopRepository */
+        $shopRepository = app(ShopRepository::class);
+        $shopResult = $shopRepository->find($storeId);
+        if (! $shopResult?->get('success')) {
+            return response()->json(['message' => __('Shop not found')], Response::HTTP_NOT_FOUND);
+        }
+
+        $shop = $shopResult->get('data')->get('data');
+
+        Gate::forUser($user)->authorize('delete-shop', [$shop['company_id']]);
+
+        return true;
+    }
+
     protected static function convertManagerUser(int $userId, array $params, bool $needConvertUser, bool $isOwnManager = false): array
     {
         $convertUserIds = [$userId];

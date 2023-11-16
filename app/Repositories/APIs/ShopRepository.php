@@ -268,4 +268,9 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     {
         return app(LinkedUserInfoRepository::class);
     }
+
+    public function delete(string $storeId): Collection
+    {
+        return $this->shopService->delete($storeId);
+    }
 }
