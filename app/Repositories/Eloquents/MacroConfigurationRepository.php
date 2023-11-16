@@ -1100,7 +1100,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $newDateCondition = $this->handleConditionContainingDate($conditionItem);
                     $conditionItem['field'] = $newDateCondition[0];
                     $conditionItem['operator'] = $newDateCondition[1];
-                    $conditionItem['value'] = $newDateCondition[2]->format('Y/m/d');
+                    $conditionItem['value'] = Carbon::create($newDateCondition[2])->format('Y/m/d');
                 }
 
                 return $conditionItem;
