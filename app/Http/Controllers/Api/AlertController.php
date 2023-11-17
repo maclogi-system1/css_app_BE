@@ -26,4 +26,11 @@ class AlertController extends Controller
 
         return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
     }
+
+    public function markAsRead(int $alertId)
+    {
+        $result = $this->alertRepository->markAsRead($alertId);
+
+        return response()->json($result->get('data'), $result->get('status', Response::HTTP_OK));
+    }
 }

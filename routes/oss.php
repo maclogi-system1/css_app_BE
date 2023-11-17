@@ -24,6 +24,7 @@ Route::prefix('')->middleware(['auth:sanctum', 'check_shop_permission_by_store_i
 
     Route::prefix('alerts')->name('alerts.')->controller(AlertController::class)->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::put('/mark-as-read/{alertId}', 'markAsRead')->name('mark-as-read');
     });
 
     Route::prefix('tasks')->name('tasks.')->controller(TaskController::class)->group(function () {
