@@ -63,6 +63,8 @@ class MqAccountingService extends Service
         $mqAccountings = MqAccounting::with(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost'])
             ->where('store_id', $storeId)
             ->dateRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date'])
+            ->orderBy('year')
+            ->orderBy('month')
             ->get()
             ->map(function ($item) use ($settings) {
                 if ($settings->isNotEmpty()) {
