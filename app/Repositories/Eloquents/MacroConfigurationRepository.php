@@ -503,6 +503,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             'time_conditions' => $timeConditions,
             'graph_types' => $graphTypes,
             'position_display' => $positionDisplay,
+            'alert_types' => [
+                ['label' => '店舗アラート', 'value' => 9],
+                ['label' => 'タスクアラート', 'value' => 10],
+            ],
         ];
     }
 
