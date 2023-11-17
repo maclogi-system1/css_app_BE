@@ -11,6 +11,7 @@ use App\Repositories\Contracts\PolicySimulationHistoryRepository as PolicySimula
 use App\Repositories\Repository;
 use App\WebServices\AI\ItemsPred2mService;
 use App\WebServices\AI\StorePred2mService;
+use App\WebServices\OSS\ShopService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -21,6 +22,7 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
     public function __construct(
         protected ItemsPred2mService $itemsPred2mService,
         protected StorePred2mService $storePred2mService,
+        protected ShopService $shopService,
     ) {
     }
 
@@ -210,28 +212,53 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
      */
     public function chartSalesAndRateByStore(string $storeId)
     {
-        return Policy::with('rules')->where('store_id', $storeId)
+        $shopDetailRes = $this->shopService->find($storeId, ['is_load_relation' => 0]);
+        $chartData = [];
+
+        if ($shopDetailRes->get('success')) {
+            $shopDetail = $shopDetailRes->get('data')->get('data');
+            $relatedShopsRes = $this->shopService->getList([
+                'per_page' => -1,
+                'filters' => ['projects.genre_1' => Arr::get($shopDetail, 'genre_1')],
+            ]);
+
+            if ($relatedShopsRes->get('success')) {
+                $relatedIds = Arr::pluck($relatedShopsRes->get('data')->get('shops'), 'store_id');
+
+                foreach ($relatedIds as $relatedId) {
+                    $chartData = array_merge($chartData, $this->getChartDataShop($relatedId));
+                }
+            }
+        }
+
+        return $chartData;
+    }
+
+    private function getChartDataShop(string $storeId): array
+    {
+        return Policy::with('rules')
+            ->where('store_id', $storeId)
             ->where('category', Policy::SIMULATION_CATEGORY)
             ->get()
             ->map(function ($item) {
-                $startDate = $item['simulation_start_date'];
-                $endDate = $item['simulation_end_date'];
-
                 $shopAnalyticsDailyAllValue = ShopAnalyticsDaily::where('store_id', $item->store_id)
-                    ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$startDate}'")
-                    ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$endDate}'")
+                    ->whereBetween('date', [
+                        Carbon::create($item->simulation_start_date)->format('Ymd'),
+                        Carbon::create($item->simulation_end_date)->format('Ymd'),
+                    ])
                     ->join(
                         'shop_analytics_daily_sales_num as sadsn',
                         'sadsn.sales_num_id',
                         '=',
                         'shop_analytics_daily.sales_num_id'
-                    )
-                    ->sum('sadsn.all_value');
+                    );
 
                 return [
+                    'store_id' => $item->store_id,
                     'policy_value' => $item->rules->sum('value'),
-                    'all_value_sum' => $shopAnalyticsDailyAllValue,
+                    'all_value_sum' => $shopAnalyticsDailyAllValue->sum('sadsn.all_value'),
                 ];
-            });
+            })
+            ->toArray();
     }
 }
