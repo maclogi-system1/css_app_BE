@@ -10,4 +10,6 @@ interface AlertRepository extends Repository
     public function getList(array $filters = [], array $columns = ['*']);
 
     public function markAsRead(int $alertId);
+
+    public function createAlert(array $params);
 }
