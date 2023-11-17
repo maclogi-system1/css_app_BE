@@ -45,6 +45,7 @@ return [
             ],
             'alerts' => [
                 'list' => '/alerts',
+                'mark_as_read' => '/alerts/mark-as-read/{id}',
                 'get_alert_count' => '/alerts/get-alert-count/{storeId}',
             ],
             'tasks' => [

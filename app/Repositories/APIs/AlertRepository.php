@@ -28,4 +28,9 @@ class AlertRepository extends Repository implements AlertRepositoryContract
     {
         return $this->alertService->getList($filters);
     }
+
+    public function markAsRead(int $alertId)
+    {
+        return $this->alertService->markAsRead($alertId);
+    }
 }
