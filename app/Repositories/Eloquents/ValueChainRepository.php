@@ -4,6 +4,8 @@ namespace App\Repositories\Eloquents;
 
 use App\Models\StandardDeviation;
 use App\Models\ValueChain;
+use App\Repositories\Contracts\MqAccountingRepository;
+use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\StandardDeviationRepository;
 use App\Repositories\Contracts\ValueChainRepository as ValueChainRepositoryContract;
 use App\Repositories\Repository;
@@ -18,6 +20,7 @@ use App\WebServices\AI\RgroupAdService;
 use App\WebServices\AI\RppAdService;
 use App\WebServices\AI\TdaAdService;
 use App\WebServices\OSS\ShopService;
+use App\WebServices\OSS\ValueChainService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -96,6 +99,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         private TdaAdService $tdaAdService,
         protected AdPurchaseHistoryService $adPurchaseHistoryService,
         private AccessSourceService $accessSourceService,
+        private ValueChainService $valueChainService,
     ) {
     }
 
@@ -571,6 +575,16 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             return;
         }
 
+        $pointFormOSS = [];
+        $resultFromOSS = $this->valueChainService->monthlyEvaluation([
+            'store_id' => $storeId,
+            'current_date' => $date,
+        ]);
+
+        if ($resultFromOSS->get('success')) {
+            $pointFormOSS = $resultFromOSS->get('data')->get($storeId);
+        }
+
         $filters['store_id'] = $storeId;
         $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate($filters)->first();
         $googleAndInstagramAccessNum = $this->accessSourceService->getTotalAccessGoogleAndInstagram($filters)->first();
@@ -589,8 +603,8 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'number_of_items_point' => $this->getRatingPointProduct($standardDeviation, $filters),
             'product_utilization_rate_point' => $this->getProductUtilizationRate($standardDeviation, $filters),
             'product_cost_rate_point' => $this->getRatingPointCostRate($storeId, $filters),
-            'low_product_reviews_point' => 0,
-            'few_sold_out_items_point' => 0,
+            'low_product_reviews_point' => Arr::get($pointFormOSS, 'low_product_reviews_point', 0),
+            'few_sold_out_items_point' => Arr::get($pointFormOSS, 'few_sold_out_items_point', 0),
 
             'product_page_conversion_rate_point' => $this->getRatingPointProductPageConversionRate($standardDeviation, $itemsSales),
             'access_number_point' => $this->getRatingPointProductAccessNum($standardDeviation, $itemsSales),
@@ -607,18 +621,18 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'instagram_access_point' => $this->getRattingPointInstagramAccess($standardDeviation, $googleAndInstagramAccessNum),
 
             'shipping_fee_point' => 0,
-            'shipping_ratio_point' => 0,
+            'shipping_ratio_point' => $this->getRattingPointShippingratio($standardDeviation, $filters),
             'bundling_ratio_point' => 0,
-            'delivery_on_specified_day_point' => 0,
-            'delivery_preparation_period_point' => 0,
-            'shipping_according_to_the_delivery_date_point' => 0,
+            'delivery_on_specified_day_point' => Arr::get($pointFormOSS, 'ship_on_specified_date_point', 0),
+            'delivery_preparation_period_point' => Arr::get($pointFormOSS, 'delivery_preparation_period_point', 0),
+            'shipping_according_to_the_delivery_date_point' => Arr::get($pointFormOSS, 'ship_according_to_delivery_date_point', 0),
 
-            'few_user_complaints_point' => 0,
+            'few_user_complaints_point' => Arr::get($pointFormOSS, 'few_user_complaints_point', 0),
 
             'email_newsletter_point' => $this->getEmailNewsletterPoint($storeId, $filters),
             're_sales_num_rate_point' => $this->getRattingPointReSalesNumRate($standardDeviation, $filters),
             'review_writing_rate' => 0,
-            'line_official_point' => $this->lineOfficial($storeId, $filters),
+            'line_official_point' => Arr::get($pointFormOSS, 'line_official', 0),
             'instagram_followers' => $this->getInstagramFlow($storeId, $filters),
             'ltv_point' => $this->getRatingPointLtv2yAmnt($standardDeviation, $filters),
         ]);
@@ -826,6 +840,40 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         };
     }
 
+    public function getRattingPointShippingratio(StandardDeviation $standardDeviation, array $filters = [])
+    {
+        $standardDeviation = $standardDeviation->shipping_ratio;
+        $storeId = Arr::get($filters, 'store_id');
+        $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
+
+        /** @var \App\Repositories\Contracts\MqSheetRepository */
+        $mqSheetRepository = app(MqSheetRepository::class);
+        $mqSheetDefault = $mqSheetRepository->getDefaultByStore($storeId);
+
+        /** @var \App\Repositories\Contracts\MqAccountingRepository */
+        $mqAccountingRepository = app(MqAccountingRepository::class);
+        $postageAI = $mqAccountingRepository->getListByStore($storeId, [
+            'mq_sheet_id' => $mqSheetDefault->id,
+            'from_date' => $currentDate,
+            'to_date' => $currentDate,
+        ])->first()?->mqCost?->postage ?? 0;
+
+        $postageActual = Arr::get(Arr::first($this->mqAccountingService->getListByStore($storeId, [
+            'from_date' => Carbon::createFromFormat('Y-m', $currentDate)->subMonth()->format('Y-m'),
+            'to_date' => Carbon::createFromFormat('Y-m', $currentDate)->subMonth()->format('Y-m'),
+        ])), 'mq_cost.postage', 0);
+
+        $postage = $postageAI - $postageActual;
+
+        return match (true) {
+            $postage >= 2 * $standardDeviation => 5,
+            $postage >= $standardDeviation && $postage < 2 * $standardDeviation => 4,
+            $postage >= 0 && $postage < $standardDeviation => 3,
+            $postage >= -$standardDeviation && $postage <= 0 => 2,
+            $postage < -$standardDeviation => 1,
+        };
+    }
+
     public function getRattingPointReSalesNumRate(StandardDeviation $standardDeviation, array $filters = [])
     {
         $standardDeviation = $standardDeviation->re_sales_num_rate;
@@ -984,10 +1032,5 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             1000 <= $instagramFlowNum && $instagramFlowNum <= 4999 => 2,
             $instagramFlowNum < 1000 => 1,
         };
-    }
-
-    public function lineOfficial(string $storeId, array $filters)
-    {
-        return 0;
     }
 }

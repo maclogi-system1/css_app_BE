@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\StandardDeviation;
+use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\StandardDeviationRepository as StandardDeviationRepositoryContract;
 use App\Repositories\Repository;
 use App\WebServices\AI\AccessSourceService;
@@ -14,7 +15,9 @@ use App\WebServices\AI\ProductAnalysisService;
 use App\WebServices\AI\RgroupAdService;
 use App\WebServices\AI\RppAdService;
 use App\WebServices\AI\TdaAdService;
+use App\WebServices\OSS\ValueChainService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 
 class StandardDeviationRepository extends Repository implements StandardDeviationRepositoryContract
 {
@@ -28,6 +31,7 @@ class StandardDeviationRepository extends Repository implements StandardDeviatio
         private AdPurchaseHistoryService $adPurchaseHistoryService,
         private AccessSourceService $accessSourceService,
         private MqAccountingService $mqAccountingService,
+        private ValueChainService $valueChainService,
     ) {
     }
 
@@ -47,6 +51,16 @@ class StandardDeviationRepository extends Repository implements StandardDeviatio
         $date = Arr::get($data, 'date');
         $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate(['current_date' => $date]);
         $googleAndInstagramAccessNum = $this->accessSourceService->getTotalAccessGoogleAndInstagram(['current_date' => $date]);
+
+        $pointFormOSS = [];
+        $resultFromOSS = $this->valueChainService->monthlyEvaluation([
+            'current_date' => $date,
+        ]);
+
+        if ($resultFromOSS->get('success')) {
+            $pointFormOSS = $resultFromOSS->get('data')->toArray();
+        }
+
         $standardDeviation = $this->model()->firstOrCreate(
             [
                 'date' => $date.'-01',
@@ -72,12 +86,12 @@ class StandardDeviationRepository extends Repository implements StandardDeviatio
                 'instagram_access' => $this->getInstagramAccess($googleAndInstagramAccessNum),
 
                 'shipping_fee' => null,
-                'shipping_ratio' => null,
+                'shipping_ratio' => $this->getShippingRatio($date),
                 'bundling_ratio' => null,
 
                 'email_newsletter' => null,
                 're_sales_num_rate' => $this->getReSalesNumRate($date),
-                'line_official' => null,
+                'line_official' => $this->getLineOfficial($pointFormOSS),
                 'ltv' => $this->getLtv2yAmnt($date),
             ]
         );
@@ -344,6 +358,40 @@ class StandardDeviationRepository extends Repository implements StandardDeviatio
         return sqrt($standardDeviation / $totalShop);
     }
 
+    public function getShippingRatio(string $date)
+    {
+        /** @var \App\Repositories\Contracts\MqAccountingRepository */
+        $mqAccountingRepository = app(MqAccountingRepository::class);
+        $mqAccountingAI = $mqAccountingRepository->getList([
+            'from_date' => $date,
+            'to_date' => $date,
+        ]);
+        $mqAccountingActual = $this->mqAccountingService->getList([
+            'year_month' => Carbon::createFromFormat('Y-m', $date)->subMonth()->format('Y-m'),
+        ])->get('data');
+        $difference = [];
+
+        foreach ($mqAccountingAI as $itemAI) {
+            $itemActual = $mqAccountingActual->where('store_id', 'ariat')->first();
+            $difference[] = ($itemAI->mqCost->postage ?? 0) - ($itemActual?->mqCost?->postage ?? 0);
+        }
+
+        $totalShop = count($difference);
+
+        if (! $totalShop) {
+            return 0;
+        }
+
+        $average = array_reduce($difference, fn (?int $carry, $item) => $carry + $item) / $totalShop;
+        $standardDeviation = 0;
+
+        foreach ($difference as $item) {
+            $standardDeviation += pow($item - $average, 2);
+        }
+
+        return sqrt($standardDeviation / $totalShop);
+    }
+
     public function getReSalesNumRate(string $date)
     {
         $mqAccounting = $this->mqAccountingService->getListReSalesNum([
@@ -363,6 +411,24 @@ class StandardDeviationRepository extends Repository implements StandardDeviatio
 
         foreach ($mqAccounting as $item) {
             $standardDeviation += pow($item->re_sales_num_rate - $average, 2);
+        }
+
+        return sqrt($standardDeviation / $totalShop);
+    }
+
+    public function getLineOfficial(array $pointFormOSS)
+    {
+        $totalShop = count($pointFormOSS);
+
+        if (! $totalShop) {
+            return 0;
+        }
+
+        $average = array_reduce($pointFormOSS, fn (?int $carry, $item) => $carry + $item['line_official'] ?? 0);
+        $standardDeviation = 0;
+
+        foreach ($pointFormOSS as $item) {
+            $standardDeviation += pow($item['line_official'] - $average, 2);
         }
 
         return sqrt($standardDeviation / $totalShop);
