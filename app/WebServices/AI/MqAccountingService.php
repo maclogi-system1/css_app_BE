@@ -173,11 +173,6 @@ class MqAccountingService extends Service
         })->toArray() : $mqAccountings;
     }
 
-    public function getMonthlyChangesInFinancialIndicators(string $storeId, array $filters = [])
-    {
-        return [];
-    }
-
     /**
      * Get the cumulative change in revenue and profit.
      */

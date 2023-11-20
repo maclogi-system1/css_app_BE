@@ -89,6 +89,9 @@ return [
                 'get_tasks' => '/my-page/get-tasks',
                 'get_alerts' => '/my-page/get-alerts',
             ],
+            'value_chain' => [
+                'monthly_evaluation' => '/shops/value-chain/monthly-evaluation',
+            ],
         ],
     ],
 

@@ -153,6 +153,45 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         ];
     }
 
+    public function getList(array $filters = [], array $columns = ['*'])
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $mqSheetId = Arr::get($filters, 'mq_sheet_id');
+        $storeId = Arr::get($filters, 'store_id');
+
+        $query = $this->useWith(['mqKpi', 'mqAccessNum', 'mqAdSalesAmnt', 'mqUserTrends', 'mqCost', 'mqSheet'])
+            ->useScope(['dateRange' => [$dateRangeFilter['from_date'], $dateRangeFilter['to_date']]])
+            ->queryBuilder()
+            ->when($storeId, function ($query, $storeId) {
+                $query->where('store_id', $storeId);
+            });
+
+        if (is_null($mqSheetId)) {
+            $query->whereHas('mqSheet', function (Builder $query) {
+                $query->where('is_default', 1);
+            });
+        } else {
+            $query->where('mq_sheet_id', $mqSheetId);
+        }
+
+        return $query->get()
+            ->map(function ($item) {
+                $item->date_year_month = $item->year.'/'.sprintf('%02d', $item->month);
+                $item->fixed_cost = is_null($item->fixed_cost)
+                    ? $item->mqCost?->cost_sum + ($item->csv_usage_fee ?? 0) + ($item->store_opening_fee ?? 0)
+                    : $item->fixed_cost;
+                $item->mqCost->variable_cost_sum = is_null($item->mqCost?->variable_cost_sum)
+                    ? ($item->mqCost?->coupon_points_cost ?? 0)
+                        + ($item->mqCost?->ad_cost ?? 0)
+                        + ($item->mqCost?->cost_price ?? 0)
+                        + ($item->mqCost?->postage ?? 0)
+                        + ($item->mqCost?->commision ?? 0)
+                    : $item->mqCost?->variable_cost_sum;
+
+                return $item;
+            });
+    }
+
     /**
      * Get mq_accounting details by storeId.
      */

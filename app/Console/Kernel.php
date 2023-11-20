@@ -18,8 +18,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command(ExecuteScheduledMacros::class)->everyMinute();
         $schedule->command(CreateMqSheetDefault::class)->daily();
-        $schedule->command(CreateDefaultValueChainsForShops::class)->cron('0 5 3 * *');
-        $schedule->command(CreateStandardDeviation::class)->cron('0 5 1 * *');
+        $schedule->command(CreateDefaultValueChainsForShops::class)->monthlyOn(3, '5:0');
+        $schedule->command(CreateStandardDeviation::class)->monthlyOn(1, '5:0');
     }
 
     /**
