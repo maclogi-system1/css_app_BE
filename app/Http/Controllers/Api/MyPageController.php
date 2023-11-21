@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProfitReferenceRequest;
 use App\Models\User;
 use App\Repositories\Contracts\MyPageRepository;
 use App\Support\PermissionHelper;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 
@@ -20,9 +21,9 @@ class MyPageController extends Controller
     /**
      * Get my page options.
      */
-    public function options()
+    public function options(Request $request)
     {
-        return response()->json($this->myPageRepository->getOptions());
+        return response()->json($this->myPageRepository->getOptions($request->user()));
     }
 
     /**
