@@ -3,11 +3,13 @@
 namespace App\Repositories\Eloquents;
 
 use App\Constants\DatabaseConnectionConstant;
+use App\Models\User;
 use App\Repositories\Contracts;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\MyPageRepository as MyPageRepositoryContract;
 use App\Repositories\Contracts\ShopRepository;
 use App\Repositories\Contracts\TaskRepository;
+use App\Repositories\Contracts\TeamRepository;
 use App\Repositories\Repository;
 use App\WebServices\MyPageService;
 use Illuminate\Database\Query\JoinClause;
@@ -32,7 +34,7 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
         return '';
     }
 
-    public function getOptions(): array
+    public function getOptions(?User $user = null): array
     {
         $genres = [
             'レディースファッション',
@@ -73,22 +75,32 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
             'サービス・リフォーム',
             'カタログギフト・チケット',
         ];
+        $storeGroup = collect([
+            [
+                'label' => 'すべて',
+                'value' => 'all',
+            ],
+            [
+                'label' => 'チーム',
+                'value' => 'team',
+            ],
+            [
+                'label' => '担当店舗',
+                'value' => 'store_in_charge',
+            ],
+        ]);
+
+        if ($user->is_admin) {
+            /** @var \App\Repositories\Contracts\TeamRepository */
+            $teamRepository = app(TeamRepository::class);
+            $storeGroup = $storeGroup->merge($teamRepository->getList(['per_page' => -1])->map(fn ($team) => [
+                'label' => $team->name,
+                'value' => $team->id,
+            ]));
+        }
 
         return [
-            'store_group' => [
-                [
-                    'label' => 'すべて',
-                    'value' => 'all',
-                ],
-                [
-                    'label' => 'チーム',
-                    'value' => 'team',
-                ],
-                [
-                    'label' => '担当店舗',
-                    'value' => 'store_in_charge',
-                ],
-            ],
+            'store_group' => $storeGroup,
             'store_genres' => array_map(function ($genre) {
                 return [
                     'label' => $genre,
@@ -271,22 +283,30 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
     public function prepareDataStoreProfit(array $params): array
     {
         $manager = array_filter(explode(',', Arr::get($params, 'manager', '')));
-        $storeGroup = Arr::get($params, 'store_group');
+        $storeGroup = collect(Arr::get($params, 'store_group', []));
         $userId = Arr::pull($params, 'user_id');
-        if (in_array($storeGroup, ['team', 'store_in_charge']) && $userId) {
-            $user = $this->getUserRepository()->find($userId);
-            if ($user) { //user login
-                if ('team' == $storeGroup) {
-                    $teamIds = $user->teams->pluck('id')->toArray();
-                    /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
-                    $teamRepository = app(\App\Repositories\Contracts\TeamRepository::class);
-                    $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamIds);
-                    $manager = array_merge($manager, $teamUserIds);
-                }
 
-                if ('store_in_charge' == $storeGroup) {
-                    $manager = [$userId];
-                }
+        if ($userId && ! $storeGroup->contains('all')) {
+            $user = $this->getUserRepository()->find($userId);
+            /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
+            $teamRepository = app(TeamRepository::class);
+
+            if ($storeGroup->contains('team')) {
+                $teamIds = $user->teams->pluck('id')->toArray();
+                $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamIds);
+                $manager = array_merge($manager, $teamUserIds);
+            }
+
+            // Filter manager by current user
+            if ($storeGroup->contains('store_in_charge')) {
+                $manager = [$userId];
+            }
+
+            $teamUserIds = $storeGroup->except(['all', 'team', 'store_in_charge']);
+
+            if ($teamUserIds->count()) {
+                $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamUserIds->toArray());
+                $manager = array_merge($manager, $teamUserIds);
             }
         }
 

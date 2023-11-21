@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Validation\Rule;
 
 class StoreProfitReferenceRequest extends FormRequest
 {
@@ -23,7 +22,7 @@ class StoreProfitReferenceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_group' => ['nullable', Rule::in(['all', 'team', 'store_in_charge'])],
+            'store_group' => ['nullable', 'array'],
         ];
     }
 }
