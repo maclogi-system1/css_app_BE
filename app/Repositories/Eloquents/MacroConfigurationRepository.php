@@ -527,7 +527,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             return array_merge($additions, array_map(fn ($shop) => [
                 'value' => $shop['store_id'],
-                'label' => $shop['name'],
+                'label' => $shop['name'].'_'.$shop['store_id'],
             ], $result->get('data')->get('shops')));
         }
 
