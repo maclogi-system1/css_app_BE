@@ -84,6 +84,13 @@ class MacroConfiguration extends Model
         return $cronExpression;
     }
 
+    public function getListStoreIdAttribute(): array
+    {
+        $storeIds = explode(',', str_replace(' ', '', $this->store_ids));
+
+        return $storeIds;
+    }
+
     public function graph(): HasOne
     {
         return $this->hasOne(MacroGraph::class);
@@ -107,6 +114,11 @@ class MacroConfiguration extends Model
     public function taskTemplates(): HasMany
     {
         return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_TASK_ISSUE);
+    }
+
+    public function alertTemplates(): HasMany
+    {
+        return $this->hasMany(MacroTemplate::class)->where('type', MacroConstant::MACRO_TYPE_ALERT_DISPLAY);
     }
 
     public function users(): MorphToMany
