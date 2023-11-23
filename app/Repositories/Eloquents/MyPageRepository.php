@@ -81,10 +81,6 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
                 'value' => 'all',
             ],
             [
-                'label' => 'チーム',
-                'value' => 'team',
-            ],
-            [
                 'label' => '担当店舗',
                 'value' => 'store_in_charge',
             ],
@@ -291,18 +287,12 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
             /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
             $teamRepository = app(TeamRepository::class);
 
-            if ($storeGroup->contains('team')) {
-                $teamIds = $user->teams->pluck('id')->toArray();
-                $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamIds);
-                $manager = array_merge($manager, $teamUserIds);
-            }
-
             // Filter manager by current user
             if ($storeGroup->contains('store_in_charge')) {
                 $manager = [$userId];
             }
 
-            $teamUserIds = $storeGroup->except(['all', 'team', 'store_in_charge']);
+            $teamUserIds = $storeGroup->except(['all', 'store_in_charge']);
 
             if ($teamUserIds->count()) {
                 $teamUserIds = $teamRepository->getTeamUserIdsWithTeamIds($teamUserIds->toArray());
