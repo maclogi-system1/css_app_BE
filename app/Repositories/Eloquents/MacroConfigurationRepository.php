@@ -322,6 +322,14 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 && Arr::has($data, 'tasks')
             ) {
                 $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
+                && Arr::has($data, 'alert')
+            ) {
+                $this->macroTemplateRepository->create($macroConfiguration->id, [
+                    'type' => MacroConstant::MACRO_TYPE_ALERT_DISPLAY,
+                    'payload' => Arr::get($data, 'alert'),
+                ]);
             }
 
             return $macroConfiguration->refresh();
@@ -392,6 +400,16 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ) {
                 $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
                 $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
+                && Arr::has($data, 'alert')
+            ) {
+                $this->macroTemplateRepository->updateOrCreate([
+                    'macro_configuration_id' => $macroConfiguration->id,
+                ], [
+                    'type' => MacroConstant::MACRO_TYPE_ALERT_DISPLAY,
+                    'payload' => Arr::get($data, 'alert'),
+                ]);
             }
 
             if (
