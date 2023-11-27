@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 interface MyPageRepository extends Repository
@@ -9,7 +10,7 @@ interface MyPageRepository extends Repository
     /**
      * Get my page options.
      */
-    public function getOptions(): array;
+    public function getOptions(?User $user = null): array;
 
     public function getStoreProfitReference(array $params): Collection;
 

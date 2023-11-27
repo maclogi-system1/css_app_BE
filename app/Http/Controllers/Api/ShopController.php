@@ -55,7 +55,10 @@ class ShopController extends Controller
 
     public function update(string $storeId, Request $request): JsonResponse
     {
-        PermissionHelper::checkUpdateShopPermission($request->user(), $storeId);
+        $permissionCheck = PermissionHelper::checkUpdateShopPermission($request->user(), $storeId);
+        if ($permissionCheck instanceof JsonResponse) {
+            return $permissionCheck;
+        }
 
         $result = $this->shopRepository->update($storeId, $request->all());
 
@@ -67,6 +70,25 @@ class ShopController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    public function delete(string $storeId): JsonResponse
+    {
+        $permissionCheck = PermissionHelper::checkDeleteShopPermission(request()->user(), $storeId);
+        if ($permissionCheck instanceof JsonResponse) {
+            return $permissionCheck;
+        }
+
+        $result = $this->shopRepository->delete($storeId);
+        if ($result->has('success') && ! $result->get('success')) {
+            return response()->json($result->get('data'), $result->get('status'));
+        }
+
+        return $result
+        ? response()->json($result->get('data'), Response::HTTP_OK)
+        : response()->json([
+            'message' => __('Deleted failure.'),
+        ]);
     }
 
     public function create(Request $request): JsonResponse

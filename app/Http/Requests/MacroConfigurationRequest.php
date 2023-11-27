@@ -33,11 +33,11 @@ class MacroConfigurationRequest extends FormRequest
             'time_conditions.schedule' => [Rule::requiredIf(fn () => empty($this->input('time_conditions.designation')))],
             'graph' => ['nullable'],
             'users_teams' => ['nullable', 'string'],
+            'simulation' => ['nullable'],
+            'policies' => ['nullable', 'array'],
+            'tasks' => ['nullable', 'array'],
+            'alert' => ['nullable'],
         ];
-
-        $this->setRuleForSimulation($rules);
-        $this->setRuleForPolicies($rules);
-        $this->setRuleForTasks($rules);
 
         if ($id = $this->route('macroConfiguration')) {
             $rules['name'] = [
@@ -58,20 +58,5 @@ class MacroConfigurationRequest extends FormRequest
         }
 
         return $rules;
-    }
-
-    protected function setRuleForSimulation(array &$rules)
-    {
-        $rules['simulation'] = ['nullable'];
-    }
-
-    protected function setRuleForPolicies(array &$rules)
-    {
-        $rules['policies'] = ['nullable', 'array'];
-    }
-
-    protected function setRuleForTasks(array &$rules)
-    {
-        $rules['tasks'] = ['nullable', 'array'];
     }
 }

@@ -15,4 +15,14 @@ class AlertService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.list'), $filters));
     }
+
+    public function markAsRead(int $alertId)
+    {
+        return $this->toResponse(Http::oss()->put(OSSService::getApiUri('alerts.mark_as_read', $alertId)));
+    }
+
+    public function createAlert(array $params)
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('alerts.create'), $params));
+    }
 }

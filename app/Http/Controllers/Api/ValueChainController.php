@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetListValueChainRequest;
+use App\Models\ValueChain;
 use App\Repositories\Contracts\ShopRepository;
 use App\Repositories\Contracts\ValueChainRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 
@@ -16,6 +19,16 @@ class ValueChainController extends Controller
         private ValueChainRepository $valueChainRepository,
         private ShopRepository $shopRepository,
     ) {
+    }
+
+    public function getListByStore(GetListValueChainRequest $request, string $storeId)
+    {
+        $valueChainCollection = $this->valueChainRepository->getListByStore(
+            $storeId,
+            $request->validated() + ['format_detail' => true]
+        );
+
+        return response()->json($valueChainCollection);
     }
 
     public function monthlyEvaluation(Request $request, string $storeId): JsonResponse
@@ -78,5 +91,51 @@ class ValueChainController extends Controller
         return response()->json([
             'chart' => $chart,
         ]);
+    }
+
+    public function getOptions()
+    {
+        return response()->json($this->valueChainRepository->getOptions());
+    }
+
+    public function update(Request $request)
+    {
+        $numberFailures = 0;
+        $errors = [];
+        $status = Response::HTTP_OK;
+
+        foreach ($request->post() as $index => $data) {
+            $validated = $this->valueChainRepository->handleValidation($data, $index);
+
+            if (isset($validated['error'])) {
+                $errors[] = $validated['error'];
+                $status = $status != Response::HTTP_BAD_REQUEST
+                    ? Response::HTTP_UNPROCESSABLE_ENTITY
+                    : Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+
+                continue;
+            }
+
+            $result = $this->valueChainRepository->update($validated, ValueChain::find(Arr::get($data, 'id')));
+
+            if (is_null($result)) {
+                $errors[] = [
+                    'index' => $index,
+                    'row' => $index + 1,
+                    'messages' => [
+                        'record' => "Something went wrong! Can't edit value chain.",
+                    ],
+                ];
+                $status = Response::HTTP_BAD_REQUEST;
+                $numberFailures++;
+            }
+        }
+
+        return response()->json([
+            'message' => $numberFailures > 0 ? 'There are a few failures.' : 'Success.',
+            'number_of_failures' => $numberFailures,
+            'errors' => $errors,
+        ], $status);
     }
 }

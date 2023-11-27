@@ -52,4 +52,9 @@ class ShopService extends Service
     {
         return $this->toResponse(Http::oss()->get(OSSService::getApiUri('alerts.get_alert_count', $storeId)));
     }
+
+    public function delete(string $storeId)
+    {
+        return $this->toResponse(Http::oss()->delete(OSSService::getApiUri('shops.delete', $storeId)));
+    }
 }

@@ -41,16 +41,19 @@ class MqAccounting extends Model
         return $this->belongsTo(MqCost::class, 'mq_cost_id', 'mq_cost_id');
     }
 
-    public function scopeDateRange(Builder $query, Carbon $fromDate, Carbon $toDate)
+    public function scopeDateRange(Builder $builder, Carbon $fromDate, Carbon $toDate)
     {
         if ($fromDate <= $toDate) {
-            $query->where(function ($query) use ($fromDate, $toDate) {
-                $query->whereRaw("
-                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-".$fromDate->lastOfMonth()->day."'), '%Y-%m-%d') >= DATE('".$fromDate->format('Y-m-d')."')
-                ")
-                ->whereRaw("
-                    STR_TO_DATE(CONCAT(mq_accounting.year, '-', LPAD(mq_accounting.month, 2, '0'), '-".$toDate->lastOfMonth()->day."'), '%Y-%m-%d') <= DATE('".$toDate->format('Y-m-d')."')
-                ");
+            $builder->where(function ($query) use ($fromDate, $toDate) {
+                $boolean = $fromDate->year == $toDate->year ? 'and' : 'or';
+
+                $query->where(function ($q) use ($fromDate) {
+                    $q->where('year', $fromDate->year)
+                        ->where('month', '>=', $fromDate->month);
+                })->whereNested(function ($q) use ($toDate) {
+                    $q->where('year', $toDate->year)
+                        ->where('month', '<=', $toDate->month);
+                }, $boolean);
             });
         }
     }

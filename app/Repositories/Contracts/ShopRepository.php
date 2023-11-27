@@ -34,4 +34,6 @@ interface ShopRepository extends Repository
     public function update(string $storeId, array $data): Collection;
 
     public function convertCssUserByOssUser(Collection $data): Collection;
+
+    public function delete(string $storeId): Collection;
 }

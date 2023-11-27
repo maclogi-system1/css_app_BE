@@ -19,6 +19,7 @@ use App\WebServices\OSS\SchemaService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -321,6 +322,14 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 && Arr::has($data, 'tasks')
             ) {
                 $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+            } elseif (
+                Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
+                && Arr::has($data, 'alert')
+            ) {
+                $this->macroTemplateRepository->create($macroConfiguration->id, [
+                    'type' => MacroConstant::MACRO_TYPE_ALERT_DISPLAY,
+                    'payload' => Arr::get($data, 'alert'),
+                ]);
             }
 
             return $macroConfiguration->refresh();
@@ -391,6 +400,16 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ) {
                 $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
                 $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+            } elseif (
+                $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
+                && Arr::has($data, 'alert')
+            ) {
+                $this->macroTemplateRepository->updateOrCreate([
+                    'macro_configuration_id' => $macroConfiguration->id,
+                ], [
+                    'type' => MacroConstant::MACRO_TYPE_ALERT_DISPLAY,
+                    'payload' => Arr::get($data, 'alert'),
+                ]);
             }
 
             if (
@@ -502,6 +521,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             'time_conditions' => $timeConditions,
             'graph_types' => $graphTypes,
             'position_display' => $positionDisplay,
+            'alert_types' => [
+                ['label' => '店舗アラート', 'value' => 9],
+                ['label' => 'タスクアラート', 'value' => 10],
+            ],
         ];
     }
 
@@ -522,7 +545,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
             return array_merge($additions, array_map(fn ($shop) => [
                 'value' => $shop['store_id'],
-                'label' => $shop['name'],
+                'label' => $shop['name'].'_'.$shop['store_id'],
             ], $result->get('data')->get('shops')));
         }
 
@@ -619,6 +642,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             default => $value
         };
 
+        if (in_array($value, array_keys(DateTimeConstant::TIMELINE))) {
+            $value = $this->getValueFromTimeLine($value);
+        }
+
         if ($operator == 'in') {
             return [
                 $field,
@@ -638,33 +665,19 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     private function handleConditionContainingDate(array $condition): array
     {
+        $field = Arr::get($condition, 'field');
+        $operator = Arr::get($condition, 'operator');
         $value = Arr::get($condition, 'value');
         $dateCondition = Arr::get($condition, 'date_condition');
         $now = now()->toImmutable();
         $newValue = $now;
 
         if (in_array($value, array_keys(DateTimeConstant::TIMELINE))) {
-            $splitValue = explode('_', $value);
-            $carbonMethod = match ($splitValue[0]) {
-                'last', 'yesterday' => 'sub',
-                'this', 'today' => '',
-                'next', 'tomorrow' => 'add',
-            };
-
-            if (! empty($carbonMethod)) {
-                $carbonMethod .= count($splitValue) > 1 ? str($splitValue[1])->title()->toString() : 'Day';
-                $newValue = now()->{$carbonMethod}();
-            }
-
-            if (str($splitValue[1])->contains('week')) {
-                $newValue = $newValue->weekday($dateCondition['day']);
-            } elseif (str($splitValue[1])->contains('month')) {
-                $newValue = $newValue->day($dateCondition['day']);
-            }
+            $newValue = $this->getValueFromTimeLine($value, $dateCondition['day']);
 
             return [
-                Arr::get($condition, 'field'),
-                Arr::get($condition, 'operator'),
+                $field,
+                $operator,
                 $newValue,
             ];
         } elseif ($value == 'from_today') {
@@ -678,11 +691,57 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             };
 
             return [
-                Arr::get($condition, 'field'),
+                $field,
                 $direction,
                 $newValue,
             ];
+        } elseif ($value == 'specify_date_time') {
+            $value = $dateCondition['value'];
+
+            if ($this->getColumnDataType($field, true) == 'datetime' && $operator == '=') {
+                $operator = 'between';
+                $value = [
+                    Carbon::create($value)->startOfDay()->format('Y-m-d H:i:s'),
+                    Carbon::create($value)->endOfDay()->format('Y-m-d H:i:s'),
+                ];
+
+                return [
+                    $field,
+                    $value,
+                    $operator,
+                ];
+            }
         }
+
+        return [
+            $field,
+            $operator,
+            $value,
+        ];
+    }
+
+    private function getValueFromTimeLine($value, ?int $day = 1)
+    {
+        $newValue = now();
+        $splitValue = explode('_', $value);
+        $carbonMethod = match ($splitValue[0]) {
+            'last', 'yesterday' => 'sub',
+            'this', 'today' => '',
+            'next', 'tomorrow' => 'add',
+        };
+
+        if (! empty($carbonMethod)) {
+            $carbonMethod .= count($splitValue) > 1 ? str($splitValue[1])->title()->toString() : 'Day';
+            $newValue = now()->{$carbonMethod}();
+        }
+
+        if (str($splitValue[1])->contains('week')) {
+            $newValue = $newValue->weekday($day);
+        } elseif (str($splitValue[1])->contains('month')) {
+            $newValue = $newValue->day($day);
+        }
+
+        return $newValue;
     }
 
     /**
@@ -983,6 +1042,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 }
 
                 $method = $conditionItem['operator'] == 'in' ? 'whereIn' : 'where';
+
+                if (Arr::last($params) == 'between') {
+                    $method = 'whereBetween';
+                    array_pop($params);
+                }
+
                 $params[] = $boolean; // and|or
 
                 $query->{$method}(...$params);
@@ -1057,7 +1122,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                     $newDateCondition = $this->handleConditionContainingDate($conditionItem);
                     $conditionItem['field'] = $newDateCondition[0];
                     $conditionItem['operator'] = $newDateCondition[1];
-                    $conditionItem['value'] = $newDateCondition[2]->format('Y/m/d');
+                    $conditionItem['value'] = Carbon::create($newDateCondition[2])->format('Y/m/d');
                 }
 
                 return $conditionItem;

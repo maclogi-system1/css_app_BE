@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Traits\FilterYearMonthValidationRules;
 use Illuminate\Validation\Rule;
 
 class GetMqAnalysisRequest extends FormRequest
 {
+    use FilterYearMonthValidationRules;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -21,16 +24,8 @@ class GetMqAnalysisRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        return $this->yearMonthFromToRules(true) + [
             'store_id' => [Rule::requiredIf(! $this->route('storeId')), 'string'],
-            'from_date' => ['required', 'date:Y-m', 'after_or_equal:2021-01'],
-            'to_date' => ['required', 'date:Y-m', 'after_or_equal:from_date'],
-            'compared_from_date' => ['nullable', 'date:Y-m', 'after_or_equal:2021-01'],
-            'compared_to_date' => [
-                Rule::requiredIf($this->has('compared_from_date')),
-                'date:Y-m',
-                'after_or_equal:compared_from_date',
-            ],
         ];
     }
 }

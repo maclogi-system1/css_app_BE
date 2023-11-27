@@ -24,12 +24,12 @@ trait ColumnTypeHandler
      * Get column data type from input string 'table.column'.
      * Return empty when exception table not found has been thrown.
      */
-    public function getColumnDataType(string $tableColumnStr): string
+    public function getColumnDataType(string $tableColumnStr, bool $original = false): string
     {
         try {
             $columnType = Schema::getColumnType(explode('.', $tableColumnStr)[0], explode('.', $tableColumnStr)[1]);
 
-            return $this->convertColumnType($columnType);
+            return $original ? $columnType : $this->convertColumnType($columnType);
         } catch(\Exception $e) {
             return '';
         }

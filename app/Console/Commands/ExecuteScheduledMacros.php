@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
+use App\Repositories\Contracts\AlertRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Repositories\Contracts\TaskRepository;
 use Illuminate\Console\Command;
@@ -109,20 +110,24 @@ class ExecuteScheduledMacros extends Command
             case MacroConstant::MACRO_TYPE_TASK_ISSUE:
                 $this->createTask($macro);
                 break;
+            case MacroConstant::MACRO_TYPE_ALERT_DISPLAY:
+                $this->createAlert($macro);
+                break;
         }
 
-        $this->info($macro->name.' is executed.');
+        $this->info('"'.$macro->name.'" is executed.');
     }
 
     private function createSimulationPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->simulationTemplates;
-        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($storeIds as $storeId) {
+            foreach ($macro->listStoreId as $storeId) {
+                logger('Run create simulation: '.json_encode($data + ['store_id' => $storeId]));
+
                 $this->policyRepository()->createSimulation($data, $storeId);
             }
         }
@@ -131,14 +136,16 @@ class ExecuteScheduledMacros extends Command
     private function createPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->policyTemplates;
-        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($storeIds as $index => $storeId) {
+            foreach ($macro->listStoreId as $index => $storeId) {
+                $data = array_merge($data, ['store_id' => $storeId]);
+                logger('Run create policy: '.json_encode($data));
+
                 $this->policyRepository()->create(
-                    $this->policyRepository()->handleValidation($data + ['store_id' => $storeId], $index),
+                    $this->policyRepository()->handleValidation($data, $index),
                     $storeId
                 );
             }
@@ -148,13 +155,30 @@ class ExecuteScheduledMacros extends Command
     private function createTask(MacroConfiguration $macro): void
     {
         $templates = $macro->taskTemplates;
-        $storeIds = explode(',', preg_replace('/ *, */', '', $macro->store_ids));
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($storeIds as $storeId) {
+            foreach ($macro->listStoreId as $storeId) {
+                logger('Run create task: '.json_encode($data + ['store_id' => $storeId]));
+
                 $this->taskRepository()->create($data, $storeId);
+            }
+        }
+    }
+
+    private function createAlert(MacroConfiguration $macro): void
+    {
+        $templates = $macro->alertTemplates;
+
+        foreach ($templates as $template) {
+            $data = $template->payload_decode;
+
+            foreach ($macro->listStoreId as $storeId) {
+                $data = array_merge($data, ['store_id' => $storeId, 'macro_id' => $macro->id]);
+                logger('Run create alert: '.json_encode($data));
+
+                $this->alertRepository()->createAlert($data);
             }
         }
     }
@@ -167,5 +191,10 @@ class ExecuteScheduledMacros extends Command
     private function taskRepository(): TaskRepository
     {
         return app(TaskRepository::class);
+    }
+
+    private function alertRepository(): AlertRepository
+    {
+        return app(AlertRepository::class);
     }
 }

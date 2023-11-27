@@ -38,12 +38,15 @@ return [
             'shops' => [
                 'list' => '/shops',
                 'detail' => '/shops/{storeId}',
+                'delete' => '/shops/{storeId}',
                 'options' => '/shops/shop-options',
                 'update' => '/shops',
                 'create' => '/shops',
             ],
             'alerts' => [
                 'list' => '/alerts',
+                'create' => '/alerts',
+                'mark_as_read' => '/alerts/mark-as-read/{id}',
                 'get_alert_count' => '/alerts/get-alert-count/{storeId}',
             ],
             'tasks' => [
@@ -85,6 +88,9 @@ return [
                 'get_store_profit_table' => '/my-page/get-store-profit-table',
                 'get_tasks' => '/my-page/get-tasks',
                 'get_alerts' => '/my-page/get-alerts',
+            ],
+            'value_chain' => [
+                'monthly_evaluation' => '/shops/value-chain/monthly-evaluation',
             ],
         ],
     ],

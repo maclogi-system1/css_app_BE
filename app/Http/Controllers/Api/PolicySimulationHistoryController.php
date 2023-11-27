@@ -12,6 +12,7 @@ use App\Repositories\Contracts\PolicySimulationHistoryRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 class PolicySimulationHistoryController extends Controller
 {
@@ -45,7 +46,7 @@ class PolicySimulationHistoryController extends Controller
             $mqSheet = $this->mqSheetRepository->getDefaultByStore($simulation->store_id);
             $filters = $request->query() + [
                     'from_date' => $policySimulationHistory->execution_time,
-                    'to_date' => $policySimulationHistory->undo_time,
+                    'to_date' => Carbon::create($policySimulationHistory->undo_time)->addMonths(2)->format('Y-m-d H:i:s'),
                     'mq_sheet_id' => $mqSheet->id,
                 ];
             $mqAccountingActualsAndExpected = $this->mqAccountingRepository->getListCompareSimulationWithExpectedValues(

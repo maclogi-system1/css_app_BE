@@ -36,6 +36,11 @@ class CronExpression
         return new static($schedule);
     }
 
+    public function __toString()
+    {
+        return (string) $this->cronExpression;
+    }
+
     public function __call(string $method, array $parameters): mixed
     {
         return $this->cronExpression->{$method}(...$parameters);

@@ -51,7 +51,7 @@ class MqSheetRepository extends Repository implements MqSheetRepositoryContract
             ->first();
 
         if (is_null($mqSheet)) {
-            return null;
+            return $this->createDefault($storeId);
         }
 
         return $mqSheet;
