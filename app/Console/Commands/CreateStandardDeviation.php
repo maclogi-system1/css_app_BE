@@ -20,7 +20,7 @@ class CreateStandardDeviation extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Calculate the indexes to create the standard deviation';
 
     /**
      * Execute the console command.
