@@ -116,7 +116,7 @@ class UserController extends Controller
         if ($request->hasFile('profile_photo_path')) {
             $data['profile_photo_path'] = $this->userRepository->uploadProfilePhoto(
                 $request->file('profile_photo_path'),
-                $data
+                $data,
             );
         }
 

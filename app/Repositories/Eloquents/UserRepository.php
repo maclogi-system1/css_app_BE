@@ -232,8 +232,8 @@ class UserRepository extends Repository implements UserRepositoryContract
     public function update(array $data, User $user): ?User
     {
         return $this->handleSafely(function () use ($data, $user) {
-            $user->fill($data);
             $currentPath = $user->profile_photo_path;
+            $user->fill($data);
 
             if (Arr::has($data, 'profile_photo_path')) {
                 if ($currentPath && Storage::exists($currentPath)) {
@@ -333,7 +333,7 @@ class UserRepository extends Repository implements UserRepositoryContract
     {
         $user = to_array($user);
 
-        $fileName = str(Arr::get($user, 'name', $file->getClientOriginalName()))
+        $fileName = str(Arr::get($user, 'email', $file->getClientOriginalName()))
             ->snake()
             ->append('_'.time().'.'.$file->extension());
 
