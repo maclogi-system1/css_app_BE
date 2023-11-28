@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\ValueChain;
+use Illuminate\Support\Collection;
 
 interface ValueChainRepository extends Repository
 {
@@ -50,4 +51,9 @@ interface ValueChainRepository extends Repository
      * Get the list of monthly evaluation scores for the chart.
      */
     public function chartEvaluate(string $storeId, array $filters = []);
+
+    /**
+     * Check and supplement data for empty months.
+     */
+    public function checkAndSupplementData(Collection $valueChains, array $filters): array;
 }

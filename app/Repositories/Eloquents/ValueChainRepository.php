@@ -23,6 +23,7 @@ use App\WebServices\OSS\ShopService;
 use App\WebServices\OSS\ValueChainService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
 class ValueChainRepository extends Repository implements ValueChainRepositoryContract
@@ -155,12 +156,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     {
         $result = [
             'merchandise' => [
-                'number_of_categories_point' => $valueChain->number_of_categories_point,
-                'number_of_items_point' => $valueChain->number_of_items_point,
-                'product_utilization_rate_point' => $valueChain->product_utilization_rate_point,
-                'product_cost_rate_point' => $valueChain->product_cost_rate_point,
-                'low_product_reviews_point' => $valueChain->low_product_reviews_point,
-                'few_sold_out_items_point' => $valueChain->few_sold_out_items_point,
+                'number_of_categories_point' => $valueChain->number_of_categories_point ?? 0.0,
+                'number_of_items_point' => $valueChain->number_of_items_point ?? 0.0,
+                'product_utilization_rate_point' => $valueChain->product_utilization_rate_point ?? 0.0,
+                'product_cost_rate_point' => $valueChain->product_cost_rate_point ?? 0.0,
+                'low_product_reviews_point' => $valueChain->low_product_reviews_point ?? 0.0,
+                'few_sold_out_items_point' => $valueChain->few_sold_out_items_point ?? 0.0,
                 'average' => round((
                     $valueChain->number_of_categories_point
                     + $valueChain->number_of_items_point
@@ -171,9 +172,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 6, 2),
             ],
             'purchase' => [
-                'purchase_form_point' => $valueChain->purchase_form_point,
-                'stock_value_point' => $valueChain->stock_value_point,
-                'product_utilization_rate_point' => $valueChain->product_utilization_rate_point,
+                'purchase_form_point' => $valueChain->purchase_form_point ?? 0.0,
+                'stock_value_point' => $valueChain->stock_value_point ?? 0.0,
+                'product_utilization_rate_point' => $valueChain->product_utilization_rate_point ?? 0.0,
                 'average' => round((
                     $valueChain->purchase_form_point
                     + $valueChain->stock_value_point
@@ -181,16 +182,16 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 3, 2),
             ],
             'construction_production' => [
-                'top_page_point' => $valueChain->top_page_point,
-                'category_page_point' => $valueChain->category_page_point,
-                'header_point' => $valueChain->header_point,
-                'product_page_point' => $valueChain->product_page_point,
-                'product_page_conversion_rate' => $valueChain->product_page_conversion_rate_point,
-                'product_thumbnail_point' => $valueChain->product_thumbnail_point,
-                'access_number_point' => $valueChain->access_number_point,
-                'featured_products_point' => $valueChain->featured_products_point,
-                'left_navigation_point' => $valueChain->left_navigation_point,
-                'header_large_banner_small_banner_point' => $valueChain->header_large_banner_small_banner_point,
+                'top_page_point' => $valueChain->top_page_point ?? 0.0,
+                'category_page_point' => $valueChain->category_page_point ?? 0.0,
+                'header_point' => $valueChain->header_point ?? 0.0,
+                'product_page_point' => $valueChain->product_page_point ?? 0.0,
+                'product_page_conversion_rate' => $valueChain->product_page_conversion_rate_point ?? 0.0,
+                'product_thumbnail_point' => $valueChain->product_thumbnail_point ?? 0.0,
+                'access_number_point' => $valueChain->access_number_point ?? 0.0,
+                'featured_products_point' => $valueChain->featured_products_point ?? 0.0,
+                'left_navigation_point' => $valueChain->left_navigation_point ?? 0.0,
+                'header_large_banner_small_banner_point' => $valueChain->header_large_banner_small_banner_point ?? 0.0,
                 'average' => round((
                     $valueChain->top_page_point
                     + $valueChain->category_page_point
@@ -205,10 +206,10 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 10, 2),
             ],
             'event_sale' => [
-                'event_sales_ratio_point' => $valueChain->event_sales_ratio_point,
-                'sales_ratio_day_endings_0_5' => $valueChain->sales_ratio_day_endings_0_5_point,
-                'implementation_of_measures_point' => $valueChain->implementation_of_measures_point,
-                'coupon_effect_point' => $valueChain->coupon_effect_point,
+                'event_sales_ratio_point' => $valueChain->event_sales_ratio_point ?? 0.0,
+                'sales_ratio_day_endings_0_5' => $valueChain->sales_ratio_day_endings_0_5_point ?? 0.0,
+                'implementation_of_measures_point' => $valueChain->implementation_of_measures_point ?? 0.0,
+                'coupon_effect_point' => $valueChain->coupon_effect_point ?? 0.0,
                 'average' => round((
                     $valueChain->event_sales_ratio_point
                     + $valueChain->sales_ratio_day_endings_0_5_point
@@ -217,14 +218,14 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 4, 2),
             ],
             'advertisement' => [
-                'rpp_ad_point' => $valueChain->rpp_ad_point,
-                'rpp_ad_operation' => $valueChain->rpp_ad_operation_point,
-                'coupon_advance_point' => $valueChain->coupon_advance_point,
-                'rgroup_ad_point' => $valueChain->rgroup_ad_point,
-                'tda_ad_point' => $valueChain->tda_ad_point,
-                'sns_ad_point' => $valueChain->sns_ad_point,
-                'google_access_point' => $valueChain->google_access_point,
-                'instagram_access_point' => $valueChain->instagram_access_point,
+                'rpp_ad_point' => $valueChain->rpp_ad_point ?? 0.0,
+                'rpp_ad_operation' => $valueChain->rpp_ad_operation_point ?? 0.0,
+                'coupon_advance_point' => $valueChain->coupon_advance_point ?? 0.0,
+                'rgroup_ad_point' => $valueChain->rgroup_ad_point ?? 0.0,
+                'tda_ad_point' => $valueChain->tda_ad_point ?? 0.0,
+                'sns_ad_point' => $valueChain->sns_ad_point ?? 0.0,
+                'google_access_point' => $valueChain->google_access_point ?? 0.0,
+                'instagram_access_point' => $valueChain->instagram_access_point ?? 0.0,
                 'average' => round((
                     $valueChain->rpp_ad_point
                     + $valueChain->rpp_ad_operation_point
@@ -237,16 +238,16 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 8, 2),
             ],
             'logistics' => [
-                'compatible_point' => $valueChain->compatible_point,
-                'shipping_fee_point' => $valueChain->shipping_fee_point,
-                'shipping_ratio_point' => $valueChain->shipping_ratio_point,
-                'mail_service_point' => $valueChain->mail_service_point,
-                'bundling_ratio_point' => $valueChain->bundling_ratio_point,
-                'gift_available_point' => $valueChain->gift_available_point,
-                'delivery_on_specified_day_point' => $valueChain->delivery_on_specified_day_point,
-                'delivery_preparation_period_point' => $valueChain->delivery_preparation_period_point,
-                'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point,
-                'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point,
+                'compatible_point' => $valueChain->compatible_point ?? 0.0,
+                'shipping_fee_point' => $valueChain->shipping_fee_point ?? 0.0,
+                'shipping_ratio_point' => $valueChain->shipping_ratio_point ?? 0.0,
+                'mail_service_point' => $valueChain->mail_service_point ?? 0.0,
+                'bundling_ratio_point' => $valueChain->bundling_ratio_point ?? 0.0,
+                'gift_available_point' => $valueChain->gift_available_point ?? 0.0,
+                'delivery_on_specified_day_point' => $valueChain->delivery_on_specified_day_point ?? 0.0,
+                'delivery_preparation_period_point' => $valueChain->delivery_preparation_period_point ?? 0.0,
+                'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point ?? 0.0,
+                'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point ?? 0.0,
                 'average' => round((
                     $valueChain->compatible_point
                     + $valueChain->shipping_fee_point
@@ -261,9 +262,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 10, 2),
             ],
             'orders' => [
-                'system_introduction' => $valueChain->system_introduction_point,
-                'order_through_rate_point' => $valueChain->order_through_rate_point,
-                'number_of_people_in_charge_of_ordering_point' => $valueChain->number_of_people_in_charge_of_ordering_point,
+                'system_introduction' => $valueChain->system_introduction_point ?? 0.0,
+                'order_through_rate_point' => $valueChain->order_through_rate_point ?? 0.0,
+                'number_of_people_in_charge_of_ordering_point' => $valueChain->number_of_people_in_charge_of_ordering_point ?? 0.0,
                 'average' => round((
                     $valueChain->system_introduction_point
                     + $valueChain->order_through_rate_point
@@ -271,12 +272,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 3, 2),
             ],
             'customer_service' => [
-                'thank_you_email_point' => $valueChain->thank_you_email_point,
-                'what_s_included_point' => $valueChain->what_s_included_point,
-                'follow_email_point' => $valueChain->follow_email_point,
-                'order_email_point' => $valueChain->order_email_point,
-                'shipping_email_point' => $valueChain->shipping_email_point,
-                'few_user_complaints_point' => $valueChain->few_user_complaints_point,
+                'thank_you_email_point' => $valueChain->thank_you_email_point ?? 0.0,
+                'what_s_included_point' => $valueChain->what_s_included_point ?? 0.0,
+                'follow_email_point' => $valueChain->follow_email_point ?? 0.0,
+                'order_email_point' => $valueChain->order_email_point ?? 0.0,
+                'shipping_email_point' => $valueChain->shipping_email_point ?? 0.0,
+                'few_user_complaints_point' => $valueChain->few_user_complaints_point ?? 0.0,
                 'average' => round((
                     $valueChain->thank_you_email_point
                     + $valueChain->what_s_included_point
@@ -287,13 +288,13 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 6, 2),
             ],
             'crm' => [
-                'email_newsletter_point' => $valueChain->email_newsletter_point,
-                're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point,
-                'review_writing_rate_point' => $valueChain->review_writing_rate,
-                'review_measures_point' => $valueChain->review_measures_point,
-                'line_official' => $valueChain->line_official_point,
-                'instagram_followers_point' => $valueChain->instagram_followers,
-                'ltv_point' => $valueChain->ltv_point,
+                'email_newsletter_point' => $valueChain->email_newsletter_point ?? 0.0,
+                're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point ?? 0.0,
+                'review_writing_rate_point' => $valueChain->review_writing_rate ?? 0.0,
+                'review_measures_point' => $valueChain->review_measures_point ?? 0.0,
+                'line_official' => $valueChain->line_official_point ?? 0.0,
+                'instagram_followers_point' => $valueChain->instagram_followers ?? 0.0,
+                'ltv_point' => $valueChain->ltv_point ?? 0.0,
                 'average' => round((
                     $valueChain->email_newsletter_point
                     + $valueChain->re_sales_num_rate_point
@@ -338,7 +339,64 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
      */
     public function create(array $data): ?ValueChain
     {
-        $valueChain = $this->model()->fill($data);
+        $valueChain = $this->model()->fill([
+            'number_of_categories_point' => Arr::get($data, 'number_of_categories_point', 0),
+            'number_of_items_point' => Arr::get($data, 'number_of_items_point', 0),
+            'product_utilization_rate_point' => Arr::get($data, 'product_utilization_rate_point', 0),
+            'product_cost_rate_point' => Arr::get($data, 'product_cost_rate_point', 0),
+            'low_product_reviews_point' => Arr::get($data, 'low_product_reviews_point', 0),
+            'few_sold_out_items_point' => Arr::get($data, 'few_sold_out_items_point', 0),
+            'purchase_form_point' => Arr::get($data, 'purchase_form_point', 0),
+            'stock_value_point' => Arr::get($data, 'stock_value_point', 0),
+            'top_page' => Arr::join(Arr::get($data, 'top_page', []), ','),
+            'category_page' => Arr::join(Arr::get($data, 'category_page', []), ','),
+            'header' => Arr::join(Arr::get($data, 'header', []), ','),
+            'product_page' => Arr::join(Arr::get($data, 'product_page', []), ','),
+            'product_page_conversion_rate_point' => Arr::get($data, 'product_page_conversion_rate_point', 0),
+            'product_thumbnail' => Arr::join(Arr::get($data, 'product_thumbnail', []), ','),
+            'access_number_point' => Arr::get($data, 'access_number_point', 0),
+            'featured_products' => Arr::join(Arr::get($data, 'featured_products', []), ','),
+            'left_navigation_point' => Arr::get($data, 'left_navigation_point', 0),
+            'header_large_banner_small_banner_point' => Arr::get($data, 'header_large_banner_small_banner_point', 0),
+            'event_sales_ratio_point' => Arr::get($data, 'event_sales_ratio_point', 0),
+            'sales_ratio_day_endings_0_5_point' => Arr::get($data, 'sales_ratio_day_endings_0_5_point', 0),
+            'implementation_of_measures' => Arr::join(Arr::get($data, 'implementation_of_measures', []), ','),
+            'coupon_effect_point' => Arr::get($data, 'coupon_effect_point', 0),
+            'rpp_ad_point' => Arr::get($data, 'rpp_ad_point', 0),
+            'rpp_ad_operation' => Arr::join(Arr::get($data, 'rpp_ad_operation', []), ','),
+            'coupon_advance_point' => Arr::get($data, 'coupon_advance_point', 0),
+            'rgroup_ad_point' => Arr::get($data, 'rgroup_ad_point', 0),
+            'tda_ad_point' => Arr::get($data, 'tda_ad_point', 0),
+            'sns_ad_point' => Arr::get($data, 'sns_ad_point', 0),
+            'google_access_point' => Arr::get($data, 'google_access_point', 0),
+            'instagram_access_point' => Arr::get($data, 'instagram_access_point', 0),
+            'compatible_point' => Arr::get($data, 'compatible_point', 0),
+            'shipping_fee_point' => Arr::get($data, 'shipping_fee_point', 0),
+            'shipping_ratio_point' => Arr::get($data, 'shipping_ratio_point', 0),
+            'mail_service_point' => Arr::get($data, 'mail_service_point', 0),
+            'bundling_ratio_point' => Arr::get($data, 'bundling_ratio_point', 0),
+            'gift_available' => Arr::join(Arr::get($data, 'gift_available', []), ','),
+            'delivery_on_specified_day_point' => Arr::get($data, 'delivery_on_specified_day_point', 0),
+            'delivery_preparation_period_point' => Arr::get($data, 'delivery_preparation_period_point', 0),
+            'shipping_on_the_specified_date_point' => Arr::get($data, 'shipping_on_the_specified_date_point', 0),
+            'shipping_according_to_the_delivery_date_point' => Arr::get($data, 'shipping_according_to_the_delivery_date_point', 0),
+            'system_introduction_point' => Arr::get($data, 'system_introduction_point', 0),
+            'order_through_rate_point' => Arr::get($data, 'order_through_rate_point', 0),
+            'number_of_people_in_charge_of_ordering_point' => Arr::get($data, 'number_of_people_in_charge_of_ordering_point', 0),
+            'thank_you_email_point' => Arr::get($data, 'thank_you_email_point', 0),
+            'what_s_included_point' => Arr::get($data, 'what_s_included_point', 0),
+            'follow_email_point' => Arr::get($data, 'follow_email_point', 0),
+            'order_email_point' => Arr::get($data, 'order_email_point', 0),
+            'shipping_email_point' => Arr::get($data, 'shipping_email_point', 0),
+            'few_user_complaints_point' => Arr::get($data, 'few_user_complaints_point', 0),
+            'email_newsletter_point' => Arr::get($data, 'email_newsletter_point', 0),
+            're_sales_num_rate_point' => Arr::get($data, 're_sales_num_rate_point', 0),
+            'review_writing_rate' => Arr::get($data, 'review_writing_rate_point', 0),
+            'review_measures' => Arr::join(Arr::get($data, 'review_measures', []), ','),
+            'line_official_point' => Arr::get($data, 'line_official_point', 0),
+            'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
+            'ltv_point' => Arr::get($data, 'ltv_point', 0),
+        ]);
         $valueChain->save();
 
         return $valueChain->refresh();
@@ -433,7 +491,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
     public function getValidationRules(array $data)
     {
         return [
-            'id' => ['required', 'integer'],
+            'id' => ['nullable', 'integer'],
             'year' => ['required', 'integer', 'max:'.now()->year, 'min:2021'],
             'month' => ['required', 'integer', 'min:1', 'max:12'],
         ] + $this->validationRules;
@@ -1032,5 +1090,37 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             1000 <= $instagramFlowNum && $instagramFlowNum <= 4999 => 2,
             $instagramFlowNum < 1000 => 1,
         };
+    }
+
+    /**
+     * Check and supplement data for empty months.
+     */
+    public function checkAndSupplementData(Collection $valueChains, array $filters): array
+    {
+        $dateRangeFilter = $this->getDateRangeFilter($filters);
+        $dateTimeRange = $this->getDateTimeRange($dateRangeFilter['from_date'], $dateRangeFilter['to_date']);
+        $result = [];
+
+        foreach ($dateTimeRange as $yearMonth) {
+            [$year, $month] = explode('-', $yearMonth);
+            $valueChain = $valueChains->filter(fn ($item) => $item['month'] == $month && $item['year'] == $year)->first();
+
+            if (is_null($valueChain)) {
+                $valueChain = $this->emptyValueChain($year, $month);
+            }
+
+            $result[] = $valueChain;
+        }
+
+        return $result;
+    }
+
+    public function emptyValueChain(int $year, int $month)
+    {
+        return array_merge([
+            'id' => null,
+            'year' => $year,
+            'month' => $month,
+        ], $this->formatDetail($this->model(), true));
     }
 }
