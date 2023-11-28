@@ -28,7 +28,9 @@ class ValueChainController extends Controller
             $request->validated() + ['format_detail' => true]
         );
 
-        return response()->json($valueChainCollection);
+        $result = $this->valueChainRepository->checkAndSupplementData($valueChainCollection, $request->validated());
+
+        return response()->json($result);
     }
 
     public function monthlyEvaluation(Request $request, string $storeId): JsonResponse
@@ -117,7 +119,11 @@ class ValueChainController extends Controller
                 continue;
             }
 
-            $result = $this->valueChainRepository->update($validated, ValueChain::find(Arr::get($data, 'id')));
+            if ($validated['id']) {
+                $result = $this->valueChainRepository->update($validated, ValueChain::find(Arr::get($data, 'id')));
+            } else {
+                $result = $this->valueChainRepository->create($validated);
+            }
 
             if (is_null($result)) {
                 $errors[] = [
