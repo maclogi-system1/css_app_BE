@@ -28,12 +28,12 @@ class PermissionHelper
                     $params['filters']['projects.is_contract'] = 1;
 
                     if ($user->can('view_shops')) {
-                        $params = self::convertManagerUser($user->id, $params, true, true);
+                        $params = self::convertManagerUser($user->id, $params, $needConvertUser, true);
                     }
                 }
 
                 if (! $viewCompanyContractShops && $user->can('view_shops')) {
-                    $params = self::convertManagerUser($user->id, $params, $needConvertUser);
+                    $params = self::convertManagerUser($user->id, $params, $needConvertUser, true);
                 }
             }
         }

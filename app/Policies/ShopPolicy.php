@@ -26,8 +26,8 @@ class ShopPolicy
             return true;
         }
 
-        $createdById = Arr::get($shop, 'created_by.id');
-        if ($user->can('view_shops') && $user->id == $createdById) {
+        $managers = Arr::get($shop, 'managers', []);
+        if ($user->can('view_shops') && in_array($user->id, array_column($managers, 'id'))) {
             return true;
         }
 
