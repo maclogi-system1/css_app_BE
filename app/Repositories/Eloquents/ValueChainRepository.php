@@ -37,7 +37,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         'product_cost_rate_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'low_product_reviews_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'few_sold_out_items_point' => ['required', 'decimal:0,2', 'between:0,5'],
-        'purchase_form_point' => ['nullable', 'integer', 'in:1,3,5'],
+        'purchase_form_point' => ['nullable', 'integer', 'in:0,1,3,5'],
         'stock_value_point' => ['nullable', 'integer', 'between:0,5'],
         'top_page' => ['nullable', 'array'],
         'category_page' => ['nullable', 'array'],
