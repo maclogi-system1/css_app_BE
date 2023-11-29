@@ -121,11 +121,6 @@ class ValueChain extends Model
         '商品別効果測定と、商品除外などの対応ができているか',
     ];
 
-    public const COMPATIBLE_VALUES = [
-        5 => '対応している',
-        1 => '対応していない',
-    ];
-
     public const MAIL_SERVICE_VALUES = [
         5 => '対応している',
         1 => '対応していない',
@@ -205,7 +200,7 @@ class ValueChain extends Model
         'system_introduction_point', 'order_through_rate_point', 'number_of_people_in_charge_of_ordering_point',
         'thank_you_email_point', 'what_s_included_point', 'follow_email_point', 'order_email_point',
         'shipping_email_point', 'few_user_complaints_point', 'email_newsletter_point', 're_sales_num_rate_point',
-        'review_writing_rate', 'review_measures', 'line_official_point', 'instagram_followers', 'ltv_point',
+        'review_writing_rate_point', 'review_measures', 'line_official_point', 'instagram_followers', 'ltv_point',
     ];
 
     public function getTopPagePointAttribute()
