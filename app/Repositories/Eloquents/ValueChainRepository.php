@@ -61,7 +61,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         'sns_ad_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'google_access_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'instagram_access_point' => ['required', 'decimal:0,2', 'between:0,5'],
-        'compatible_point' => ['required', 'integer', 'in:0,1,5'],
+        'next_day_delivery_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'shipping_fee_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'shipping_ratio_point' => ['required', 'decimal:0,2', 'between:0,5'],
         'mail_service_point' => ['required', 'integer', 'in:0,1,5'],
@@ -238,7 +238,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 8, 2),
             ],
             'logistics' => [
-                'compatible_point' => $valueChain->compatible_point ?? 0.0,
+                'next_day_delivery_point' => $valueChain->next_day_delivery_point ?? 0.0,
                 'shipping_fee_point' => $valueChain->shipping_fee_point ?? 0.0,
                 'shipping_ratio_point' => $valueChain->shipping_ratio_point ?? 0.0,
                 'mail_service_point' => $valueChain->mail_service_point ?? 0.0,
@@ -249,7 +249,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point ?? 0.0,
                 'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point ?? 0.0,
                 'average' => round((
-                    $valueChain->compatible_point
+                    $valueChain->next_day_delivery_point
                     + $valueChain->shipping_fee_point
                     + $valueChain->shipping_ratio_point
                     + $valueChain->mail_service_point
@@ -292,7 +292,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point ?? 0.0,
                 'review_writing_rate_point' => $valueChain->review_writing_rate ?? 0.0,
                 'review_measures_point' => $valueChain->review_measures_point ?? 0.0,
-                'line_official' => $valueChain->line_official_point ?? 0.0,
+                'line_official_point' => $valueChain->line_official_point ?? 0.0,
                 'instagram_followers_point' => $valueChain->instagram_followers ?? 0.0,
                 'ltv_point' => $valueChain->ltv_point ?? 0.0,
                 'average' => round((
@@ -370,7 +370,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'sns_ad_point' => Arr::get($data, 'sns_ad_point', 0),
             'google_access_point' => Arr::get($data, 'google_access_point', 0),
             'instagram_access_point' => Arr::get($data, 'instagram_access_point', 0),
-            'compatible_point' => Arr::get($data, 'compatible_point', 0),
+            'next_day_delivery_point' => Arr::get($data, 'next_day_delivery_point', 0),
             'shipping_fee_point' => Arr::get($data, 'shipping_fee_point', 0),
             'shipping_ratio_point' => Arr::get($data, 'shipping_ratio_point', 0),
             'mail_service_point' => Arr::get($data, 'mail_service_point', 0),
@@ -438,7 +438,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'sns_ad_point' => Arr::get($data, 'sns_ad_point', 0),
             'google_access_point' => Arr::get($data, 'google_access_point', 0),
             'instagram_access_point' => Arr::get($data, 'instagram_access_point', 0),
-            'compatible_point' => Arr::get($data, 'compatible_point', 0),
+            'next_day_delivery_point' => Arr::get($data, 'next_day_delivery_point', 0),
             'shipping_fee_point' => Arr::get($data, 'shipping_fee_point', 0),
             'shipping_ratio_point' => Arr::get($data, 'shipping_ratio_point', 0),
             'mail_service_point' => Arr::get($data, 'mail_service_point', 0),
@@ -678,6 +678,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'google_access_point' => $this->getRattingPointGoogleAccess($standardDeviation, $googleAndInstagramAccessNum),
             'instagram_access_point' => $this->getRattingPointInstagramAccess($standardDeviation, $googleAndInstagramAccessNum),
 
+            'next_day_delivery_point' => Arr::get($pointFormOSS, 'next_day_delivery_point', 0),
             'shipping_fee_point' => 0,
             'shipping_ratio_point' => $this->getRattingPointShippingratio($standardDeviation, $filters),
             'bundling_ratio_point' => 0,
@@ -690,7 +691,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'email_newsletter_point' => $this->getEmailNewsletterPoint($storeId, $filters),
             're_sales_num_rate_point' => $this->getRattingPointReSalesNumRate($standardDeviation, $filters),
             'review_writing_rate' => 0,
-            'line_official_point' => Arr::get($pointFormOSS, 'line_official', 0),
+            'line_official_point' => $this->getRattingPointLineOfficial($standardDeviation, Arr::get($pointFormOSS, 'line_official', 0)),
             'instagram_followers' => $this->getInstagramFlow($storeId, $filters),
             'ltv_point' => $this->getRatingPointLtv2yAmnt($standardDeviation, $filters),
         ]);
@@ -712,6 +713,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $totalCategoryOfAStore >= 0 && $totalCategoryOfAStore < $standardDeviation => 3,
             $totalCategoryOfAStore >= -$standardDeviation && $totalCategoryOfAStore <= 0 => 2,
             $totalCategoryOfAStore < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -729,6 +731,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $totalProductOfAStore >= 0 && $totalProductOfAStore < $standardDeviation => 3,
             $totalProductOfAStore >= -$standardDeviation && $totalProductOfAStore <= 0 => 2,
             $totalProductOfAStore < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -743,6 +746,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $utilizationRateOfAStore >= 0 && $utilizationRateOfAStore < $standardDeviation => 3,
             $utilizationRateOfAStore >= -$standardDeviation && $utilizationRateOfAStore <= 0 => 2,
             $utilizationRateOfAStore < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -766,6 +770,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $costRate > 40 && $costRate <= 50 => 3,
             $costRate > 50 && $costRate <= 70 => 2,
             $costRate > 70 => 1,
+            default => 0,
         };
     }
 
@@ -780,6 +785,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $conversionRate >= 0 && $conversionRate < $standardDeviation => 3,
             $conversionRate >= -$standardDeviation && $conversionRate <= 0 => 2,
             $conversionRate < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -794,6 +800,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $accessNum >= 0 && $accessNum < $standardDeviation => 3,
             $accessNum >= -$standardDeviation && $accessNum <= 0 => 2,
             $accessNum < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -811,6 +818,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $salesAmnt >= 0 && $salesAmnt < $standardDeviation => 3,
             $salesAmnt >= -$standardDeviation && $salesAmnt <= 0 => 2,
             $salesAmnt < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -825,6 +833,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $rppAd >= 0 && $rppAd < $standardDeviation => 3,
             $rppAd >= -$standardDeviation && $rppAd <= 0 => 2,
             $rppAd < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -839,6 +848,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $couponAdvanceAdTotal >= 0 && $couponAdvanceAdTotal < $standardDeviation => 3,
             $couponAdvanceAdTotal >= -$standardDeviation && $couponAdvanceAdTotal <= 0 => 2,
             $couponAdvanceAdTotal < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -853,6 +863,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $rgroupAdTotal >= 0 && $rgroupAdTotal < $standardDeviation => 3,
             $rgroupAdTotal >= -$standardDeviation && $rgroupAdTotal <= 0 => 2,
             $rgroupAdTotal < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -867,6 +878,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $tdaAdTotal >= 0 && $tdaAdTotal < $standardDeviation => 3,
             $tdaAdTotal >= -$standardDeviation && $tdaAdTotal <= 0 => 2,
             $tdaAdTotal < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -881,6 +893,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $googleAccess >= 0 && $googleAccess < $standardDeviation => 3,
             $googleAccess >= -$standardDeviation && $googleAccess <= 0 => 2,
             $googleAccess < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -895,6 +908,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $instagramAccess >= 0 && $instagramAccess < $standardDeviation => 3,
             $instagramAccess >= -$standardDeviation && $instagramAccess <= 0 => 2,
             $instagramAccess < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -929,6 +943,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $postage >= 0 && $postage < $standardDeviation => 3,
             $postage >= -$standardDeviation && $postage <= 0 => 2,
             $postage < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -948,6 +963,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $reSalesNumRate >= 0 && $reSalesNumRate < $standardDeviation => 3,
             $reSalesNumRate >= -$standardDeviation && $reSalesNumRate <= 0 => 2,
             $reSalesNumRate < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -974,6 +990,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $ltv2yAmnt >= 0 && $ltv2yAmnt < $standardDeviation => 3,
             $ltv2yAmnt >= -$standardDeviation && $ltv2yAmnt <= 0 => 2,
             $ltv2yAmnt < -$standardDeviation => 1,
+            default => 0,
         };
     }
 
@@ -1027,7 +1044,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 + $valueChain->instagram_access_point
             ) / 8, 2),
             'logistics' => round((
-                $valueChain->compatible_point
+                $valueChain->next_day_delivery_point
                 + $valueChain->shipping_fee_point
                 + $valueChain->shipping_ratio_point
                 + $valueChain->mail_service_point
@@ -1068,6 +1085,20 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         return 0;
     }
 
+    public function getRattingPointLineOfficial(StandardDeviation $standardDeviation, $lineOfficial)
+    {
+        $standardDeviation = $standardDeviation->line_official;
+
+        return match (true) {
+            $lineOfficial >= 2 * $standardDeviation => 5,
+            $lineOfficial >= $standardDeviation && $lineOfficial < 2 * $standardDeviation => 4,
+            $lineOfficial >= 0 && $lineOfficial < $standardDeviation => 3,
+            $lineOfficial >= -$standardDeviation && $lineOfficial <= 0 => 2,
+            $lineOfficial < -$standardDeviation => 1,
+            default => 0,
+        };
+    }
+
     public function getInstagramFlow(string $storeId, array $filters)
     {
         $currentDate = Arr::get($filters, 'current_date', now()->format('Y-m'));
@@ -1089,6 +1120,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             5000 <= $instagramFlowNum && $instagramFlowNum <= 9999 => 3,
             1000 <= $instagramFlowNum && $instagramFlowNum <= 4999 => 2,
             $instagramFlowNum < 1000 => 1,
+            default => 0,
         };
     }
 
