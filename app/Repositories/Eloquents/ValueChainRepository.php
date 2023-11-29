@@ -262,9 +262,9 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 10, 2),
             ],
             'orders' => [
-                'system_introduction' => $valueChain->system_introduction_point ?? 0.0,
-                'order_through_rate_point' => $valueChain->order_through_rate_point ?? 0.0,
-                'number_of_people_in_charge_of_ordering_point' => $valueChain->number_of_people_in_charge_of_ordering_point ?? 0.0,
+                'system_introduction_point' => intval($valueChain->system_introduction_point ?? 0.0),
+                'order_through_rate_point' => intval($valueChain->order_through_rate_point ?? 0.0),
+                'number_of_people_in_charge_of_ordering_point' => intval($valueChain->number_of_people_in_charge_of_ordering_point ?? 0.0),
                 'average' => round((
                     $valueChain->system_introduction_point
                     + $valueChain->order_through_rate_point
@@ -290,7 +290,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'crm' => [
                 'email_newsletter_point' => $valueChain->email_newsletter_point ?? 0.0,
                 're_sales_num_rate_point' => $valueChain->re_sales_num_rate_point ?? 0.0,
-                'review_writing_rate_point' => $valueChain->review_writing_rate ?? 0.0,
+                'review_writing_rate_point' => $valueChain->review_writing_rate_point ?? 0.0,
                 'review_measures_point' => $valueChain->review_measures_point ?? 0.0,
                 'line_official_point' => $valueChain->line_official_point ?? 0.0,
                 'instagram_followers_point' => $valueChain->instagram_followers ?? 0.0,
@@ -298,7 +298,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'average' => round((
                     $valueChain->email_newsletter_point
                     + $valueChain->re_sales_num_rate_point
-                    + $valueChain->review_writing_rate
+                    + $valueChain->review_writing_rate_point
                     + $valueChain->review_measures_point
                     + $valueChain->line_official_point
                     + $valueChain->instagram_followers
@@ -326,7 +326,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'gift_available' => $valueChain->gift_available,
             ]);
             $result['crm'] = array_merge($result['crm'], [
-                'review_writing_rate' => $valueChain->review_writing_rate,
                 'review_measures' => array_filter(explode(',', $valueChain->review_measures)),
             ]);
         }
@@ -391,7 +390,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'few_user_complaints_point' => Arr::get($data, 'few_user_complaints_point', 0),
             'email_newsletter_point' => Arr::get($data, 'email_newsletter_point', 0),
             're_sales_num_rate_point' => Arr::get($data, 're_sales_num_rate_point', 0),
-            'review_writing_rate' => Arr::get($data, 'review_writing_rate_point', 0),
+            'review_writing_rate_point' => Arr::get($data, 'review_writing_rate_point', 0),
             'review_measures' => Arr::join(Arr::get($data, 'review_measures', []), ','),
             'line_official_point' => Arr::get($data, 'line_official_point', 0),
             'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
@@ -459,7 +458,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'few_user_complaints_point' => Arr::get($data, 'few_user_complaints_point', 0),
             'email_newsletter_point' => Arr::get($data, 'email_newsletter_point', 0),
             're_sales_num_rate_point' => Arr::get($data, 're_sales_num_rate_point', 0),
-            'review_writing_rate' => Arr::get($data, 'review_writing_rate_point', 0),
+            'review_writing_rate_point' => Arr::get($data, 'review_writing_rate_point', 0),
             'review_measures' => Arr::join(Arr::get($data, 'review_measures', []), ','),
             'line_official_point' => Arr::get($data, 'line_official_point', 0),
             'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
@@ -538,9 +537,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $rppAdOperation = collect(ValueChain::RPP_AD_OPERATION_VALUES)
             ->map(fn ($label) => ['value' => $label, 'label' => $label])
             ->values();
-        $compatible = collect(ValueChain::COMPATIBLE_VALUES)
-            ->map(fn ($label, $value) => compact('value', 'label'))
-            ->values();
         $mailService = collect(ValueChain::MAIL_SERVICE_VALUES)
             ->map(fn ($label, $value) => compact('value', 'label'))
             ->values();
@@ -592,7 +588,6 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'header_large_banner_small_banner' => $headerLargeBannerSmallBanner,
             'implementation_of_measures' => $implementationOfMeasures,
             'rpp_ad_operation' => $rppAdOperation,
-            'compatible' => $compatible,
             'mail_service' => $mailService,
             'gift_available' => $giftAvailable,
             'delivery_on_specified_day' => $deliveryOnSpecifiedDay,
@@ -690,7 +685,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
 
             'email_newsletter_point' => $this->getEmailNewsletterPoint($storeId, $filters),
             're_sales_num_rate_point' => $this->getRattingPointReSalesNumRate($standardDeviation, $filters),
-            'review_writing_rate' => 0,
+            'review_writing_rate_point' => $this->getRattingPointReviewWritingRate($storeId, $filters),
             'line_official_point' => $this->getRattingPointLineOfficial($standardDeviation, Arr::get($pointFormOSS, 'line_official', 0)),
             'instagram_followers' => $this->getInstagramFlow($storeId, $filters),
             'ltv_point' => $this->getRatingPointLtv2yAmnt($standardDeviation, $filters),
@@ -965,6 +960,11 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             $reSalesNumRate < -$standardDeviation => 1,
             default => 0,
         };
+    }
+
+    public function getRattingPointReviewWritingRate(string $storeId, array $filters = [])
+    {
+        return 0;
     }
 
     public function getRatingPointLtv2yAmnt(StandardDeviation $standardDeviation, array $filters = [])
