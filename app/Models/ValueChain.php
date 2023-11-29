@@ -219,6 +219,7 @@ class ValueChain extends Model
             $itemsCount >= 7 && $itemsCount <= 9 => 3,
             $itemsCount >= 10 && $itemsCount <= 12 => 4,
             $itemsCount >= 13 && $itemsCount <= 15 => 5,
+            default => 0,
         };
     }
 
