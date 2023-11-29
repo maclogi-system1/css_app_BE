@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Support\Traits\FilterYearMonthValidationRules;
+use Illuminate\Support\Carbon;
 
 class GetListValueChainRequest extends FormRequest
 {
@@ -23,6 +24,10 @@ class GetListValueChainRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->yearMonthFromToRules();
+        $rules = $this->yearMonthFromToRules();
+        $maxDate = Carbon::create($this->from_date)->addMonths(6)->format('Y-m');
+        $rules['to_date'][] = "before:{$maxDate}";
+
+        return $rules;
     }
 }

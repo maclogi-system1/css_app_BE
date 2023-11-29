@@ -86,7 +86,7 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
             ],
         ]);
 
-        if ($user->is_admin) {
+        if ($user->isAdmin() || $user->hasRole('system_admin')) {
             /** @var \App\Repositories\Contracts\TeamRepository */
             $teamRepository = app(TeamRepository::class);
             $storeGroup = $storeGroup->merge($teamRepository->getList(['per_page' => -1])->map(fn ($team) => [
@@ -283,7 +283,6 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
         $userId = Arr::pull($params, 'user_id');
 
         if ($userId && ! $storeGroup->contains('all')) {
-            $user = $this->getUserRepository()->find($userId);
             /** @var \App\Repositories\Contracts\TeamRepository $teamRepository */
             $teamRepository = app(TeamRepository::class);
 

@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 trait FilterYearMonthValidationRules
 {
     /**
-     * Get the validation rules used to validate passwords.
+     * Get the validation rules used to validate the year-month time period filter.
      *
      * @return array
      */

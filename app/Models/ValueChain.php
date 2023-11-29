@@ -121,11 +121,6 @@ class ValueChain extends Model
         '商品別効果測定と、商品除外などの対応ができているか',
     ];
 
-    public const COMPATIBLE_VALUES = [
-        5 => '対応している',
-        1 => '対応していない',
-    ];
-
     public const MAIL_SERVICE_VALUES = [
         5 => '対応している',
         1 => '対応していない',
@@ -198,14 +193,14 @@ class ValueChain extends Model
         'left_navigation_point', 'header_large_banner_small_banner_point', 'event_sales_ratio_point',
         'sales_ratio_day_endings_0_5_point', 'implementation_of_measures', 'coupon_effect', 'rpp_ad_point',
         'rpp_ad_operation', 'coupon_advance_point', 'rgroup_ad_point', 'tda_ad_point', 'sns_ad_point',
-        'google_access_point', 'instagram_access_point', 'compatible_point', 'shipping_fee_point',
+        'google_access_point', 'instagram_access_point', 'next_day_delivery_point', 'shipping_fee_point',
         'shipping_ratio_point', 'mail_service_point', 'bundling_ratio_point', 'gift_available_point',
         'delivery_on_specified_day_point', 'delivery_preparation_period_point',
         'shipping_on_the_specified_date_point', 'shipping_according_to_the_delivery_date_point',
         'system_introduction_point', 'order_through_rate_point', 'number_of_people_in_charge_of_ordering_point',
         'thank_you_email_point', 'what_s_included_point', 'follow_email_point', 'order_email_point',
         'shipping_email_point', 'few_user_complaints_point', 'email_newsletter_point', 're_sales_num_rate_point',
-        'review_writing_rate', 'review_measures', 'line_official_point', 'instagram_followers', 'ltv_point',
+        'review_writing_rate_point', 'review_measures', 'line_official_point', 'instagram_followers', 'ltv_point',
     ];
 
     public function getTopPagePointAttribute()
@@ -219,6 +214,7 @@ class ValueChain extends Model
             $itemsCount >= 7 && $itemsCount <= 9 => 3,
             $itemsCount >= 10 && $itemsCount <= 12 => 4,
             $itemsCount >= 13 && $itemsCount <= 15 => 5,
+            default => 0,
         };
     }
 
@@ -286,15 +282,6 @@ class ValueChain extends Model
     }
 
     public function getRppAdOperationPointAttribute()
-    {
-        $items = array_filter(explode(',', $this->rpp_ad_operation));
-        $totalItems = count(static::RPP_AD_OPERATION_VALUES);
-        $multiplier = 5 / $totalItems;
-
-        return round($multiplier * count($items), 2);
-    }
-
-    public function getSystemIntroductionPointAttribute()
     {
         $items = array_filter(explode(',', $this->rpp_ad_operation));
         $totalItems = count(static::RPP_AD_OPERATION_VALUES);
