@@ -172,8 +172,8 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 6, 2),
             ],
             'purchase' => [
-                'purchase_form_point' => $valueChain->purchase_form_point ?? 0.0,
-                'stock_value_point' => $valueChain->stock_value_point ?? 0.0,
+                'purchase_form_point' => intval($valueChain->purchase_form_point ?? 0.0),
+                'stock_value_point' => intval($valueChain->stock_value_point ?? 0.0),
                 'product_utilization_rate_point' => $valueChain->product_utilization_rate_point ?? 0.0,
                 'average' => round((
                     $valueChain->purchase_form_point
@@ -186,12 +186,12 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'category_page_point' => $valueChain->category_page_point ?? 0.0,
                 'header_point' => $valueChain->header_point ?? 0.0,
                 'product_page_point' => $valueChain->product_page_point ?? 0.0,
-                'product_page_conversion_rate' => $valueChain->product_page_conversion_rate_point ?? 0.0,
+                'product_page_conversion_rate_point' => $valueChain->product_page_conversion_rate_point ?? 0.0,
                 'product_thumbnail_point' => $valueChain->product_thumbnail_point ?? 0.0,
                 'access_number_point' => $valueChain->access_number_point ?? 0.0,
                 'featured_products_point' => $valueChain->featured_products_point ?? 0.0,
-                'left_navigation_point' => $valueChain->left_navigation_point ?? 0.0,
-                'header_large_banner_small_banner_point' => $valueChain->header_large_banner_small_banner_point ?? 0.0,
+                'left_navigation_point' => intval($valueChain->left_navigation_point ?? 0.0),
+                'header_large_banner_small_banner_point' => intval($valueChain->header_large_banner_small_banner_point ?? 0.0),
                 'average' => round((
                     $valueChain->top_page_point
                     + $valueChain->category_page_point
@@ -241,10 +241,10 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'next_day_delivery_point' => $valueChain->next_day_delivery_point ?? 0.0,
                 'shipping_fee_point' => $valueChain->shipping_fee_point ?? 0.0,
                 'shipping_ratio_point' => $valueChain->shipping_ratio_point ?? 0.0,
-                'mail_service_point' => $valueChain->mail_service_point ?? 0.0,
+                'mail_service_point' => intval($valueChain->mail_service_point ?? 0.0),
                 'bundling_ratio_point' => $valueChain->bundling_ratio_point ?? 0.0,
                 'gift_available_point' => $valueChain->gift_available_point ?? 0.0,
-                'delivery_on_specified_day_point' => $valueChain->delivery_on_specified_day_point ?? 0.0,
+                'delivery_on_specified_day_point' => intval($valueChain->delivery_on_specified_day_point ?? 0.0),
                 'delivery_preparation_period_point' => $valueChain->delivery_preparation_period_point ?? 0.0,
                 'shipping_on_the_specified_date_point' => $valueChain->shipping_on_the_specified_date_point ?? 0.0,
                 'shipping_according_to_the_delivery_date_point' => $valueChain->shipping_according_to_the_delivery_date_point ?? 0.0,
@@ -272,11 +272,11 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 ) / 3, 2),
             ],
             'customer_service' => [
-                'thank_you_email_point' => $valueChain->thank_you_email_point ?? 0.0,
-                'what_s_included_point' => $valueChain->what_s_included_point ?? 0.0,
-                'follow_email_point' => $valueChain->follow_email_point ?? 0.0,
-                'order_email_point' => $valueChain->order_email_point ?? 0.0,
-                'shipping_email_point' => $valueChain->shipping_email_point ?? 0.0,
+                'thank_you_email_point' => intval($valueChain->thank_you_email_point ?? 0.0),
+                'what_s_included_point' => intval($valueChain->what_s_included_point ?? 0.0),
+                'follow_email_point' => intval($valueChain->follow_email_point ?? 0),
+                'order_email_point' => intval($valueChain->order_email_point ?? 0),
+                'shipping_email_point' => intval($valueChain->shipping_email_point ?? 0),
                 'few_user_complaints_point' => $valueChain->few_user_complaints_point ?? 0.0,
                 'average' => round((
                     $valueChain->thank_you_email_point
