@@ -28,7 +28,10 @@ class ValueChainController extends Controller
             $request->validated() + ['format_detail' => true]
         );
 
-        $result = $this->valueChainRepository->checkAndSupplementData($valueChainCollection, $request->validated());
+        $result = $this->valueChainRepository->checkAndSupplementData(
+            $valueChainCollection,
+            $request->validated() + ['store_id' => $storeId],
+        );
 
         return response()->json($result);
     }
@@ -119,7 +122,7 @@ class ValueChainController extends Controller
                 continue;
             }
 
-            if ($validated['id']) {
+            if (isset($validated['id'])) {
                 $result = $this->valueChainRepository->update($validated, ValueChain::find(Arr::get($data, 'id')));
             } else {
                 $result = $this->valueChainRepository->create($validated);
