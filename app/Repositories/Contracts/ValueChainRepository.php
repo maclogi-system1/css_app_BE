@@ -33,6 +33,11 @@ interface ValueChainRepository extends Repository
     public function update(array $data, ValueChain $valueChain): ?ValueChain;
 
     /**
+     * Get and format data for creating and updating.
+     */
+    public function getDataForCreateAndUpdate(array $data): array;
+
+    /**
      * Get a list of the option for select.
      */
     public function getOptions(): array;
