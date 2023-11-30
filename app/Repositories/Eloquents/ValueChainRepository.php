@@ -318,13 +318,13 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'featured_products' => array_filter(explode(',', $valueChain->featured_products)),
             ]);
             $result['event_sale'] = array_merge($result['event_sale'], [
-                'implementation_of_measures' => $valueChain->implementation_of_measures,
+                'implementation_of_measures' => array_filter(explode(',', $valueChain->implementation_of_measures)),
             ]);
             $result['advertisement'] = array_merge($result['advertisement'], [
-                'rpp_ad_operation' => $valueChain->rpp_ad_operation,
+                'rpp_ad_operation' => array_filter(explode(',', $valueChain->rpp_ad_operation)),
             ]);
             $result['logistics'] = array_merge($result['logistics'], [
-                'gift_available' => $valueChain->gift_available,
+                'gift_available' => array_filter(explode(',', $valueChain->gift_available)),
             ]);
             $result['crm'] = array_merge($result['crm'], [
                 'review_measures' => array_filter(explode(',', $valueChain->review_measures)),
