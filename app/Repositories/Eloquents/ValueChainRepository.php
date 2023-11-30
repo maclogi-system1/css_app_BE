@@ -219,7 +219,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ],
             'advertisement' => [
                 'rpp_ad_point' => $valueChain->rpp_ad_point ?? 0.0,
-                'rpp_ad_operation' => $valueChain->rpp_ad_operation_point ?? 0.0,
+                'rpp_ad_operation_point' => $valueChain->rpp_ad_operation_point ?? 0.0,
                 'coupon_advance_point' => $valueChain->coupon_advance_point ?? 0.0,
                 'rgroup_ad_point' => $valueChain->rgroup_ad_point ?? 0.0,
                 'tda_ad_point' => $valueChain->tda_ad_point ?? 0.0,
@@ -317,13 +317,13 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
                 'featured_products' => array_filter(explode(',', $valueChain->featured_products)),
             ]);
             $result['event_sale'] = array_merge($result['event_sale'], [
-                'implementation_of_measures' => $valueChain->implementation_of_measures,
+                'implementation_of_measures' => array_filter(explode(',', $valueChain->implementation_of_measures)),
             ]);
             $result['advertisement'] = array_merge($result['advertisement'], [
-                'rpp_ad_operation' => $valueChain->rpp_ad_operation,
+                'rpp_ad_operation' => array_filter(explode(',', $valueChain->rpp_ad_operation)),
             ]);
             $result['logistics'] = array_merge($result['logistics'], [
-                'gift_available' => $valueChain->gift_available,
+                'gift_available' => array_filter(explode(',', $valueChain->gift_available)),
             ]);
             $result['crm'] = array_merge($result['crm'], [
                 'review_measures' => array_filter(explode(',', $valueChain->review_measures)),
