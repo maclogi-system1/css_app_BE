@@ -15,10 +15,9 @@ class StorePred2mService extends Service
 
     public function runSimulation(array $data): Collection
     {
-        $response = Http::post(
-            'https://g5p4jn0a41.execute-api.ap-northeast-1.amazonaws.com/default/predict_2months-dev001',
-            $data,
-        );
+        $env = app()->environment('production') ? 'production' : 'staging';
+        $url = config("ai.api_url.{$env}.predict_2_months_url");
+        $response = Http::post($url, $data);
 
         return $this->toResponse($response);
     }
