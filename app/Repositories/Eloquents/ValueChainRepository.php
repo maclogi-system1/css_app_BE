@@ -207,7 +207,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ],
             'event_sale' => [
                 'event_sales_ratio_point' => $valueChain->event_sales_ratio_point ?? 0.0,
-                'sales_ratio_day_endings_0_5' => $valueChain->sales_ratio_day_endings_0_5_point ?? 0.0,
+                'sales_ratio_day_endings_0_5_point' => $valueChain->sales_ratio_day_endings_0_5_point ?? 0.0,
                 'implementation_of_measures_point' => $valueChain->implementation_of_measures_point ?? 0.0,
                 'coupon_effect_point' => $valueChain->coupon_effect_point ?? 0.0,
                 'average' => round((
