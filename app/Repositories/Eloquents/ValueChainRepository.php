@@ -339,9 +339,32 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
      */
     public function create(array $data): ?ValueChain
     {
-        $valueChain = $this->model()->fill([
+        $valueChain = $this->model()->fill(array_merge([
             'store_id' => Arr::get($data, 'store_id'),
             'date' => Arr::get($data, 'year').'-'.Arr::get($data, 'month').'-01',
+        ], $this->getDataForCreateAndUpdate($data)));
+        $valueChain->save();
+
+        return $valueChain->refresh();
+    }
+
+    /**
+     * Handle update a specified value chain.
+     */
+    public function update(array $data, ValueChain $valueChain): ?ValueChain
+    {
+        $valueChain->fill($this->getDataForCreateAndUpdate($data));
+        $valueChain->save();
+
+        return $valueChain->refresh();
+    }
+
+    /**
+     * Get and format data for creating and updating.
+     */
+    public function getDataForCreateAndUpdate(array $data): array
+    {
+        return [
             'number_of_categories_point' => Arr::get($data, 'number_of_categories_point', 0),
             'number_of_items_point' => Arr::get($data, 'number_of_items_point', 0),
             'product_utilization_rate_point' => Arr::get($data, 'product_utilization_rate_point', 0),
@@ -398,78 +421,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             'line_official_point' => Arr::get($data, 'line_official_point', 0),
             'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
             'ltv_point' => Arr::get($data, 'ltv_point', 0),
-        ]);
-        $valueChain->save();
-
-        return $valueChain->refresh();
-    }
-
-    /**
-     * Handle update a specified value chain.
-     */
-    public function update(array $data, ValueChain $valueChain): ?ValueChain
-    {
-        $valueChain->fill([
-            'number_of_categories_point' => Arr::get($data, 'number_of_categories_point', 0),
-            'number_of_items_point' => Arr::get($data, 'number_of_items_point', 0),
-            'product_utilization_rate_point' => Arr::get($data, 'product_utilization_rate_point', 0),
-            'product_cost_rate_point' => Arr::get($data, 'product_cost_rate_point', 0),
-            'low_product_reviews_point' => Arr::get($data, 'low_product_reviews_point', 0),
-            'few_sold_out_items_point' => Arr::get($data, 'few_sold_out_items_point', 0),
-            'purchase_form_point' => Arr::get($data, 'purchase_form_point', 0),
-            'stock_value_point' => Arr::get($data, 'stock_value_point', 0),
-            'top_page' => Arr::join(Arr::get($data, 'top_page', []), ','),
-            'category_page' => Arr::join(Arr::get($data, 'category_page', []), ','),
-            'header' => Arr::join(Arr::get($data, 'header', []), ','),
-            'product_page' => Arr::join(Arr::get($data, 'product_page', []), ','),
-            'product_page_conversion_rate_point' => Arr::get($data, 'product_page_conversion_rate_point', 0),
-            'product_thumbnail' => Arr::join(Arr::get($data, 'product_thumbnail', []), ','),
-            'access_number_point' => Arr::get($data, 'access_number_point', 0),
-            'featured_products' => Arr::join(Arr::get($data, 'featured_products', []), ','),
-            'left_navigation_point' => Arr::get($data, 'left_navigation_point', 0),
-            'header_large_banner_small_banner_point' => Arr::get($data, 'header_large_banner_small_banner_point', 0),
-            'event_sales_ratio_point' => Arr::get($data, 'event_sales_ratio_point', 0),
-            'sales_ratio_day_endings_0_5_point' => Arr::get($data, 'sales_ratio_day_endings_0_5_point', 0),
-            'implementation_of_measures' => Arr::join(Arr::get($data, 'implementation_of_measures', []), ','),
-            'coupon_effect_point' => Arr::get($data, 'coupon_effect_point', 0),
-            'rpp_ad_point' => Arr::get($data, 'rpp_ad_point', 0),
-            'rpp_ad_operation' => Arr::join(Arr::get($data, 'rpp_ad_operation', []), ','),
-            'coupon_advance_point' => Arr::get($data, 'coupon_advance_point', 0),
-            'rgroup_ad_point' => Arr::get($data, 'rgroup_ad_point', 0),
-            'tda_ad_point' => Arr::get($data, 'tda_ad_point', 0),
-            'sns_ad_point' => Arr::get($data, 'sns_ad_point', 0),
-            'google_access_point' => Arr::get($data, 'google_access_point', 0),
-            'instagram_access_point' => Arr::get($data, 'instagram_access_point', 0),
-            'next_day_delivery_point' => Arr::get($data, 'next_day_delivery_point', 0),
-            'shipping_fee_point' => Arr::get($data, 'shipping_fee_point', 0),
-            'shipping_ratio_point' => Arr::get($data, 'shipping_ratio_point', 0),
-            'mail_service_point' => Arr::get($data, 'mail_service_point', 0),
-            'bundling_ratio_point' => Arr::get($data, 'bundling_ratio_point', 0),
-            'gift_available' => Arr::join(Arr::get($data, 'gift_available', []), ','),
-            'delivery_on_specified_day_point' => Arr::get($data, 'delivery_on_specified_day_point', 0),
-            'delivery_preparation_period_point' => Arr::get($data, 'delivery_preparation_period_point', 0),
-            'shipping_on_the_specified_date_point' => Arr::get($data, 'shipping_on_the_specified_date_point', 0),
-            'shipping_according_to_the_delivery_date_point' => Arr::get($data, 'shipping_according_to_the_delivery_date_point', 0),
-            'system_introduction_point' => Arr::get($data, 'system_introduction_point', 0),
-            'order_through_rate_point' => Arr::get($data, 'order_through_rate_point', 0),
-            'number_of_people_in_charge_of_ordering_point' => Arr::get($data, 'number_of_people_in_charge_of_ordering_point', 0),
-            'thank_you_email_point' => Arr::get($data, 'thank_you_email_point', 0),
-            'what_s_included_point' => Arr::get($data, 'what_s_included_point', 0),
-            'follow_email_point' => Arr::get($data, 'follow_email_point', 0),
-            'order_email_point' => Arr::get($data, 'order_email_point', 0),
-            'shipping_email_point' => Arr::get($data, 'shipping_email_point', 0),
-            'few_user_complaints_point' => Arr::get($data, 'few_user_complaints_point', 0),
-            'email_newsletter_point' => Arr::get($data, 'email_newsletter_point', 0),
-            're_sales_num_rate_point' => Arr::get($data, 're_sales_num_rate_point', 0),
-            'review_writing_rate_point' => Arr::get($data, 'review_writing_rate_point', 0),
-            'review_measures' => Arr::join(Arr::get($data, 'review_measures', []), ','),
-            'line_official_point' => Arr::get($data, 'line_official_point', 0),
-            'instagram_followers' => Arr::get($data, 'instagram_followers_point', 0),
-            'ltv_point' => Arr::get($data, 'ltv_point', 0),
-        ]);
-        $valueChain->save();
-
-        return $valueChain->refresh();
+        ];
     }
 
     public function handleValidation(array $data, $index)
@@ -646,10 +598,19 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
         $itemsSales = $this->productAnalysisService->getProductAccessNumAndConversionRate($filters)->first();
         $googleAndInstagramAccessNum = $this->accessSourceService->getTotalAccessGoogleAndInstagram($filters)->first();
 
+        $shopResult = $this->shopService->find($storeId);
+        $shop = [];
+        $currentDate = now();
+
+        if ($shopResult->get('success')) {
+            $shop = $shopResult->get('data');
+            $currentDate = Carbon::create(Arr::get($shop, 'contract_date'));
+        }
+
         /** @var \App\Repositories\Contracts\StandardDeviationRepository */
         $standardDeviationRepository = app(StandardDeviationRepository::class);
         $standardDeviation = $standardDeviationRepository->firstOrCreate([
-            'date' => $date->format('Y-m'),
+            'date' => $currentDate->format('Y-m'),
         ]);
 
         $valueChain = $this->model()->firstOrCreate([
