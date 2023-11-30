@@ -220,7 +220,7 @@ class ValueChainRepository extends Repository implements ValueChainRepositoryCon
             ],
             'advertisement' => [
                 'rpp_ad_point' => $valueChain->rpp_ad_point ?? 0.0,
-                'rpp_ad_operation' => $valueChain->rpp_ad_operation_point ?? 0.0,
+                'rpp_ad_operation_point' => $valueChain->rpp_ad_operation_point ?? 0.0,
                 'coupon_advance_point' => $valueChain->coupon_advance_point ?? 0.0,
                 'rgroup_ad_point' => $valueChain->rgroup_ad_point ?? 0.0,
                 'tda_ad_point' => $valueChain->tda_ad_point ?? 0.0,
