@@ -106,6 +106,8 @@ class MacroConstant
                 'single_job_id',
                 'created_at',
                 'updated_at',
+                'processing_status',
+                'simulation_promotional_expenses',
             ],
         ],
         'policy_attachments' => [
