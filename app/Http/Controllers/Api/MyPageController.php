@@ -124,7 +124,7 @@ class MyPageController extends Controller
 
     protected function filterDataWithPermission(User $user, array $params): array
     {
-        $params = PermissionHelper::getDataViewShopsWithPermission($user, $params, false);
+        $params = PermissionHelper::getDataViewShopsWithPermission($user, $params);
         if ($user->cannot(['view_all_shops', 'view_all_company_shops', 'view_company_contract_shops'])
             && $user->can('view_shops')) {
             Arr::forget($params, ['store_group']);
