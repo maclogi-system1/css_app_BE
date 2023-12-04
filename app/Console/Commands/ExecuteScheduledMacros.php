@@ -5,9 +5,12 @@ namespace App\Console\Commands;
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\AlertRepository;
+use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\PolicyRepository;
 use App\Repositories\Contracts\TaskRepository;
+use App\WebServices\OSS\ShopService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 
 class ExecuteScheduledMacros extends Command
@@ -125,7 +128,7 @@ class ExecuteScheduledMacros extends Command
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($macro->listStoreId as $storeId) {
+            foreach ($this->getListStoreId($macro) as $storeId) {
                 logger('Run create simulation: '.json_encode($data + ['store_id' => $storeId]));
 
                 $this->policyRepository()->createSimulation($data, $storeId);
@@ -140,7 +143,7 @@ class ExecuteScheduledMacros extends Command
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($macro->listStoreId as $index => $storeId) {
+            foreach ($this->getListStoreId($macro) as $index => $storeId) {
                 $data = array_merge($data, ['store_id' => $storeId]);
                 logger('Run create policy: '.json_encode($data));
 
@@ -159,7 +162,7 @@ class ExecuteScheduledMacros extends Command
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($macro->listStoreId as $storeId) {
+            foreach ($this->getListStoreId($macro) as $storeId) {
                 logger('Run create task: '.json_encode($data + ['store_id' => $storeId]));
 
                 $this->taskRepository()->create($data, $storeId);
@@ -174,13 +177,43 @@ class ExecuteScheduledMacros extends Command
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($macro->listStoreId as $storeId) {
+            foreach ($this->getListStoreId($macro) as $storeId) {
                 $data = array_merge($data, ['store_id' => $storeId, 'macro_id' => $macro->id]);
                 logger('Run create alert: '.json_encode($data));
 
                 $this->alertRepository()->createAlert($data);
             }
         }
+    }
+
+    private function getListStoreId(MacroConfiguration $macro): array
+    {
+        $listStoreId = $macro->listStoreId;
+        /** @var \App\WebServices\OSS\ShopService */
+        $shopService = app(ShopService::class);
+
+        if (array_search('__all__', $listStoreId) !== false) {
+            $shopResult = $shopService->getList(['per_page' => -1]);
+
+            if ($shopResult->get('success')) {
+                $shops = $shopResult->get('data')->get('shops');
+
+                return Arr::pluck($shops, 'store_id');
+            }
+        } elseif (array_search('__shop_owner__', $listStoreId) !== false) {
+            $shopResult = $shopService->getList([
+                'per_page' => -1,
+                'own_manager' => $this->linkedUserInfoRepository()->getOssUserIdByCssUserId($macro->created_by),
+            ]);
+
+            if ($shopResult->get('success')) {
+                $shops = $shopResult->get('data')->get('shops');
+
+                $listStoreId = array_merge($listStoreId, Arr::pluck($shops, 'store_id'));
+            }
+        }
+
+        return array_unique($listStoreId);
     }
 
     private function policyRepository(): PolicyRepository
@@ -196,5 +229,10 @@ class ExecuteScheduledMacros extends Command
     private function alertRepository(): AlertRepository
     {
         return app(AlertRepository::class);
+    }
+
+    private function linkedUserInfoRepository(): LinkedUserInfoRepository
+    {
+        return app(LinkedUserInfoRepository::class);
     }
 }

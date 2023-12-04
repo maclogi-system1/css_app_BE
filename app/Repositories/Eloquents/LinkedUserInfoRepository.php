@@ -44,4 +44,12 @@ class LinkedUserInfoRepository extends Repository implements LinkedUserInfoRepos
             ->pluck('linked_service_user_id')
             ->toArray();
     }
+
+    /**
+     * Get OSS user id by CSS user id.
+     */
+    public function getOssUserIdByCssUserId(int $userId): ?int
+    {
+        return $this->model()->where('user_id', $userId)->first()?->linked_service_user_id;
+    }
 }

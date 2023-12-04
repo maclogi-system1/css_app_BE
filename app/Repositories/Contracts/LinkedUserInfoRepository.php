@@ -20,4 +20,9 @@ interface LinkedUserInfoRepository extends Repository
      * Get a list of oss_user_ids by css_user_ids.
      */
     public function getOssUserIdsByCssUserIds(array|Collection $userIds): array;
+
+    /**
+     * Get OSS user id by CSS user id.
+     */
+    public function getOssUserIdByCssUserId(int $userId): ?int;
 }
