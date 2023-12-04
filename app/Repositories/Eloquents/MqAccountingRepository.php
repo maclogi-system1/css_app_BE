@@ -729,7 +729,7 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
         });
 
         foreach ($anotherData as $data) {
-            $this->createDefaultData(Carbon::create($data)->format('Y-m'), $storeId, $mqSheet, $data);
+            $this->createDefaultData(Carbon::create($data['date'])->format('Y-m'), $storeId, $mqSheet, $data);
         }
     }
 
