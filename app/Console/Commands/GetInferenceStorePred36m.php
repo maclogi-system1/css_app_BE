@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Repositories\Contracts\MqSheetRepository;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 
 class GetInferenceStorePred36m extends Command
@@ -48,10 +49,23 @@ class GetInferenceStorePred36m extends Command
         } else {
             $env = app()->environment('production') ? 'production' : 'staging';
             $url = config("ai.api_url.{$env}.store_pred_36m");
-            $response = Http::post($url);
+            $shops = $this->getShops();
 
-            if ($response->failed()) {
-                logger()->error('Execution of failed 36-month sales forecast.');
+            foreach ($shops as $shop) {
+                $storeId = Arr::get($shop, 'store_id');
+                logger()->info("Execute 36 months forecast for {$storeId} store.");
+
+                $response = Http::post($url, [
+                    'store_id' => $storeId,
+                ]);
+
+                $result = $response->json();
+
+                if (Arr::get($result, 'statusCode', 400) == 200) {
+                    logger()->info("36 month forecast execution for {$storeId} store completed.");
+                } else {
+                    logger()->error("Execution of failed 36-month sales forecast.\n".Arr::get($result, 'errorMessage', ''));
+                }
             }
         }
 
