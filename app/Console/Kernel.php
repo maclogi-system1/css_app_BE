@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(CreateDefaultValueChainsForShops::class)->monthlyOn(3, '5:0');
         $schedule->command(CreateStandardDeviation::class)->monthlyOn(1, '5:0');
         $schedule->command(GetInferenceStorePred36m::class)->monthlyOn(1);
-        $schedule->command(GetInferenceStorePred36m::class, ['--generate-data'])->monthlyOn(3);
+        $schedule->command(GetInferenceStorePred36m::class, ['--generate-data'])->monthlyOn(1, '2:0');
     }
 
     /**
