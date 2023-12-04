@@ -44,17 +44,10 @@ class MqAccounting extends Model
     public function scopeDateRange(Builder $builder, Carbon $fromDate, Carbon $toDate)
     {
         if ($fromDate <= $toDate) {
-            $builder->where(function ($query) use ($fromDate, $toDate) {
-                $boolean = $fromDate->year == $toDate->year ? 'and' : 'or';
-
-                $query->where(function ($q) use ($fromDate) {
-                    $q->where('year', $fromDate->year)
-                        ->where('month', '>=', $fromDate->month);
-                })->whereNested(function ($q) use ($toDate) {
-                    $q->where('year', $toDate->year)
-                        ->where('month', '<=', $toDate->month);
-                }, $boolean);
-            });
+            $builder->whereRaw("CONCAT(`year`, LPAD(`month`, 2, '0')) >= ? and CONCAT(`year`, LPAD(`month`, 2, '0')) <= ?", [
+                $fromDate->format('Ym'),
+                $toDate->format('Ym'),
+            ]);
         }
     }
 }
