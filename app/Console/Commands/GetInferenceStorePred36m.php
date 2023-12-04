@@ -47,7 +47,7 @@ class GetInferenceStorePred36m extends Command
             }
         } else {
             $env = app()->environment('production') ? 'production' : 'staging';
-            $url = config("ai.api_url.{$env}.predict_2_months_url");
+            $url = config("ai.api_url.{$env}.store_pred_36m");
             $response = Http::post($url);
 
             if ($response->failed()) {
