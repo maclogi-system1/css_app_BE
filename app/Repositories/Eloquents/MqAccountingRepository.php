@@ -205,6 +205,8 @@ class MqAccountingRepository extends Repository implements MqAccountingRepositor
             ->queryBuilder()
             ->where('store_id', $storeId)
             ->where('mq_sheet_id', $mqSheetId)
+            ->orderBy('year')
+            ->orderBy('month')
             ->get()
             ->map(function ($item) {
                 $item->date_year_month = $item->year.'/'.sprintf('%02d', $item->month);
