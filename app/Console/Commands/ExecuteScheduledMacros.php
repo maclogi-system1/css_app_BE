@@ -116,6 +116,8 @@ class ExecuteScheduledMacros extends Command
             case MacroConstant::MACRO_TYPE_ALERT_DISPLAY:
                 $this->createAlert($macro);
                 break;
+            default:
+                break;
         }
 
         $this->info('"'.$macro->name.'" is executed.');
@@ -124,6 +126,7 @@ class ExecuteScheduledMacros extends Command
     private function createSimulationPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->simulationTemplates;
+        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -132,6 +135,17 @@ class ExecuteScheduledMacros extends Command
                 logger('Run create simulation: '.json_encode($data + ['store_id' => $storeId]));
 
                 $this->policyRepository()->createSimulation($data, $storeId);
+
+                // Increase the start and end times for the next new creation.
+                $template->payload = $this->getDataWithDateTimeForNextCreation(
+                    $data,
+                    'simulation_start_date',
+                    'simulation_start_time',
+                    'simulation_end_date',
+                    'simulation_end_time',
+                    $diffInSeconds,
+                );
+                $template->save();
             }
         }
     }
@@ -139,6 +153,7 @@ class ExecuteScheduledMacros extends Command
     private function createPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->policyTemplates;
+        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -151,6 +166,17 @@ class ExecuteScheduledMacros extends Command
                     $this->policyRepository()->handleValidation($data, $index),
                     $storeId
                 );
+
+                // Increase the start and end times for the next new creation.
+                $template->payload = $this->getDataWithDateTimeForNextCreation(
+                    $data,
+                    'execution_date',
+                    'execution_time',
+                    'undo_date',
+                    'undo_time',
+                    $diffInSeconds,
+                );
+                $template->save();
             }
         }
     }
@@ -158,6 +184,7 @@ class ExecuteScheduledMacros extends Command
     private function createTask(MacroConfiguration $macro): void
     {
         $templates = $macro->taskTemplates;
+        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -166,6 +193,17 @@ class ExecuteScheduledMacros extends Command
                 logger('Run create task: '.json_encode($data + ['store_id' => $storeId]));
 
                 $this->taskRepository()->create($data, $storeId);
+
+                // Increase the start and end times for the next new creation.
+                $template->payload = $this->getDataWithDateTimeForNextCreation(
+                    $data,
+                    'start_date',
+                    'start_time',
+                    'due_date',
+                    'due_time',
+                    $diffInSeconds,
+                );
+                $template->save();
             }
         }
     }
@@ -214,6 +252,30 @@ class ExecuteScheduledMacros extends Command
         }
 
         return array_unique($listStoreId);
+    }
+
+    /**
+     * Get data with increased start and end date time for the next new creation.
+     */
+    private function getDataWithDateTimeForNextCreation(
+        array $data,
+        string $startDateName,
+        string $startTimeName,
+        string $endDateName,
+        string $endTimeName,
+        int $diffInSeconds = 1,
+    ) {
+        $startDate = (new Carbon($data[$startDateName].' '.$data[$startTimeName]))
+            ->addSeconds($diffInSeconds);
+        $endDate = (new Carbon($data[$endDateName].' '.$data[$endTimeName]))
+            ->addSeconds($diffInSeconds);
+        $data[$startDateName] = $startDate->format('Y-m-d');
+        $data[$startTimeName] = $startDate->format('H:i');
+
+        $data[$endDateName] = $endDate->format('Y-m-d');
+        $data[$endTimeName] = $endDate->format('H:i');
+
+        return json_encode($data);
     }
 
     private function policyRepository(): PolicyRepository
