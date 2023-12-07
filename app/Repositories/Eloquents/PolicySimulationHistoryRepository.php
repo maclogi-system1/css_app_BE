@@ -118,8 +118,8 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
      */
     public function makeDataPolicy(PolicySimulationHistory $policySimulationHistory): array
     {
-        $startDate = Carbon::create($policySimulationHistory->start_date);
-        $endDate = Carbon::create($policySimulationHistory->end_date);
+        $startDate = Carbon::create($policySimulationHistory->execution_time);
+        $endDate = Carbon::create($policySimulationHistory->undo_time);
         $simulation = $policySimulationHistory->policy;
 
         $result = [
