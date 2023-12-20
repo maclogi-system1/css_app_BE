@@ -98,6 +98,12 @@ elif [ "$1" == "redis" ] ; then
     ARGS+=(exec)
     [ ! -t 0 ] && ARGS+=(-T)
     ARGS+=(redis redis-cli)
+elif [ "$1" == "format" ] ; then
+    shift 1
+
+    ARGS+=(exec -u www-dev)
+    [ ! -t 0 ] && ARGS+=(-T)
+    ARGS+=("$APP_SERVICE" bin/format "$@")
 else
     ARGS+=("$@")
 fi
