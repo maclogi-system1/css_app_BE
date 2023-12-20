@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquents;
 
+use App\Constants\DatabaseConnectionConstant;
 use App\Constants\DateTimeConstant;
 use App\Constants\MacroConstant;
 use App\Models\MacroConfiguration;
@@ -135,20 +136,33 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
      */
     public function getListTable(): array
     {
+        if (cache()->has('macros_list_table')) {
+            return cache('macros_list_table');
+        }
+
         $tables = [];
 
-        foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+        foreach (MacroConstant::LIST_RELATIVE_TABLE as $key => $relativeTable) {
+            $tableName = $relativeTable[MacroConstant::TABLE_NAME];
+
             if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_EXTERNAL) {
                 continue;
             }
 
-            $tables[$tableName] = $this->getAllColumnOfTableAndRelativeTable(
+            $connection = 'mysql';
+
+            if (MacroConstant::DESCRIPTION_TABLES[$tableName][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_AI_KPI) {
+                $connection = DatabaseConnectionConstant::KPI_CONNECTION;
+            }
+
+            $tables[$key] = $this->getAllColumnOfTableAndRelativeTable(
                 $tableName,
-                Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES)
+                Arr::get($relativeTable, MacroConstant::RELATIVE_TABLES),
+                $connection
             );
             if ($tableName === 'mq_accounting') {
-                $tables[$tableName] = $this->buildAccountingTableColumns($tables[$tableName]);
-                $tables[$tableName]->push([
+                $tables[$key] = $this->buildAccountingTableColumns($tables[$tableName]);
+                $tables[$key]->push([
                     'table' => 'mq_accounting',
                     'column' => 'year_month',
                     'type' => 'string',
@@ -162,6 +176,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $tables = $ossColumns->get('data')->merge($tables)->toArray();
         }
 
+        cache(['macros_list_table' => $tables], 86400);
+
         return $tables;
     }
 
@@ -171,7 +187,8 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     public function getTableLabels(): array
     {
         $tableLabels = [];
-        foreach (MacroConstant::LIST_RELATIVE_TABLE as $tableName => $relativeTable) {
+        foreach (MacroConstant::LIST_RELATIVE_TABLE as $relativeTable) {
+            $tableName = $relativeTable[MacroConstant::TABLE_NAME];
             $tableLabels[$tableName] = trans("macro-labels.$tableName.table_label");
         }
 
@@ -181,12 +198,12 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Get all the columns of a table and of the tables that are related to it.
      */
-    private function getAllColumnOfTableAndRelativeTable($tableName, $relativeTables): Collection
+    private function getAllColumnOfTableAndRelativeTable($tableName, $relativeTables, $connection): Collection
     {
-        $columns = $this->getAllColumnOfTable($tableName);
+        $columns = $this->getAllColumnOfTable($tableName, $connection);
 
         foreach ($relativeTables as $relativeTable) {
-            $columns = $columns->merge($this->getAllColumnOfTable($relativeTable['table_name']));
+            $columns = $columns->merge($this->getAllColumnOfTable($relativeTable['table_name'], $connection));
         }
 
         return $columns;
@@ -195,19 +212,25 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Get all columns of a table.
      */
-    private function getAllColumnOfTable($tableName): Collection
+    private function getAllColumnOfTable($tableName, $connection): Collection
     {
-        $columns = collect(Schema::getColumnListing($tableName));
+        $columns = collect(Schema::connection($connection)->getColumnListing($tableName));
         $hiddenColumns = Arr::get(MacroConstant::DESCRIPTION_TABLES, $tableName.'.'.MacroConstant::REMOVE_COLUMNS);
         $convertColumnType = fn ($type) => $this->convertColumnType($type);
 
         return $columns->filter(function ($columnName) use ($hiddenColumns) {
             return ! in_array($columnName, $hiddenColumns);
-        })->map(function ($columnName) use ($tableName, $convertColumnType) {
+        })->map(function ($columnName) use ($tableName, $convertColumnType, $connection) {
+            $columnType = Schema::connection($connection)->getColumnType($tableName, $columnName);
+
+            if ($columnName === 'date') {
+                $columnType = 'date';
+            }
+
             return [
                 'table' => $tableName,
                 'column' => $columnName,
-                'type' => $convertColumnType(Schema::getColumnType($tableName, $columnName)),
+                'type' => $convertColumnType($columnType),
                 'label' => trans("macro-labels.$tableName.$columnName"),
             ];
         })->values();
@@ -675,6 +698,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         if (in_array($value, array_keys(DateTimeConstant::TIMELINE))) {
             $newValue = $this->getValueFromTimeLine($value, $dateCondition['day']);
 
+            if ($field == 'date') {
+                $newValue = $newValue->format('Ymd');
+            }
+
             return [
                 $field,
                 $operator,
@@ -690,6 +717,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'year' => $direction == '<=' ? now()->startOfYear() : now()->endOfYear(),
             };
 
+            if ($field == 'date') {
+                $newValue = $newValue->format('Ymd');
+            }
+
             return [
                 $field,
                 $direction,
@@ -697,6 +728,10 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             ];
         } elseif ($value == 'specify_date_time') {
             $value = $dateCondition['value'];
+
+            if ($field == 'date') {
+                $value = str_replace('-', '', $value);
+            }
 
             if ($this->getColumnDataType($field, true) == 'datetime' && $operator == '=') {
                 $operator = 'between';
@@ -720,7 +755,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         ];
     }
 
-    private function getValueFromTimeLine($value, ?int $day = 1)
+    private function getValueFromTimeLine($value, ?int $day = 1): Carbon
     {
         $newValue = now();
         $splitValue = explode('_', $value);
@@ -994,21 +1029,30 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             return null;
         }
 
-        if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL) {
+        if (
+            MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_INTERNAL
+            || MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_AI_KPI
+        ) {
+            $connection = 'mysql';
+
+            if (MacroConstant::DESCRIPTION_TABLES[$table][MacroConstant::TABLE_TYPE] == MacroConstant::TYPE_AI_KPI) {
+                $connection = DatabaseConnectionConstant::KPI_CONNECTION;
+            }
+
             $relativeTables = Arr::get(
                 MacroConstant::LIST_RELATIVE_TABLE,
                 $table.'.'.MacroConstant::RELATIVE_TABLES
             );
 
-            $columns = $this->getAllColumnOfTable($table)
+            $columns = $this->getAllColumnOfTable($table, $connection)
                 ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                 ->toArray();
             foreach ($columns as $column) {
                 $labelArr[explode('.', $column)[1]] = trans('macro-labels.'.$column);
             }
             $labelArr['store_id'] = trans('macro-labels.'.$table.'.store_id');
-
-            $query = DB::table($table)
+            $query = DB::connection($connection)
+                ->table($table)
                 ->select('store_id', ...$columns)
                 ->whereIn('store_id', $storeIds);
             if ($table == 'mq_accounting') {
@@ -1017,7 +1061,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             }
 
             foreach ($relativeTables as $tableName => $relativeTable) {
-                $columnsRelativeTable = $this->getAllColumnOfTable($tableName)
+                $columnsRelativeTable = $this->getAllColumnOfTable($tableName, $connection)
                         ->map(fn ($item) => "{$item['table']}.{$item['column']}")
                         ->toArray();
 
