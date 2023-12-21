@@ -24,6 +24,7 @@ class PolicySimulationHistoryResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'policy_id' => $this->resource->policy_id,
+            'manager_id' => $this->resource->user_id,
             'manager' => $this->whenLoaded('manager', fn () => $this->resource->manager->name),
             'title' => $this->resource->title,
             'execution_time' => $this->resource->execution_time,
