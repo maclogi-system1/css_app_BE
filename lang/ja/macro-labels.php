@@ -133,6 +133,7 @@ return [
     'actual' => '（実績）',
     'diff' => '（差分）',
     'access_keywords' => [
+        'table_label' => 'access_keywords',
         'date' => 'date',
         'user_genre' => 'user_genre',
         'keyword' => 'keyword',
@@ -163,6 +164,7 @@ return [
         'ranking_market' => 'ランキング市場',
     ],
     'access_reference' => [
+        'table_label' => 'access_reference',
         'date' => 'date',
         'user_genre' => 'user_genre',
         'ref' => 'ref',
@@ -170,6 +172,7 @@ return [
         'val' => 'val',
     ],
     'access_source' => [
+        'table_label' => 'access_source',
         'date' => 'date',
         'instagram' => 'Instagram',
         'google' => 'Google',
@@ -179,6 +182,7 @@ return [
         'facebook' => 'Facebook',
     ],
     'ad_purchase_history' => [
+        'table_label' => 'ad_purchase_history',
         'date' => 'date',
         'rakuten_ad' => 'rakuten_ad',
         'rakuten_excpt_ad' => 'rakuten_excpt_ad',
@@ -193,6 +197,7 @@ return [
         'cancel_rakuten_ad' => 'cancel_rakuten_ad',
     ],
     'affiliate_achivement' => [
+        'table_label' => 'affiliate_achivement',
         'date' => 'date',
         'outcome_sales_amnt' => 'outcome_sales_amnt',
         'outcome_sales_num' => 'outcome_sales_num',
@@ -202,6 +207,7 @@ return [
         'price_earnings' => 'price_earnings',
     ],
     'coupon_advice_ad' => [
+        'table_label' => 'coupon_advice_ad',
         'date' => 'date',
         'coupon_num' => 'coupon_num',
         'actual_amnt' => 'actual_amnt',
@@ -222,12 +228,14 @@ return [
         'roas_with_dscnt_rate' => 'roas_with_dscnt_rate',
     ],
     'daily_rranking' => [
+        'table_label' => 'daily_rranking',
         'date' => 'date',
         'itemid' => 'itemid',
         'genreid' => 'genreid',
         'rank' => 'rank',
     ],
     'item_listprice' => [
+        'table_label' => 'item_listprice',
         'date' => 'date',
         'item_id' => 'item_id',
         'no' => 'no',
@@ -238,6 +246,7 @@ return [
         'sales_num' => 'sales_num',
     ],
     'items_analytics' => [
+        'table_label' => 'items_analytics',
         'date' => 'date',
         'item_id' => 'item_id',
         'reg_date' => 'reg_date',
@@ -319,6 +328,7 @@ return [
         'bookmark_total' => 'bookmark_total',
     ],
     'items_data' => [
+        'table_label' => 'items_data',
         'date' => 'date',
         'item_id' => 'item_id',
         'reg_date' => 'reg_date',
@@ -408,6 +418,7 @@ return [
         'sd_web_flag' => 'sd_web_flag',
     ],
     'items_sales' => [
+        'table_label' => 'items_sales',
         'date' => 'date',
         'item_management_number' => 'item_management_number',
         'catalog_id' => 'catalog_id',
@@ -438,6 +449,7 @@ return [
         'inventory_00' => 'inventory_00',
     ],
     'keysearch_ranking' => [
+        'table_label' => 'keysearch_ranking',
         'date' => 'date',
         'search_id' => 'search_id',
         'itemmngid' => 'itemmngid',
@@ -450,9 +462,11 @@ return [
         'keywordnum3' => 'keywordnum3',
     ],
     'purchase_count' => [
+        'table_label' => 'purchase_count',
         'date' => 'date',
     ],
     'purchase_count_2y' => [
+        'table_label' => 'purchase_count_2y',
         'date' => 'date',
     ],
     'purchase_count_2y_num' => [
@@ -504,6 +518,7 @@ return [
         'sales_amnt_over_10' => 'sales_amnt_over_10',
     ],
     'rgroup_ad' => [
+        'table_label' => 'rgroup_ad',
         'date' => 'date',
         'ad_cost' => 'ad_cost',
         'ad_cost_per_day' => 'ad_cost_per_day',
@@ -511,6 +526,7 @@ return [
         'cpc' => 'cpc',
     ],
     'rgroup_ad_by_ad' => [
+        'table_label' => 'rgroup_ad_by_ad',
         'date' => 'date',
         'ad_group' => 'ad_group',
         'item_name_in_ad' => 'item_name_in_ad',
@@ -611,6 +627,7 @@ return [
         'exist_720h' => 'exist_720h',
     ],
     'shop_analytics_daily' => [
+        'table_label' => 'shop_analytics_daily',
         'date' => 'date',
         'tax' => 'tax',
         'postage' => 'postage',
@@ -652,6 +669,7 @@ return [
         'device' => 'device',
     ],
     'shop_analytics_monthly' => [
+        'table_label' => 'shop_analytics_monthly',
         'date' => 'date',
         'tax' => 'tax',
         'postage' => 'postage',
@@ -692,6 +710,7 @@ return [
         'device' => 'device',
     ],
     'tda_ad' => [
+        'table_label' => 'tda_ad',
         'date' => 'date',
         'viwer_impression' => 'viwer_impression',
         'actual_amnt' => 'actual_amnt',
@@ -708,6 +727,7 @@ return [
         'exist_user_sales_amnt' => 'exist_user_sales_amnt',
     ],
     'user_trends' => [
+        'table_label' => 'user_trends',
         'date' => 'date',
         'new_user_num' => 'new_user_num',
         'new_sales_amnt' => 'new_sales_amnt',

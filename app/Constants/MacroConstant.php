@@ -431,7 +431,7 @@ class MacroConstant
             ],
         ],
         'purchase_count_2y' => [
-            self::TABLE_NAME => 'purchase_count',
+            self::TABLE_NAME => 'purchase_count_2y',
             self::TABLE_TYPE => self::TYPE_AI_KPI,
             self::REMOVE_COLUMNS => [
                 'store_id',
@@ -1005,7 +1005,7 @@ class MacroConstant
             ],
         ],
         'shop_analytics_monthly' => [
-            self::TABLE_NAME => 'shop_analytics_daily',
+            self::TABLE_NAME => 'shop_analytics_monthly',
             self::RELATIVE_TABLES => [
                 'shop_analytics_monthly_access_num' => [
                     self::TABLE_NAME => 'shop_analytics_monthly_access_num',
