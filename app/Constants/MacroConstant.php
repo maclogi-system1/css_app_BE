@@ -6,6 +6,7 @@ class MacroConstant
 {
     public const TYPE_INTERNAL = 'CSS';
     public const TYPE_EXTERNAL = 'OSS';
+    public const TYPE_AI_KPI = 'AI_KPI';
     public const TABLE_NAME = 'table_name';
     public const TABLE_TYPE = 'table_type';
     public const TABLE_COLUMNS = 'columns';
@@ -44,6 +45,9 @@ class MacroConstant
         self::MACRO_TYPE_ALERT_DISPLAY,
     ];
 
+    /**
+     * Descriptions of the tables.
+     */
     public const DESCRIPTION_TABLES = [
         'mq_accounting' => [
             self::TABLE_NAME => 'mq_accounting',
@@ -276,8 +280,400 @@ class MacroConstant
                 'updated_at',
             ],
         ],
+        'access_keywords' => [
+            self::TABLE_NAME => 'access_keywords',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'access_others' => [
+            self::TABLE_NAME => 'access_others',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'others_id',
+            ],
+        ],
+        'access_rakuten' => [
+            self::TABLE_NAME => 'access_rakuten',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rakuten_id',
+            ],
+        ],
+        'access_reference' => [
+            self::TABLE_NAME => 'access_reference',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'access_source' => [
+            self::TABLE_NAME => 'access_source',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'rakuten_id',
+                'others_id',
+                'created_at',
+            ],
+        ],
+        'ad_purchase_history' => [
+            self::TABLE_NAME => 'ad_purchase_history',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'affiliate_achivement' => [
+            self::TABLE_NAME => 'affiliate_achivement',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'coupon_advice_ad' => [
+            self::TABLE_NAME => 'coupon_advice_ad',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'daily_rranking' => [
+            self::TABLE_NAME => 'daily_rranking',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'item_listprice' => [
+            self::TABLE_NAME => 'item_listprice',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'items_analytics' => [
+            self::TABLE_NAME => 'items_analytics',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'items_data' => [
+            self::TABLE_NAME => 'items_data',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'items_data_all' => [
+            self::TABLE_NAME => 'items_data_all',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'items_data_all_id',
+            ],
+        ],
+        'items_data_pc' => [
+            self::TABLE_NAME => 'items_data_pc',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'items_data_pc_id',
+            ],
+        ],
+        'items_data_sd_web' => [
+            self::TABLE_NAME => 'items_data_sd_web',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'items_data_sd_app_id',
+            ],
+        ],
+        'items_data_sd_app' => [
+            self::TABLE_NAME => 'items_data_sd_app',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'items_data_sd_web_id',
+            ],
+        ],
+        'items_sales' => [
+            self::TABLE_NAME => 'items_sales',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'keysearch_ranking' => [
+            self::TABLE_NAME => 'keysearch_ranking',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'purchase_count' => [
+            self::TABLE_NAME => 'purchase_count',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'prchs_cnt_num_id',
+                'prchs_cnt_sales_amnt_id',
+                'created_at',
+            ],
+        ],
+        'purchase_count_2y' => [
+            self::TABLE_NAME => 'purchase_count_2y',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'prchs_cnt_2y_num_id',
+                'prchs_cnt_2y_sales_amnt_id',
+                'created_at',
+            ],
+        ],
+        'purchase_count_2y_num' => [
+            self::TABLE_NAME => 'purchase_count_2y_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'prchs_cnt_2y_num_id',
+            ],
+        ],
+        'purchase_count_2y_sales_amnt' => [
+            self::TABLE_NAME => 'purchase_count_2y_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'prchs_cnt_2y_sales_amnt_id',
+            ],
+        ],
+        'purchase_count_num' => [
+            self::TABLE_NAME => 'purchase_count_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'prchs_cnt_num_id',
+            ],
+        ],
+        'purchase_count_sales_amnt' => [
+            self::TABLE_NAME => 'purchase_count_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'prchs_cnt_sales_amnt_id',
+            ],
+        ],
+        'rgroup_ad' => [
+            self::TABLE_NAME => 'rgroup_ad',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'sales_amnt_id',
+                'created_at',
+            ],
+        ],
+        'rgroup_ad_sales_amnt' => [
+            self::TABLE_NAME => 'rgroup_ad_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_id',
+            ],
+        ],
+        'rgroup_ad_by_ad' => [
+            self::TABLE_NAME => 'rgroup_ad_by_ad',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'group_ad_by_ad_id',
+                'store_id',
+                'sales_amnt_id',
+                'created_at',
+            ],
+        ],
+        'rgroup_ad_by_ad_sales_amnt' => [
+            self::TABLE_NAME => 'rgroup_ad_by_ad_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_id',
+            ],
+        ],
+        'rpp_actual_amnt' => [
+            self::TABLE_NAME => 'rpp_actual_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_actual_amnt_id',
+            ],
+        ],
+        'rpp_ad' => [
+            self::TABLE_NAME => 'rpp_ad',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'rpp_actual_amnt_id',
+                'rpp_sales_amnt_id',
+                'rpp_sales_num_id',
+                'rpp_cvr_rate_id',
+                'rpp_roas_id',
+                'rpp_price_per_order_id',
+                'created_at',
+            ],
+        ],
+        'rpp_cvr_rate' => [
+            self::TABLE_NAME => 'rpp_cvr_rate',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_cvr_rate_id',
+            ],
+        ],
+        'rpp_price_per_order' => [
+            self::TABLE_NAME => 'rpp_price_per_order',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_price_per_order_id',
+            ],
+        ],
+        'rpp_roas' => [
+            self::TABLE_NAME => 'rpp_roas',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_roas_id',
+            ],
+        ],
+        'rpp_sales_amnt' => [
+            self::TABLE_NAME => 'rpp_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_sales_amnt_id',
+            ],
+        ],
+        'rpp_sales_num' => [
+            self::TABLE_NAME => 'rpp_sales_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'rpp_sales_num_id',
+            ],
+        ],
+        'shop_analytics_daily' => [
+            self::TABLE_NAME => 'shop_analytics_daily',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'sales_amnt_id',
+                'sales_num_id',
+                'access_num_id',
+                'conversion_rate_id',
+                'sales_amnt_per_user_id',
+                'created_at',
+            ],
+        ],
+        'shop_analytics_daily_access_num' => [
+            self::TABLE_NAME => 'shop_analytics_daily_access_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'access_num_id',
+            ],
+        ],
+        'shop_analytics_daily_conversion_rate' => [
+            self::TABLE_NAME => 'shop_analytics_daily_conversion_rate',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'conversion_rate_id',
+            ],
+        ],
+        'shop_analytics_daily_sales_amnt' => [
+            self::TABLE_NAME => 'shop_analytics_daily_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_id',
+            ],
+        ],
+        'shop_analytics_daily_sales_amnt_per_user' => [
+            self::TABLE_NAME => 'shop_analytics_daily_sales_amnt_per_user',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_per_user_id',
+            ],
+        ],
+        'shop_analytics_daily_sales_num' => [
+            self::TABLE_NAME => 'shop_analytics_daily_sales_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_id',
+            ],
+        ],
+        'shop_analytics_monthly' => [
+            self::TABLE_NAME => 'shop_analytics_monthly',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+                'sales_amnt_id',
+                'sales_num_id',
+                'access_num_id',
+                'conversion_rate_id',
+                'sales_amnt_per_user_id',
+            ],
+        ],
+        'shop_analytics_monthly_access_num' => [
+            self::TABLE_NAME => 'shop_analytics_monthly_access_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'access_num_id',
+            ],
+        ],
+        'shop_analytics_monthly_conversion_rate' => [
+            self::TABLE_NAME => 'shop_analytics_monthly_conversion_rate',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'conversion_rate_id',
+            ],
+        ],
+        'shop_analytics_monthly_sales_amnt' => [
+            self::TABLE_NAME => 'shop_analytics_monthly_sales_amnt',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_id',
+            ],
+        ],
+        'shop_analytics_monthly_sales_amnt_per_user' => [
+            self::TABLE_NAME => 'shop_analytics_monthly_sales_amnt_per_user',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_amnt_per_user_id',
+            ],
+        ],
+        'shop_analytics_monthly_sales_num' => [
+            self::TABLE_NAME => 'shop_analytics_monthly_sales_num',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'sales_num_id',
+            ],
+        ],
+        'tda_ad' => [
+            self::TABLE_NAME => 'tda_ad',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
+        'user_trends' => [
+            self::TABLE_NAME => 'user_trends',
+            self::TABLE_TYPE => self::TYPE_AI_KPI,
+            self::REMOVE_COLUMNS => [
+                'store_id',
+                'created_at',
+            ],
+        ],
     ];
 
+    /**
+     * List of tables and relations.
+     */
     public const LIST_RELATIVE_TABLE = [
         'mq_accounting' => [
             self::TABLE_NAME => 'mq_accounting',
@@ -412,6 +808,239 @@ class MacroConstant
                     self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
                 ],
             ],
+        ],
+        'access_keywords' => [
+            self::TABLE_NAME => 'access_keywords',
+            self::RELATIVE_TABLES => [],
+        ],
+        'access_reference' => [
+            self::TABLE_NAME => 'access_reference',
+            self::RELATIVE_TABLES => [],
+        ],
+        'access_source' => [
+            self::TABLE_NAME => 'access_source',
+            self::RELATIVE_TABLES => [
+                'access_others' => [
+                    self::TABLE_NAME => 'access_others',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'others_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'access_rakuten' => [
+                    self::TABLE_NAME => 'access_rakuten',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rakuten_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'ad_purchase_history' => [
+            self::TABLE_NAME => 'ad_purchase_history',
+            self::RELATIVE_TABLES => [],
+        ],
+        'affiliate_achivement' => [
+            self::TABLE_NAME => 'affiliate_achivement',
+            self::RELATIVE_TABLES => [],
+        ],
+        'coupon_advice_ad' => [
+            self::TABLE_NAME => 'coupon_advice_ad',
+            self::RELATIVE_TABLES => [],
+        ],
+        'daily_rranking' => [
+            self::TABLE_NAME => 'daily_rranking',
+            self::RELATIVE_TABLES => [],
+        ],
+        'item_listprice' => [
+            self::TABLE_NAME => 'item_listprice',
+            self::RELATIVE_TABLES => [],
+        ],
+        'items_analytics' => [
+            self::TABLE_NAME => 'items_analytics',
+            self::RELATIVE_TABLES => [],
+        ],
+        'items_data' => [
+            self::TABLE_NAME => 'items_data',
+            self::RELATIVE_TABLES => [
+                'items_data_all' => [
+                    self::TABLE_NAME => 'items_data_all',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'items_data_all_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'items_data_pc' => [
+                    self::TABLE_NAME => 'items_data_pc',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'items_data_pc_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'items_data_sd_web' => [
+                    self::TABLE_NAME => 'items_data_sd_web',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'items_data_sd_web_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'items_data_sd_app' => [
+                    self::TABLE_NAME => 'items_data_sd_app',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'items_data_sd_app_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'items_sales' => [
+            self::TABLE_NAME => 'items_sales',
+            self::RELATIVE_TABLES => [],
+        ],
+        'keysearch_ranking' => [
+            self::TABLE_NAME => 'keysearch_ranking',
+            self::RELATIVE_TABLES => [],
+        ],
+        'purchase_count' => [
+            self::TABLE_NAME => 'purchase_count',
+            self::RELATIVE_TABLES => [
+                'purchase_count_num' => [
+                    self::TABLE_NAME => 'purchase_count_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'prchs_cnt_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'purchase_count_sales_amnt' => [
+                    self::TABLE_NAME => 'purchase_count_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'prchs_cnt_sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'purchase_count_2y' => [
+            self::TABLE_NAME => 'purchase_count_2y',
+            self::RELATIVE_TABLES => [
+                'purchase_count_2y_num' => [
+                    self::TABLE_NAME => 'purchase_count_2y_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'prchs_cnt_2y_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'purchase_count_2y_sales_amnt' => [
+                    self::TABLE_NAME => 'purchase_count_2y_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'prchs_cnt_2y_sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'rgroup_ad' => [
+            self::TABLE_NAME => 'rgroup_ad',
+            self::RELATIVE_TABLES => [
+                'rgroup_ad_sales_amnt' => [
+                    self::TABLE_NAME => 'rgroup_ad_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'rgroup_ad_by_ad' => [
+            self::TABLE_NAME => 'rgroup_ad_by_ad',
+            self::RELATIVE_TABLES => [
+                'rgroup_ad_by_ad_sales_amnt' => [
+                    self::TABLE_NAME => 'rgroup_ad_by_ad_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'rpp_ad' => [
+            self::TABLE_NAME => 'rpp_ad',
+            self::RELATIVE_TABLES => [
+                'rpp_actual_amnt' => [
+                    self::TABLE_NAME => 'rpp_actual_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_actual_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'rpp_sales_amnt' => [
+                    self::TABLE_NAME => 'rpp_actual_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'rpp_sales_num' => [
+                    self::TABLE_NAME => 'rpp_sales_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_sales_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'rpp_cvr_rate' => [
+                    self::TABLE_NAME => 'rpp_cvr_rate',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_cvr_rate_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'rpp_roas' => [
+                    self::TABLE_NAME => 'rpp_roas',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_roas_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'rpp_price_per_order' => [
+                    self::TABLE_NAME => 'rpp_price_per_order',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'rpp_price_per_order_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'shop_analytics_daily' => [
+            self::TABLE_NAME => 'shop_analytics_daily',
+            self::RELATIVE_TABLES => [
+                'shop_analytics_daily_sales_amnt' => [
+                    self::TABLE_NAME => 'shop_analytics_daily_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_daily_sales_num' => [
+                    self::TABLE_NAME => 'shop_analytics_daily_sales_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_daily_access_num' => [
+                    self::TABLE_NAME => 'shop_analytics_daily_access_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'access_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_daily_conversion_rate' => [
+                    self::TABLE_NAME => 'shop_analytics_daily_conversion_rate',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'conversion_rate_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_daily_sales_amnt_per_user' => [
+                    self::TABLE_NAME => 'shop_analytics_daily_sales_amnt_per_user',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_per_user_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'shop_analytics_monthly' => [
+            self::TABLE_NAME => 'shop_analytics_monthly',
+            self::RELATIVE_TABLES => [
+                'shop_analytics_monthly_access_num' => [
+                    self::TABLE_NAME => 'shop_analytics_monthly_access_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'access_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_monthly_conversion_rate' => [
+                    self::TABLE_NAME => 'shop_analytics_monthly_conversion_rate',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'conversion_rate_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_monthly_sales_amnt' => [
+                    self::TABLE_NAME => 'shop_analytics_monthly_sales_amnt',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_monthly_sales_amnt_per_user' => [
+                    self::TABLE_NAME => 'shop_analytics_monthly_sales_amnt_per_user',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_amnt_per_user_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+                'shop_analytics_monthly_sales_num' => [
+                    self::TABLE_NAME => 'shop_analytics_monthly_sales_num',
+                    self::RELATIVE_TABLE_FOREIGN_KEY => 'sales_num_id',
+                    self::RELATIVE_TABLE_FOREIGN_KEY_TYPE => self::RELATIVE_TABLE_TYPE_OUTBOUND,
+                ],
+            ],
+        ],
+        'tda_ad' => [
+            self::TABLE_NAME => 'tda_ad',
+            self::RELATIVE_TABLES => [],
+        ],
+        'user_trends' => [
+            self::TABLE_NAME => 'user_trends',
+            self::RELATIVE_TABLES => [],
         ],
     ];
 

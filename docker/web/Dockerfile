@@ -38,9 +38,13 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
 
-RUN groupadd --force -g $WWWGROUP www-dev
-RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u $WWWUSER www-dev \
+RUN groupadd --force -g $WWWGROUP --system www-dev
+RUN useradd -ms /bin/bash -g $WWWGROUP --system -u $WWWUSER www-dev \
     && echo "www-dev:123456" | chpasswd && adduser www-dev sudo
+
+# Change user and group default for Apache
+RUN sed -i "s/User \${APACHE_RUN_USER}/User www-dev/g" /etc/apache2/apache2.conf
+RUN sed -i "s/Group \${APACHE_RUN_GROUP}/Group www-dev/g" /etc/apache2/apache2.conf
 
 COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

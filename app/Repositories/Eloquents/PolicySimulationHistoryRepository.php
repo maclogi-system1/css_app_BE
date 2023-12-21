@@ -42,7 +42,9 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
         $page = Arr::get($filters, 'page', 1);
         $perPage = Arr::get($filters, 'per_page', 10);
 
-        $query = $this->model()->join('policies as p', 'p.id', '=', 'policy_simulation_histories.policy_id')
+        $query = $this->model()
+            ->with(['manager'])
+            ->join('policies as p', 'p.id', '=', 'policy_simulation_histories.policy_id')
             ->where('p.store_id', $storeId)
             ->select('policy_simulation_histories.*', 'p.name');
 
