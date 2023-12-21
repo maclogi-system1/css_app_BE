@@ -905,7 +905,7 @@ class MacroConstant
             ],
         ],
         'purchase_count_2y' => [
-            self::TABLE_NAME => 'purchase_count',
+            self::TABLE_NAME => 'purchase_count_2y',
             self::RELATIVE_TABLES => [
                 'purchase_count_2y_num' => [
                     self::TABLE_NAME => 'purchase_count_2y_num',
