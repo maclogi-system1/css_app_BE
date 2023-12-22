@@ -40,7 +40,10 @@ class PolicySimulationHistoryController extends Controller
     public function show(Request $request, string $id): JsonResource
     {
         $policySimulationHistory = $this->policySimulationHistoryRepository->find($id);
-        $simulation = $this->policyRepository->find($policySimulationHistory->policy_id);
+        $simulation = $this->policyRepository->find(
+            id: $policySimulationHistory->policy_id,
+            filters: ['with' => ['rules']],
+        );
 
         if ($simulation->isProcessDone()) {
             $mqSheet = $this->mqSheetRepository->getDefaultByStore($simulation->store_id);
