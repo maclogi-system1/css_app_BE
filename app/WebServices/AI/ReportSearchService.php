@@ -122,7 +122,7 @@ class ReportSearchService extends Service
 
         $results = AccessKeywords::where('store_id', $storeId)
             ->whereRaw('
-                (date >= ? AND date <= ? ) 
+                (date >= ? AND date <= ? )
                 OR (date >= ? AND date <= ? )
                 OR (date >= ? AND date <= ? )
                 ', [$fromDateStr, $toDateStr, $lastMonthStartStr, $lastMonthEndStr, $lastYearStartStr, $lastYearEndStr])
@@ -298,7 +298,7 @@ class ReportSearchService extends Service
                         $tableKeywords->add([
                             'keyword' => Arr::get($keywordsItem, 'keyword', ''),
                             'value' => $keywordsAccess,
-                            'rate' => round($keywordsAccess / $totalAccess * 100, 2),
+                            'rate' => $totalAccess ? round($keywordsAccess / $totalAccess * 100, 2) : 0,
                         ]);
                     }
                 }
@@ -555,7 +555,7 @@ class ReportSearchService extends Service
 
         $results = AccessKeywords::where('store_id', $storeId)
             ->whereRaw('
-                (SUBSTRING(date, 1, 6) >= ? AND SUBSTRING(date, 1, 6) <= ? ) 
+                (SUBSTRING(date, 1, 6) >= ? AND SUBSTRING(date, 1, 6) <= ? )
                 OR (SUBSTRING(date, 1, 6) >= ? AND SUBSTRING(date, 1, 6) <= ? )
                 OR (SUBSTRING(date, 1, 6) >= ? AND SUBSTRING(date, 1, 6) <= ? )
                 ', [$fromDateStr, $toDateStr, $lastMonthStartStr, $lastMonthEndStr, $lastYearStartStr, $lastYearEndStr])
