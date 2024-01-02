@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Policy extends Model
 {
-    use HasFactory, HasUuids, ModelDateTimeFormatter;
+    use HasFactory, HasUuids, ModelDateTimeFormatter, SoftDeletes;
 
     public const MEASURES_CATEGORY = 1;
     public const PROJECT_CATEGORY = 2;
@@ -51,6 +52,7 @@ class Policy extends Model
         'processing_status',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     protected $casts = [

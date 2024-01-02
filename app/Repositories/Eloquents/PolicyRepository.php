@@ -192,6 +192,10 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
             ->toString();
         $query = $this->queryBuilder()->where('id', $id);
 
+        if (Arr::pull($filters, 'withTrashed')) {
+            $query->withTrashed();
+        }
+
         if (Arr::has($filters, 'category')) {
             if (defined($constName)) {
                 $query->where('category', constant($constName));
@@ -266,7 +270,6 @@ class PolicyRepository extends Repository implements PolicyRepositoryContract
     public function delete(Policy $policy): ?Policy
     {
         return $this->handleSafely(function () use ($policy) {
-            $policy->rules()->delete();
             app(PolicyAttachmentRepository::class)->deleteMultiple($policy->attachments->pluck('id'));
 
             if (! is_null($policy->single_job_id)) {

@@ -72,7 +72,9 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
     public function find($id, array $columns = ['*'], array $filters = []): ?PolicySimulationHistory
     {
         $policySimulationHistory = $this->model()
-            ->with(['policy', 'manager'])
+            ->with(['policy' => function ($query) {
+                $query->withTrashed();
+            }, 'manager'])
             ->where('id', $id)
             ->first($columns);
 
@@ -94,10 +96,13 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
 
         /** @var \App\Repositories\Contracts\MqAccountingRepository */
         $mqAccountingRepository = app(MqAccountingRepository::class);
-        $mqSalesAmnt = $mqAccountingRepository->getSalesAmntByStore($policySimulationHistory->policy->store_id, [
-            'from_date' => $policySimulationHistory->execution_time,
-            'to_date' => Carbon::create($policySimulationHistory->undo_time)->addMonths(2)->format('Y-m-d H:i:s'),
-        ]);
+        $mqSalesAmnt = $mqAccountingRepository->getSalesAmntByStore(
+            $policySimulationHistory->policy()->withTrashed()->first()?->store_id,
+            [
+                'from_date' => $policySimulationHistory->execution_time,
+                'to_date' => Carbon::create($policySimulationHistory->undo_time)->addMonths(2)->format('Y-m-d H:i:s'),
+            ],
+        );
 
         $growthRatePrediction = $mqSalesAmnt
             ? round($predSalesAmnt / $mqSalesAmnt, 2) - 1
