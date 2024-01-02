@@ -13,6 +13,7 @@ use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\MqAccountingRepository;
 use App\Repositories\Contracts\MqSheetRepository;
 use App\Repositories\Contracts\PolicyRepository;
+use App\Repositories\Contracts\TaskRepository;
 use App\Support\PolicyCsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class PolicyController extends Controller
         protected PolicyCsv $policyCsv,
         protected MqSheetRepository $mqSheetRepository,
         protected MqAccountingRepository $mqAccountingRepository,
+        protected TaskRepository $taskRepository,
     ) {
     }
 
@@ -42,6 +44,20 @@ class PolicyController extends Controller
             $request->query(),
         ));
         $policyCollection->wrap('policies');
+
+        if ($request->query('withTasks')) {
+            $taskResult = $this->taskRepository->getList(array_merge($request->query(), [
+                'store_id' => $storeId,
+                'per_page' => -1,
+            ]));
+
+            $tasks = $taskResult->get('data')->get('tasks');
+
+            $policyCollection->additional([
+                'tasks' => $tasks,
+            ]);
+        }
+
 
         return $policyCollection;
     }
