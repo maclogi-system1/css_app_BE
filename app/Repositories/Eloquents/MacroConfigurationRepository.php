@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquents;
 use App\Constants\DatabaseConnectionConstant;
 use App\Constants\DateTimeConstant;
 use App\Constants\MacroConstant;
+use App\Constants\ShopConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Contracts\MacroGraphRepository;
@@ -561,10 +562,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
         ]);
 
         if ($result->get('success')) {
-            $additions = [
-                ['value' => '__all__', 'label' => '全店舗'],
-                ['value' => '__shop_owner__', 'label' => '担当店舗'],
-            ];
+            $additions = array_map(
+                fn ($label, $value) => ['value' => $value, 'label' => $label],
+                ShopConstant::SHOP_OPTIONS,
+                array_keys(ShopConstant::SHOP_OPTIONS)
+            );
 
             return array_merge($additions, array_map(fn ($shop) => [
                 'value' => $shop['store_id'],
