@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Constants\MacroConstant;
+use App\Constants\ShopConstant;
 use App\Models\MacroConfiguration;
 use App\Repositories\Contracts\AlertRepository;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
@@ -230,7 +231,7 @@ class ExecuteScheduledMacros extends Command
         /** @var \App\WebServices\OSS\ShopService */
         $shopService = app(ShopService::class);
 
-        if (array_search('__all__', $listStoreId) !== false) {
+        if (array_search(ShopConstant::SHOP_ALL_OPTION, $listStoreId) !== false) {
             $shopResult = $shopService->getList(['per_page' => -1]);
 
             if ($shopResult->get('success')) {
@@ -238,7 +239,7 @@ class ExecuteScheduledMacros extends Command
 
                 return Arr::pluck($shops, 'store_id');
             }
-        } elseif (array_search('__shop_owner__', $listStoreId) !== false) {
+        } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $listStoreId) !== false) {
             $shopResult = $shopService->getList([
                 'per_page' => -1,
                 'own_manager' => $this->linkedUserInfoRepository()->getOssUserIdByCssUserId($macro->created_by),
