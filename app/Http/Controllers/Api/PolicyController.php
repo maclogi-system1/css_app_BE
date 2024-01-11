@@ -58,7 +58,6 @@ class PolicyController extends Controller
             ]);
         }
 
-
         return $policyCollection;
     }
 

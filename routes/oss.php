@@ -35,6 +35,7 @@ Route::prefix('')->middleware(['auth:sanctum', 'check_shop_permission_by_store_i
         Route::get('/download-template', 'downloadTempla    teCsv')->name('download-template');
         Route::post('/{storeId}', 'storeMultiple')->name('store-multiple');
         Route::put('/{storeId}', 'updateMultiple')->name('update-multiple');
+        Route::delete('/{storeId}', 'deleteMultiple')->name('delete-multiple');
         Route::delete('/{storeId}/{taskId}', 'delete')->name('delete');
     });
 });
