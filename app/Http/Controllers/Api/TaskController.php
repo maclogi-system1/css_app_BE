@@ -133,6 +133,20 @@ class TaskController extends Controller
             ]);
     }
 
+    public function deleteMultiple(Request $request, string $storeId): JsonResponse
+    {
+        $result = $this->taskRepository->deleteMultiple($storeId, $request->query('task_id'));
+
+        return count($result)
+            ? response()->json([
+                'message' => __('Deleted failure.'),
+                'failed_tasks' => $result,
+            ])
+            : response()->json([
+                'message' => __('The task have been deleted successfully.'),
+            ], Response::HTTP_OK);
+    }
+
     /**
      * Get a list of options for select.
      */

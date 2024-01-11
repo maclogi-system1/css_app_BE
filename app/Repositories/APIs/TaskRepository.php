@@ -222,6 +222,24 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         return null;
     }
 
+    /**
+     * Handle delete multiple tasks.
+     */
+    public function deleteMultiple(string $storeId, array $taskIds): array
+    {
+        $failedTasks = [];
+
+        foreach ($taskIds as $taskId) {
+            $result = $this->delete($storeId, $taskId);
+
+            if (is_null($result) || $result->get('errors')) {
+                $failedTasks[] = $taskId;
+            }
+        }
+
+        return $failedTasks;
+    }
+
     public function getLinkedUserInfoRepository(): LinkedUserInfoRepository
     {
         return app(LinkedUserInfoRepository::class);
