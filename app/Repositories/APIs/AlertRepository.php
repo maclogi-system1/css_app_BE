@@ -45,6 +45,7 @@ class AlertRepository extends Repository implements AlertRepositoryContract
     {
         $storeId = Arr::get($params, 'store_id');
         $params['content'] = Arr::get($params, 'content', '店舗アラート');
+        $params['content'] = empty($params['content']) ? '店舗アラート' : $params['content'];
 
         if ($storeId == ShopConstant::SHOP_ALL_OPTION) {
             $shopResult = $this->shopService->getList(['per_page' => -1]);
@@ -98,7 +99,7 @@ class AlertRepository extends Repository implements AlertRepositoryContract
             $result = $this->alertService->createAlert($data);
 
             if (! $result->get('success')) {
-                $failedAlerts[] = $data;
+                $failedAlerts[] = $result->get('data')->get('message');
             }
         }
 
