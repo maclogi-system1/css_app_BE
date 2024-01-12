@@ -46,6 +46,7 @@ return [
             'alerts' => [
                 'list' => '/alerts',
                 'create' => '/alerts',
+                'create_multiple' => '/alerts/create-multiple',
                 'mark_as_read' => '/alerts/mark-as-read/{id}',
                 'get_alert_count' => '/alerts/get-alert-count/{storeId}',
             ],
