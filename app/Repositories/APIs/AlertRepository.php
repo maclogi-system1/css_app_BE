@@ -89,18 +89,14 @@ class AlertRepository extends Repository implements AlertRepositoryContract
 
     private function handleCreateMultipleAlerts(array $storeIds, array $data): array
     {
-        $failedAlerts = [];
+        $data['store_ids'] = $storeIds;
+        unset($data['store_id']);
 
-        foreach ($storeIds as $storeId) {
-            $data['store_id'] = $storeId;
-
-            $result = $this->alertService->createAlert($data);
-
-            if (! $result->get('success')) {
-                $failedAlerts[] = $result->get('data')->get('message');
-            }
+        $result = $this->alertService->createAlertMultiple($data);
+        if (! $result->get('success')) {
+            return $result->get('data')->get('data');
         }
 
-        return $failedAlerts;
+        return [];
     }
 }

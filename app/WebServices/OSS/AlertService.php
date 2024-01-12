@@ -25,4 +25,9 @@ class AlertService extends Service
     {
         return $this->toResponse(Http::oss()->post(OSSService::getApiUri('alerts.create'), $params));
     }
+
+    public function createAlertMultiple(array $params)
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('alerts.create_multiple'), $params));
+    }
 }
