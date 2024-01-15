@@ -121,11 +121,11 @@ class ReportSearchService extends Service
         $lastYearEndStr = str_replace('-', '', date('Ymd', strtotime($lastYearEnd)));
 
         $results = AccessKeywords::where('store_id', $storeId)
-            ->whereRaw('
+            ->whereRaw('(
                 (date >= ? AND date <= ? )
                 OR (date >= ? AND date <= ? )
                 OR (date >= ? AND date <= ? )
-                ', [$fromDateStr, $toDateStr, $lastMonthStartStr, $lastMonthEndStr, $lastYearStartStr, $lastYearEndStr])
+                )', [$fromDateStr, $toDateStr, $lastMonthStartStr, $lastMonthEndStr, $lastYearStartStr, $lastYearEndStr])
             ->selectRaw('keyword,
                     SUM(CASE WHEN date >= ? AND date <= ? THEN val ELSE 0 END) as current_month_count,
                     SUM(CASE WHEN date >= ? AND date <= ? THEN val ELSE 0 END) as previous_month_count,
