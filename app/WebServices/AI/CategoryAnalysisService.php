@@ -37,8 +37,8 @@ class CategoryAnalysisService extends Service
             ->when(! empty($categoryIdsArr), function (Builder $query) use ($categoryIdsArr) {
                 $query->whereIn('id.catalog_id', $categoryIdsArr);
             })
-            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') >= '{$fromDate}'")
-            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') >= ?", [$fromDate])
+            ->whereRaw("STR_TO_DATE(`id`.`date`, '%Y%m%d') <= ?", [$toDate])
             ->selectRaw('
                 SUM(CASE WHEN ida.visit_all > 0 THEN 1 ELSE 0 END) as active_category_count_all,
                 SUM(CASE WHEN ida.visit_all = 0 THEN 1 ELSE 0 END) as unactive_category_count_all,
@@ -79,8 +79,8 @@ class CategoryAnalysisService extends Service
                 })
                 ->where('id2.store_id', $storeId)
                 ->where('id2.catalog_id', '!=', '')
-                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= ?", [$fromDate])
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= ?", [$toDate])
                 ->groupBy('id2.catalog_id')
                 ->select(
                     'id2.catalog_id',
@@ -95,8 +95,8 @@ class CategoryAnalysisService extends Service
                     })
                     ->where('is2.store_id', $storeId)
                     ->where('is2.catalog_id', '!=', '')
-                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= ?", [$fromDate])
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= ?", [$toDate])
                     ->groupBy('is2.catalog_id')
                     ->select(
                         DB::raw("CONCAT(`is2`.`catalog_id`, '.0') as catalog_id"),
@@ -133,8 +133,8 @@ class CategoryAnalysisService extends Service
                     $query->whereIn('id2.catalog_id', $categoryIdsArr);
                 })
                 ->where('id2.store_id', $storeId)
-                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') >= ?", [$fromDate])
+                ->whereRaw("STR_TO_DATE(`id2`.`date`, '%Y%m%d') <= ?", [$toDate])
                 ->groupBy('id2.date')
                 ->select(
                     'id2.date',
@@ -148,8 +148,8 @@ class CategoryAnalysisService extends Service
                         $query->whereIn('is2.catalog_id', $categoryIdsArr);
                     })
                     ->where('is2.store_id', $storeId)
-                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= '{$fromDate}'")
-                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= '{$toDate}'")
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') >= ?", [$fromDate])
+                    ->whereRaw("STR_TO_DATE(`is2`.`date`, '%Y%m%d') <= ?", [$toDate])
                     ->groupBy('is2.date')
                     ->select(
                         'is2.date',
@@ -210,8 +210,8 @@ class CategoryAnalysisService extends Service
                 $query->whereIn('id1.catalog_id', $categoryIdsArr);
             })
             ->where('id1.catalog_id', '!=', '')
-            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') >= '{$fromDate}'")
-            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') >= ?", [$fromDate])
+            ->whereRaw("STR_TO_DATE(`id1`.`date`, '%Y%m%d') <= ?", [$toDate])
             ->select(
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`id1`.`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
                 'id1.catalog_id',
@@ -246,8 +246,8 @@ class CategoryAnalysisService extends Service
                 $query->whereIn('is1.catalog_id', $categoryIdsArr);
             })
             ->where('is1.catalog_id', '!=', '')
-            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') >= '{$fromDate}'")
-            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') <= '{$toDate}'")
+            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') >= ?", [$fromDate])
+            ->whereRaw("STR_TO_DATE(`is1`.`date`, '%Y%m%d') <= ?", [$toDate])
             ->select(
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`is1`.`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
                 'is1.catalog_id',
@@ -309,8 +309,8 @@ class CategoryAnalysisService extends Service
                 $query->whereIn('catalog_id', $categoryIdsArr);
             })
             ->where('catalog_id', '!=', '')
-            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$fromDate}'")
-            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$toDate}'")
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= ?", [$fromDate])
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= ?", [$toDate])
             ->select(
                 'catalog_id',
                 DB::raw('SUM(`stay_duration`) as stay_duration'),
@@ -349,8 +349,8 @@ class CategoryAnalysisService extends Service
                 $query->whereIn('catalog_id', $categoryIdsArr);
             })
             ->where('catalog_id', '!=', '')
-            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= '{$fromDate}'")
-            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= '{$toDate}'")
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') >= ?", [$fromDate])
+            ->whereRaw("STR_TO_DATE(`date`, '%Y%m%d') <= ?", [$toDate])
             ->select(
                 'catalog_id',
                 DB::raw("DATE_FORMAT(STR_TO_DATE(`date`, '%Y%m%d'), '%Y/%m/%d') as date"),
