@@ -127,7 +127,7 @@ class ExecuteScheduledMacros extends Command
     private function createSimulationPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->simulationTemplates;
-        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
+        $diff = now()->diffInMinutes($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -144,7 +144,7 @@ class ExecuteScheduledMacros extends Command
                     'simulation_start_time',
                     'simulation_end_date',
                     'simulation_end_time',
-                    $diffInSeconds,
+                    $diff,
                 );
                 $template->save();
             }
@@ -154,7 +154,7 @@ class ExecuteScheduledMacros extends Command
     private function createPolicy(MacroConfiguration $macro): void
     {
         $templates = $macro->policyTemplates;
-        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
+        $diff = now()->diffInMinutes($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -175,7 +175,7 @@ class ExecuteScheduledMacros extends Command
                     'execution_time',
                     'undo_date',
                     'undo_time',
-                    $diffInSeconds,
+                    $diff,
                 );
                 $template->save();
             }
@@ -185,7 +185,7 @@ class ExecuteScheduledMacros extends Command
     private function createTask(MacroConfiguration $macro): void
     {
         $templates = $macro->taskTemplates;
-        $diffInSeconds = now()->diffInSeconds($macro->cron_expression->getNextRunDate());
+        $diff = now()->diffInMinutes($macro->cron_expression->getNextRunDate());
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
@@ -193,7 +193,12 @@ class ExecuteScheduledMacros extends Command
             foreach ($this->getListStoreId($macro) as $storeId) {
                 logger('Run create task: '.json_encode($data + ['store_id' => $storeId]));
 
-                $this->taskRepository()->create($data, $storeId);
+                $result = $this->taskRepository()->create($data, $storeId);
+
+                if (! $result || $result->get('errors')) {
+                    $content = is_null($result) ? 'check the OSS log' : json_encode($result->get('errors'));
+                    logger()->error('Create task failed: '.$content);
+                }
 
                 // Increase the start and end times for the next new creation.
                 $template->payload = $this->getDataWithDateTimeForNextCreation(
@@ -202,7 +207,7 @@ class ExecuteScheduledMacros extends Command
                     'start_time',
                     'due_date',
                     'due_time',
-                    $diffInSeconds,
+                    $diff,
                 );
                 $template->save();
             }
@@ -264,12 +269,12 @@ class ExecuteScheduledMacros extends Command
         string $startTimeName,
         string $endDateName,
         string $endTimeName,
-        int $diffInSeconds = 1,
+        int $diffInMinutes = 1,
     ) {
         $startDate = (new Carbon($data[$startDateName].' '.$data[$startTimeName]))
-            ->addSeconds($diffInSeconds);
+            ->addMinutes($diffInMinutes + 1);
         $endDate = (new Carbon($data[$endDateName].' '.$data[$endTimeName]))
-            ->addSeconds($diffInSeconds);
+            ->addMinutes($diffInMinutes + 1);
         $data[$startDateName] = $startDate->format('Y-m-d');
         $data[$startTimeName] = $startDate->format('H:i');
 

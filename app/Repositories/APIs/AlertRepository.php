@@ -44,7 +44,6 @@ class AlertRepository extends Repository implements AlertRepositoryContract
     public function createAlert(array $params)
     {
         $storeId = Arr::get($params, 'store_id');
-        $params['content'] = Arr::get($params, 'content', '店舗アラート');
 
         if ($storeId == ShopConstant::SHOP_ALL_OPTION) {
             $shopResult = $this->shopService->getList(['per_page' => -1]);
@@ -90,18 +89,14 @@ class AlertRepository extends Repository implements AlertRepositoryContract
 
     private function handleCreateMultipleAlerts(array $storeIds, array $data): array
     {
-        $failedAlerts = [];
+        $data['store_ids'] = $storeIds;
+        unset($data['store_id']);
 
-        foreach ($storeIds as $storeId) {
-            $data['store_id'] = $storeId;
-
-            $result = $this->alertService->createAlert($data);
-
-            if (! $result->get('success')) {
-                $failedAlerts[] = $data;
-            }
+        $result = $this->alertService->createAlertMultiple($data);
+        if (! $result->get('success')) {
+            return $result->get('data')->get('data');
         }
 
-        return $failedAlerts;
+        return [];
     }
 }
