@@ -127,7 +127,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             $errors = $result->get('data')->get('message');
 
             return collect([
-                'status' => $result->get('status'),
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
                 'errors' => $errors,
             ]);
         }
