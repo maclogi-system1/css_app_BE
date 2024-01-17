@@ -10,7 +10,6 @@ use App\WebServices\OSS\AlertService;
 use App\WebServices\OSS\ShopService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 
 class AlertRepository extends Repository implements AlertRepositoryContract
 {
