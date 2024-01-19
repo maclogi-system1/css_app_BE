@@ -3,8 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\Policy;
-use App\Models\PolicyRealData\PolicyR2;
-use App\Support\DataAdapter\PolicyAdapter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
@@ -25,10 +23,6 @@ class PolicyResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        if ($this->resource instanceof PolicyR2) {
-            return (new PolicyAdapter($this->resource))->toArray();
-        }
-
         return $this->category == Policy::SIMULATION_CATEGORY
             ? $this->simulationAttributes()
             : $this->policyAttributes();

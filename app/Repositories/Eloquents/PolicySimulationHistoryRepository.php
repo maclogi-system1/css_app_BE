@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\InferenceRealData\SuggestPolicies;
+use App\Models\InferenceRealData\SuggestPolicy;
 use App\Models\KpiRealData\ShopAnalyticsDaily;
 use App\Models\Policy;
 use App\Models\PolicySimulationHistory;
@@ -72,9 +73,7 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
     public function find($id, array $columns = ['*'], array $filters = []): ?PolicySimulationHistory
     {
         $policySimulationHistory = $this->model()
-            ->with(['policy' => function ($query) {
-                $query->withTrashed();
-            }, 'manager'])
+            ->with(['manager'])
             ->where('id', $id)
             ->first($columns);
 
@@ -243,9 +242,9 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
 
     private function getChartDataShop(string $storeId): array
     {
-        return Policy::with('rules')
+        return SuggestPolicy::with('suggestedPolicies')
             ->where('store_id', $storeId)
-            ->where('category', Policy::SIMULATION_CATEGORY)
+            ->where('status', SuggestPolicy::SUCCESS_STATUS)
             ->get()
             ->map(function ($item) {
                 $shopAnalyticsDailyAllValue = ShopAnalyticsDaily::where('store_id', $item->store_id)
@@ -262,7 +261,7 @@ class PolicySimulationHistoryRepository extends Repository implements PolicySimu
 
                 return [
                     'store_id' => $item->store_id,
-                    'policy_value' => $item->rules->sum('value'),
+                    'policy_value' => $item->suggestedPolicies->sum('policy_value'),
                     'all_value_sum' => $shopAnalyticsDailyAllValue->sum('sadsn.all_value'),
                 ];
             })

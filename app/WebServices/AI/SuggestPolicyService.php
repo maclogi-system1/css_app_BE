@@ -11,7 +11,7 @@ class SuggestPolicyService extends Service
      * @see https://drive.google.com/drive/folders/12by8OAx4-WqPDPHPcue4olcBdW7YK0xm
      * @see https://drive.google.com/file/d/1EIzTuC09mj0hsR8bdMR-n_XrI4r8qANO/view?usp=drive_link
      */
-    public function runSuggestPolicyForSimulation(string $storeId, array $simulations, array $policies)
+    public function runSuggestPolicyForSimulation(string $storeId, array $simulations, array $policies = [])
     {
         $dataRequest = [
             'store_id' => $storeId,
