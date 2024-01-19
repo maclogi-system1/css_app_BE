@@ -6,6 +6,7 @@ use App\Models\Policy;
 use App\Models\User;
 use App\Repositories\Contracts\PolicySimulationHistoryRepository;
 use App\WebServices\AI\StorePred2mService;
+use App\WebServices\AI\SuggestPolicyService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -47,50 +48,26 @@ class RunPolicySimulation implements ShouldQueue
             $result = $this->handleSimulations();
 
             foreach ($result as $item) {
-                $policyId = Arr::get($item, 'policy_id');
-                $title = Arr::get($item, 'name');
-                $storePred2m = Arr::get($item, 'store_pred_2m');
-                $itemsPred2m = Arr::get($item, 'items_pred_2m');
-                $policies = Arr::get($item, 'policies', []);
+                $policyId = Arr::get($item, 'pred_2m.policy_id');
+                $title = Arr::get($item, 'pred_2m.name');
+                $storePred2m = Arr::get($item, 'pred_2m.store_pred_2m');
+                $itemsPred2m = Arr::get($item, 'pred_2m.items_pred_2m');
+                $policyPredId = Arr::get($item, 'suggest_policy.pred_id');
 
-                if (count($policies)) {
-                    foreach ($policies as $suggestPolicy) {
-                        $policySimulationHistoryRepository->create([
-                            'policy_id' => $policyId,
-                            'title' => $title,
-                            'execution_time' => Arr::get($suggestPolicy, 'start_date'),
-                            'undo_time' => Arr::get($suggestPolicy, 'end_date'),
-                            'creation_date' => now(),
-                            'sale_effect' => 0,
-                            'store_pred_2m' => $storePred2m,
-                            'items_pred_2m' => $itemsPred2m,
-                            'user_id' => $this->manager?->id,
-                            'class' => Arr::get($suggestPolicy, 'class'),
-                            'service' => Arr::get($suggestPolicy, 'service'),
-                            'value' => Arr::get($suggestPolicy, 'value'),
-                            'condition_1' => Arr::get($suggestPolicy, 'condition_1'),
-                            'condition_value_1' => Arr::get($suggestPolicy, 'condition_value_1'),
-                            'condition_2' => Arr::get($suggestPolicy, 'condition_2'),
-                            'condition_value_2' => Arr::get($suggestPolicy, 'condition_value_2'),
-                            'condition_3' => Arr::get($suggestPolicy, 'condition_3'),
-                            'condition_value_3' => Arr::get($suggestPolicy, 'condition_value_3'),
-                        ]);
-                    }
-                } else {
-                    $policySimulationHistoryRepository->create([
-                        'policy_id' => $policyId,
-                        'title' => $title,
-                        'execution_time' => Arr::get($item, 'start_date'),
-                        'undo_time' => Arr::get($item, 'end_date'),
-                        'creation_date' => now(),
-                        'sale_effect' => 0,
-                        'store_pred_2m' => $storePred2m,
-                        'items_pred_2m' => $itemsPred2m,
-                        'user_id' => $this->manager?->id,
-                    ]);
-                }
+                $policySimulationHistoryRepository->create([
+                    'policy_id' => $policyId,
+                    'title' => $title,
+                    'execution_time' => Arr::get($item, 'pred_2m.start_date'),
+                    'undo_time' => Arr::get($item, 'pred_2m.end_date'),
+                    'creation_date' => now(),
+                    'sale_effect' => 0,
+                    'store_pred_2m' => $storePred2m,
+                    'items_pred_2m' => $itemsPred2m,
+                    'policy_pred_id' => $policyPredId,
+                    'user_id' => $this->manager?->id,
+                ]);
 
-                $simulation = Policy::find(Arr::get($item, 'policy_id'));
+                $simulation = Policy::find($policyId);
                 $simulation->processing_status = Policy::DONE_PROCESSING_STATUS;
                 $simulation->save();
             }
@@ -115,28 +92,47 @@ class RunPolicySimulation implements ShouldQueue
             $startDate = Carbon::create($simulation['simulation_start_date'])->setTimezone($timezone);
             $endDate = Carbon::create($simulation['simulation_end_date'])->setTimezone($timezone);
 
-            $result[] = $this->callApiRunPolicySimulation([
+            $rules = array_map(function ($rule) use ($startDate, $endDate) {
+                return [
+                    'class' => $rule['class'],
+                    'service' => $rule['service'],
+                    'value' => $rule['value'],
+                    'start_date' => $startDate->format('Y-m-d H:i'),
+                    'end_date' => $endDate->format('Y-m-d H:i'),
+                    'condition_1' => $rule['condition_1'],
+                    'condition_value_1' => $rule['condition_value_1'],
+                    'condition_2' => $rule['condition_2'],
+                    'condition_value_2' => $rule['condition_value_2'],
+                    'condition_3' => $rule['condition_3'],
+                    'condition_value_3' => $rule['condition_value_3'],
+                ];
+            }, $simulation['rules']);
+
+            $pred2m = $this->callApiRunPolicySimulation([
                 'store_id' => $this->storeId,
-                'policies' => array_map(function ($rule) use ($startDate, $endDate) {
-                    return [
-                        'class' => $rule['class'],
-                        'service' => $rule['service'],
-                        'value' => $rule['value'],
-                        'start_date' => $startDate->format('Y-m-d H:i'),
-                        'end_date' => $endDate->format('Y-m-d H:i'),
-                        'condition_1' => $rule['condition_1'],
-                        'condition_value_1' => $rule['condition_value_1'],
-                        'condition_2' => $rule['condition_2'],
-                        'condition_value_2' => $rule['condition_value_2'],
-                        'condition_3' => $rule['condition_3'],
-                        'condition_value_3' => $rule['condition_value_3'],
-                    ];
-                }, $simulation['rules']),
+                'policies' => $rules,
             ]) + [
                 'policy_id' => $simulation['id'],
                 'name' => $simulation['name'],
                 'start_date' => $startDate->format('Y-m-d H:i:s'),
                 'end_date' => $endDate->format('Y-m-d H:i:s'),
+            ];
+
+            $suggestPolicy = $this->callApiSuggestPolicy($this->storeId, [
+                'name' => $simulation['name'],
+                'simulation_start_date' => $startDate->format('Y-m-d'),
+                'simulation_start_time' => $startDate->format('H:i'),
+                'simulation_end_date' => $endDate->format('Y-m-d'),
+                'simulation_end_time' => $endDate->format('H:i'),
+                'simulation_promotional_expenses' => $simulation['simulation_promotional_expenses'],
+                'simulation_store_priority' => intval($simulation['simulation_store_priority']),
+                'simulation_product_priority' => intval($simulation['simulation_product_priority']),
+                'policy_rules' => [],
+            ]);
+
+            $result[] = [
+                'pred_2m' => $pred2m,
+                'suggest_policy' => $suggestPolicy,
             ];
         }
 
@@ -156,5 +152,20 @@ class RunPolicySimulation implements ShouldQueue
         }
 
         return $result->get('data')->get('data');
+    }
+
+    private function callApiSuggestPolicy(string $storeId, array $dataRequest): array
+    {
+        /** @var \App\WebServices\AI\SuggestPolicyService */
+        $suggestPolicyService = app(SuggestPolicyService::class);
+        $result = $suggestPolicyService->runSuggestPolicyForSimulation($storeId, $dataRequest);
+
+        if (! $result->get('success')) {
+            logger()->error($result->get('data')->toJson());
+
+            throw new RuntimeException('Calling the API to get the suggested policy from the AI side failed.');
+        }
+
+        return $result->get('data')->get('body');
     }
 }

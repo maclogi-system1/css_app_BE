@@ -14,8 +14,9 @@ class PolicySimulationHistory extends Model
 
     protected $fillable = [
         'policy_id', 'user_id', 'title', 'job_title', 'execution_time', 'undo_time', 'creation_date', 'sale_effect',
-        'store_pred_2m', 'items_pred_2m', 'class', 'service', 'value', 'condition_1', 'condition_value_1',
-        'condition_2', 'condition_value_2', 'condition_3', 'condition_value_3', 'created_at', 'updated_at',
+        'store_pred_2m', 'items_pred_2m', 'policy_pred_id', 'class', 'service', 'value', 'condition_1',
+        'condition_value_1', 'condition_2', 'condition_value_2', 'condition_3', 'condition_value_3',
+        'created_at', 'updated_at',
     ];
 
     public function policy(): BelongsTo

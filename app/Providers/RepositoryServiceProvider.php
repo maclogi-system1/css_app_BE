@@ -52,6 +52,7 @@ class RepositoryServiceProvider extends ServiceProvider
         \App\Repositories\Contracts\MyPageRepository::class => \App\Repositories\Eloquents\MyPageRepository::class,
         \App\Repositories\Contracts\ValueChainRepository::class => \App\Repositories\Eloquents\ValueChainRepository::class,
         \App\Repositories\Contracts\StandardDeviationRepository::class => \App\Repositories\Eloquents\StandardDeviationRepository::class,
+        \App\Repositories\Contracts\SuggestPolicyRepository::class => \App\Repositories\APIs\SuggestPolicyRepository::class,
     ];
 
     /**
