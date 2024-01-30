@@ -66,7 +66,7 @@ class ExecuteScheduledMacros extends Command
     {
         MacroConfiguration::where('status', MacroConstant::MACRO_STATUS_NOT_READY)
             ->whereIn('macro_type', MacroConstant::MACRO_SCHEDULABLE_TYPES)
-            ->whereRaw("JSON_EXTRACT(time_conditions, '$.applicable_date') <= ?", [now()->format('Y-m-d')])
+            ->whereRaw("JSON_EXTRACT(time_conditions, '$.applicable_date') <= ?", [now()->format('Y-m-d H:i:s')])
             ->update([
                 'status' => MacroConstant::MACRO_STATUS_READY,
             ]);
