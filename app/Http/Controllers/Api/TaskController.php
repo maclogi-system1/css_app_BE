@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Contracts\JobGroupRepository;
 use App\Repositories\Contracts\ShopRepository;
 use App\Repositories\Contracts\TaskRepository;
 use App\Support\PermissionHelper;
@@ -18,7 +19,8 @@ class TaskController extends Controller
     public function __construct(
         protected TaskCsv $taskCsv,
         protected TaskRepository $taskRepository,
-        protected ShopRepository $shopRepository
+        protected ShopRepository $shopRepository,
+        protected JobGroupRepository $jobGroupRepository,
     ) {
     }
 
@@ -42,6 +44,7 @@ class TaskController extends Controller
         $errors = [];
         $status = Response::HTTP_OK;
         $results = [];
+        $jobGroups = [];
 
         foreach ($request->post() as $index => $data) {
             if (! is_array($data)) {
@@ -60,13 +63,27 @@ class TaskController extends Controller
             }
 
             if ($result instanceof Collection && ! $result->has('errors')) {
-                $results[] = $result->first();
+                $task = $result->first();
+                $results[] = $task;
+
+                $this->jobGroupRepository->handleStartEndTime(
+                    Arr::get($task, 'job_group.id'),
+                    [
+                        'execution_date' => $data['start_date'],
+                        'execution_time' => $data['start_time'],
+                        'undo_date' => $data['due_date'],
+                        'undo_time' => $data['due_time'],
+                    ],
+                    $jobGroups
+                );
             }
         }
 
         if (! empty($errors)) {
             return response()->json($errors, $status);
         }
+
+        $this->jobGroupRepository->updateTime($jobGroups);
 
         return ! empty($results)
             ? response()->json(['tasks' => $results], $status)
@@ -141,7 +158,7 @@ class TaskController extends Controller
             ? response()->json([
                 'message' => __('Deleted failure.'),
                 'failed_tasks' => $result,
-            ])
+            ], Response::HTTP_BAD_REQUEST)
             : response()->json([
                 'message' => __('The task have been deleted successfully.'),
             ], Response::HTTP_OK);
