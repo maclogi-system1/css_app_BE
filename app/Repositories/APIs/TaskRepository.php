@@ -136,6 +136,8 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             return $this->handleTaskAssignees(collect($result->get('data')));
         }
 
+        logger()->error('[OSS] Create task: '.$result->get('data')->get('message'));
+
         return null;
     }
 
@@ -219,6 +221,8 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             return $result->get('data');
         }
 
+        logger()->error('[OSS] Delete task: '.$result->get('data')->get('message'));
+
         return null;
     }
 
@@ -233,7 +237,7 @@ class TaskRepository extends Repository implements TaskRepositoryContract
             $result = $this->delete($storeId, $taskId);
 
             if (is_null($result) || $result->get('errors')) {
-                $failedTasks[] = $taskId;
+                $failedTasks[$taskId] = $result->get('errors');
             }
         }
 
