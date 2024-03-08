@@ -7,6 +7,8 @@ use App\Constants\DateTimeConstant;
 use App\Constants\MacroConstant;
 use App\Constants\ShopConstant;
 use App\Models\MacroConfiguration;
+use App\Models\User;
+use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\MacroConfigurationRepository as MacroConfigurationRepositoryContract;
 use App\Repositories\Contracts\MacroGraphRepository;
 use App\Repositories\Contracts\MacroTemplateRepository;
@@ -1008,11 +1010,32 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Build query from conditions of a specified json conditions.
      */
-    public function getQueryConditionsResults(array $requestConditions)
+    public function getQueryConditionsResults(array $requestConditions, ?User $auth = null)
     {
         $conditions = Arr::get($requestConditions, 'conditions');
         $storeIdsStr = Arr::get($requestConditions, 'store_ids', '');
         $storeIds = explode(',', $storeIdsStr);
+
+        if (array_search(ShopConstant::SHOP_ALL_OPTION, $storeIds) !== false) {
+            $shopResult = $this->shopService->getList(['per_page' => -1]);
+
+            if ($shopResult->get('success')) {
+                $shops = $shopResult->get('data')->get('shops');
+
+                $storeIds = Arr::pluck($shops, 'store_id');
+            }
+        } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $storeIds) !== false) {
+            $shopResult = $this->shopService->getList([
+                'per_page' => -1,
+                'own_manager' => app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId($auth->id),
+            ]);
+
+            if ($shopResult->get('success')) {
+                $shops = $shopResult->get('data')->get('shops');
+
+                $storeIds = array_unique(array_merge($storeIds, Arr::pluck($shops, 'store_id')));
+            }
+        }
 
         return $this->buildQueryAndExecute($conditions, $storeIds);
     }

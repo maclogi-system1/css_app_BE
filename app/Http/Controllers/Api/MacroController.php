@@ -282,7 +282,7 @@ class MacroController extends Controller
         }
 
         $conditions = json_decode($request->getContent(), true);
-        $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions);
+        $result = $this->macroConfigurationRepository->getQueryConditionsResults($conditions, $request->user());
 
         return response()->json($result);
     }
