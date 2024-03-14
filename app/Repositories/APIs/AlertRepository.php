@@ -92,7 +92,7 @@ class AlertRepository extends Repository implements AlertRepositoryContract
         unset($data['store_id']);
 
         $result = $this->alertService->createAlertMultiple($data);
-        if (! $result->get('success')) {
+        if ($result->get('success')) {
             return $result->get('data')->get('data');
         }
 
