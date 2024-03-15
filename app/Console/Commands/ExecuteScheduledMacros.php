@@ -133,7 +133,9 @@ class ExecuteScheduledMacros extends Command
             $data = $template->payload_decode;
 
             foreach ($this->getListStoreId($macro) as $storeId) {
-                logger('Run create simulation: '.json_encode($data + ['store_id' => $storeId]));
+                logger()->channel('macro')->info('Run create simulation: '.json_encode($data + [
+                    'store_id' => $storeId,
+                ]));
 
                 $this->policyRepository()->createSimulation($data, $storeId);
 
@@ -161,7 +163,7 @@ class ExecuteScheduledMacros extends Command
 
             foreach ($this->getListStoreId($macro) as $index => $storeId) {
                 $data = array_merge($data, ['store_id' => $storeId]);
-                logger('Run create policy: '.json_encode($data));
+                logger()->channel('macro')->info('Run create policy: '.json_encode($data));
 
                 $this->policyRepository()->create(
                     $this->policyRepository()->handleValidation($data, $index),
@@ -191,13 +193,13 @@ class ExecuteScheduledMacros extends Command
             $data = $template->payload_decode;
 
             foreach ($this->getListStoreId($macro) as $storeId) {
-                logger('Run create task: '.json_encode($data + ['store_id' => $storeId]));
+                logger()->channel('macro')->info('Run create task: '.json_encode($data + ['store_id' => $storeId]));
 
                 $result = $this->taskRepository()->create($data, $storeId);
 
                 if (! $result || $result->get('errors')) {
                     $content = is_null($result) ? 'check the OSS log' : json_encode($result->get('errors'));
-                    logger()->error('Create task failed: '.$content);
+                    logger()->channel('macro')->error('Create task failed: '.$content);
                 }
 
                 // Increase the start and end times for the next new creation.
@@ -223,7 +225,7 @@ class ExecuteScheduledMacros extends Command
 
             foreach ($this->getListStoreId($macro) as $storeId) {
                 $data = array_merge($data, ['store_id' => $storeId, 'macro_id' => $macro->id]);
-                logger('Run create alert: '.json_encode($data));
+                logger()->channel('macro')->info('Run create alert: '.json_encode($data));
 
                 $this->alertRepository()->createAlert($data);
             }
