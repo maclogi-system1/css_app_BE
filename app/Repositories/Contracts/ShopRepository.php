@@ -22,7 +22,7 @@ interface ShopRepository extends Repository
     public function getInfo(string $storeId);
 
     /**
-     * Get a list of the user in a shop.
+     * Get a list of users in shops.
      */
     public function getUsers(array $filters = []);
 

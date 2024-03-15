@@ -2,6 +2,7 @@
 
 namespace App\Repositories\APIs;
 
+use App\Constants\ShopConstant;
 use App\Models\User;
 use App\Repositories\Contracts\LinkedUserInfoRepository;
 use App\Repositories\Contracts\MqSheetRepository;
@@ -103,11 +104,21 @@ class ShopRepository extends Repository implements ShopRepositoryContract
     }
 
     /**
-     * Get a list of the user in a shop.
+     * Get a list of users in shops.
      */
     public function getUsers(array $filters = [])
     {
         $data = ['users' => []];
+
+        if ($storeId = Arr::get($filters, 'store_id')) {
+            if ($storeId == ShopConstant::SHOP_ALL_OPTION) {
+                unset($filters['store_id']);
+            } elseif ($storeId == ShopConstant::SHOP_OWNER_OPTION) {
+                $ownerId = $this->getLinkedUserInfoRepository()->getOssUserIdByCssUserId(auth()->id());
+                $filters['owner_id'] = $ownerId;
+                unset($filters['store_id']);
+            }
+        }
 
         $result = $this->userService->getShopUsers($filters);
         $ossShopUser = collect(Arr::get($result->get('data'), 'users'));
