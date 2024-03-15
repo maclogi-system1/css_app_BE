@@ -372,6 +372,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
+            $data['status'] = MacroConstant::MACRO_STATUS_NOT_READY;
             unset($macroConfiguration->stores);
             $macroConfiguration->fill(Arr::except($data, 'macro_type'));
             $macroConfiguration->save();
