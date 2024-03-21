@@ -347,7 +347,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_TASK_ISSUE
                 && Arr::has($data, 'tasks')
             ) {
-                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+                $this->createTaskTemplates($macroConfiguration, Arr::get($data, 'tasks', []));
             } elseif (
                 Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
                 && Arr::has($data, 'alert')
@@ -426,7 +426,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 && Arr::has($data, 'tasks')
             ) {
                 $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
-                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+                $this->createTaskTemplates($macroConfiguration, Arr::get($data, 'tasks', []));
             } elseif (
                 $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
                 && Arr::has($data, 'alert')
@@ -466,10 +466,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Create a new list of task templates for macro configuration.
      */
-    public function createTaskTemplates(int $macroConfigurationId, array $tasks): void
+    public function createTaskTemplates(MacroConfiguration $macroConfiguration, array $tasks): void
     {
         foreach ($tasks as $task) {
-            $this->macroTemplateRepository->create($macroConfigurationId, [
+            if (
+                str($macroConfiguration->store_ids)->contains(ShopConstant::SHOP_ALL_OPTION)
+                || str($macroConfiguration->store_ids)->contains(ShopConstant::SHOP_OWNER_OPTION)
+            ) {
+                $task['position'] = Arr::get($task, 'assignees', []);
+                Arr::forget($task, 'assignees');
+            }
+
+            $this->macroTemplateRepository->create($macroConfiguration->id, [
                 'type' => MacroConstant::MACRO_TYPE_TASK_ISSUE,
                 'payload' => $task,
             ]);
