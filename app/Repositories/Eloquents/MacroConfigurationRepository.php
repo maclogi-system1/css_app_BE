@@ -1019,32 +1019,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Build query from conditions of a specified json conditions.
      */
-    public function getQueryConditionsResults(array $requestConditions, ?User $auth = null)
+    public function getQueryConditionsResults(array $requestConditions)
     {
         $conditions = Arr::get($requestConditions, 'conditions');
         $storeIdsStr = Arr::get($requestConditions, 'store_ids', '');
         $storeIds = explode(',', $storeIdsStr);
-
-        if (array_search(ShopConstant::SHOP_ALL_OPTION, $storeIds) !== false) {
-            $shopResult = $this->shopService->getList(['per_page' => -1]);
-
-            if ($shopResult->get('success')) {
-                $shops = $shopResult->get('data')->get('shops');
-
-                $storeIds = Arr::pluck($shops, 'store_id');
-            }
-        } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $storeIds) !== false) {
-            $shopResult = $this->shopService->getList([
-                'per_page' => -1,
-                'own_manager' => app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId($auth->id),
-            ]);
-
-            if ($shopResult->get('success')) {
-                $shops = $shopResult->get('data')->get('shops');
-
-                $storeIds = array_unique(array_merge($storeIds, Arr::pluck($shops, 'store_id')));
-            }
-        }
 
         return $this->buildQueryAndExecute($conditions, $storeIds);
     }
@@ -1077,6 +1056,27 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 MacroConstant::LIST_RELATIVE_TABLE,
                 $table.'.'.MacroConstant::RELATIVE_TABLES
             );
+
+            if (array_search(ShopConstant::SHOP_ALL_OPTION, $storeIds) !== false) {
+                $shopResult = $this->shopService->getList(['per_page' => -1]);
+
+                if ($shopResult->get('success')) {
+                    $shops = $shopResult->get('data')->get('shops');
+
+                    $storeIds = Arr::pluck($shops, 'store_id');
+                }
+            } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $storeIds) !== false && auth()->check()) {
+                $shopResult = $this->shopService->getList([
+                    'per_page' => -1,
+                    'own_manager' => app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId(auth()->id()),
+                ]);
+
+                if ($shopResult->get('success')) {
+                    $shops = $shopResult->get('data')->get('shops');
+
+                    $storeIds = array_unique(array_merge($storeIds, Arr::pluck($shops, 'store_id')));
+                }
+            }
 
             $columns = $this->getAllColumnOfTable($table, $connection)
                 ->map(fn ($item) => "{$item['table']}.{$item['column']}")
@@ -1195,6 +1195,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'labels' => $labelArr,
             ]);
         } else {
+            if (auth()->check()) {
+                $storeIds = array_map(function ($storeId) {
+                    if ($storeId == ShopConstant::SHOP_OWNER_OPTION) {
+                        return '__shop_owner_'.app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId(auth()->id());
+                    }
+                    return $storeId;
+                }, $storeIds);
+            }
+
             $conditions['conditions'] = array_map(function ($conditionItem) {
                 if (Arr::has($conditionItem, 'date_condition')) {
                     $newDateCondition = $this->handleConditionContainingDate($conditionItem);
@@ -1205,11 +1214,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
                 return $conditionItem;
             }, $conditionItems);
-            array_push($conditions['conditions'], [
+            $conditions['conditions'][] = [
                 'field' => 'store_id',
                 'operator' => 'in',
                 'value' => implode(',', $storeIds),
-            ]);
+            ];
 
             $result = $this->schemaService->getQueryConditionsResult($conditions);
             $data = $result->get('data');
