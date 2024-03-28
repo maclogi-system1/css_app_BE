@@ -312,6 +312,10 @@ class MyPageRepository extends Repository implements MyPageRepositoryContract
     public function getTasks(array $params): Collection
     {
         $params = $this->prepareDataStoreProfit($params);
+        $params['sort'] = [
+            'field' => 'tasks.created_at',
+            'direction' => 'desc',
+        ];
 
         $result = $this->myPageService->getTasks($params);
         if (! $result->get('success')) {
