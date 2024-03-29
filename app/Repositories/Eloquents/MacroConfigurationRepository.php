@@ -347,7 +347,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_TASK_ISSUE
                 && Arr::has($data, 'tasks')
             ) {
-                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+                $this->createTaskTemplates($macroConfiguration, Arr::get($data, 'tasks', []));
             } elseif (
                 Arr::get($data, 'macro_type') == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
                 && Arr::has($data, 'alert')
@@ -372,6 +372,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
             $data['store_ids'] = $storeIds;
             $data['conditions'] = json_encode($data['conditions']);
             $data['time_conditions'] = json_encode($data['time_conditions']);
+            $data['status'] = MacroConstant::MACRO_STATUS_NOT_READY;
             unset($macroConfiguration->stores);
             $macroConfiguration->fill(Arr::except($data, 'macro_type'));
             $macroConfiguration->save();
@@ -425,7 +426,7 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 && Arr::has($data, 'tasks')
             ) {
                 $this->macroTemplateRepository->deleteByMacroConfigId($macroConfiguration->id);
-                $this->createTaskTemplates($macroConfiguration->id, Arr::get($data, 'tasks', []));
+                $this->createTaskTemplates($macroConfiguration, Arr::get($data, 'tasks', []));
             } elseif (
                 $macroConfiguration->macro_type == MacroConstant::MACRO_TYPE_ALERT_DISPLAY
                 && Arr::has($data, 'alert')
@@ -465,10 +466,18 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Create a new list of task templates for macro configuration.
      */
-    public function createTaskTemplates(int $macroConfigurationId, array $tasks): void
+    public function createTaskTemplates(MacroConfiguration $macroConfiguration, array $tasks): void
     {
         foreach ($tasks as $task) {
-            $this->macroTemplateRepository->create($macroConfigurationId, [
+            if (
+                str($macroConfiguration->store_ids)->contains(ShopConstant::SHOP_ALL_OPTION)
+                || str($macroConfiguration->store_ids)->contains(ShopConstant::SHOP_OWNER_OPTION)
+            ) {
+                $task['position'] = Arr::get($task, 'assignees', []);
+                Arr::forget($task, 'assignees');
+            }
+
+            $this->macroTemplateRepository->create($macroConfiguration->id, [
                 'type' => MacroConstant::MACRO_TYPE_TASK_ISSUE,
                 'payload' => $task,
             ]);
@@ -1010,32 +1019,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
     /**
      * Build query from conditions of a specified json conditions.
      */
-    public function getQueryConditionsResults(array $requestConditions, ?User $auth = null)
+    public function getQueryConditionsResults(array $requestConditions)
     {
         $conditions = Arr::get($requestConditions, 'conditions');
         $storeIdsStr = Arr::get($requestConditions, 'store_ids', '');
         $storeIds = explode(',', $storeIdsStr);
-
-        if (array_search(ShopConstant::SHOP_ALL_OPTION, $storeIds) !== false) {
-            $shopResult = $this->shopService->getList(['per_page' => -1]);
-
-            if ($shopResult->get('success')) {
-                $shops = $shopResult->get('data')->get('shops');
-
-                $storeIds = Arr::pluck($shops, 'store_id');
-            }
-        } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $storeIds) !== false) {
-            $shopResult = $this->shopService->getList([
-                'per_page' => -1,
-                'own_manager' => app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId($auth->id),
-            ]);
-
-            if ($shopResult->get('success')) {
-                $shops = $shopResult->get('data')->get('shops');
-
-                $storeIds = array_unique(array_merge($storeIds, Arr::pluck($shops, 'store_id')));
-            }
-        }
 
         return $this->buildQueryAndExecute($conditions, $storeIds);
     }
@@ -1068,6 +1056,27 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 MacroConstant::LIST_RELATIVE_TABLE,
                 $table.'.'.MacroConstant::RELATIVE_TABLES
             );
+
+            if (array_search(ShopConstant::SHOP_ALL_OPTION, $storeIds) !== false) {
+                $shopResult = $this->shopService->getList(['per_page' => -1]);
+
+                if ($shopResult->get('success')) {
+                    $shops = $shopResult->get('data')->get('shops');
+
+                    $storeIds = Arr::pluck($shops, 'store_id');
+                }
+            } elseif (array_search(ShopConstant::SHOP_OWNER_OPTION, $storeIds) !== false && auth()->check()) {
+                $shopResult = $this->shopService->getList([
+                    'per_page' => -1,
+                    'own_manager' => app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId(auth()->id()),
+                ]);
+
+                if ($shopResult->get('success')) {
+                    $shops = $shopResult->get('data')->get('shops');
+
+                    $storeIds = array_unique(array_merge($storeIds, Arr::pluck($shops, 'store_id')));
+                }
+            }
 
             $columns = $this->getAllColumnOfTable($table, $connection)
                 ->map(fn ($item) => "{$item['table']}.{$item['column']}")
@@ -1186,6 +1195,15 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
                 'labels' => $labelArr,
             ]);
         } else {
+            if (auth()->check()) {
+                $storeIds = array_map(function ($storeId) {
+                    if ($storeId == ShopConstant::SHOP_OWNER_OPTION) {
+                        return '__shop_owner_'.app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId(auth()->id());
+                    }
+                    return $storeId;
+                }, $storeIds);
+            }
+
             $conditions['conditions'] = array_map(function ($conditionItem) {
                 if (Arr::has($conditionItem, 'date_condition')) {
                     $newDateCondition = $this->handleConditionContainingDate($conditionItem);
@@ -1196,11 +1214,11 @@ class MacroConfigurationRepository extends Repository implements MacroConfigurat
 
                 return $conditionItem;
             }, $conditionItems);
-            array_push($conditions['conditions'], [
+            $conditions['conditions'][] = [
                 'field' => 'store_id',
                 'operator' => 'in',
                 'value' => implode(',', $storeIds),
-            ]);
+            ];
 
             $result = $this->schemaService->getQueryConditionsResult($conditions);
             $data = $result->get('data');

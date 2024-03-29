@@ -10,6 +10,7 @@ use App\Repositories\Contracts\ShopRepository as ShopRepositoryContract;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Repository;
 use App\WebServices\OSS\ShopService;
+use App\WebServices\OSS\TaskService;
 use App\WebServices\OSS\UserService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
@@ -19,7 +20,8 @@ class ShopRepository extends Repository implements ShopRepositoryContract
 {
     public function __construct(
         private ShopService $shopService,
-        private UserService $userService
+        private UserService $userService,
+        private TaskService $taskService,
     ) {
     }
 
@@ -111,12 +113,30 @@ class ShopRepository extends Repository implements ShopRepositoryContract
         $data = ['users' => []];
 
         if ($storeId = Arr::get($filters, 'store_id')) {
-            if ($storeId == ShopConstant::SHOP_ALL_OPTION) {
-                unset($filters['store_id']);
-            } elseif ($storeId == ShopConstant::SHOP_OWNER_OPTION) {
-                $ownerId = $this->getLinkedUserInfoRepository()->getOssUserIdByCssUserId(auth()->id());
-                $filters['owner_id'] = $ownerId;
-                unset($filters['store_id']);
+            if (
+                $storeId == ShopConstant::SHOP_ALL_OPTION
+                || $storeId == ShopConstant::SHOP_OWNER_OPTION
+            ) {
+                $ossTaskOptionResult = $this->taskService->getOptions();
+                $ossTaskOption = $ossTaskOptionResult->get('data');
+
+                if (! $ossTaskOptionResult->get('success')) {
+                    return [
+                        'users' => [],
+                    ];
+                }
+
+                return [
+                    'users' => collect($ossTaskOption->get('positions'))
+                        ->map(function ($position) {
+                            return [
+                                'value' => $position['value'],
+                                'label' => $position['label'],
+                                'email' => '',
+                            ];
+                        })
+                        ->toArray(),
+                ];
             }
         }
 
