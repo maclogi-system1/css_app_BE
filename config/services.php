@@ -57,6 +57,7 @@ return [
                 'update' => '/tasks/{id}',
                 'delete' => '/tasks/{id}',
                 'options' => '/tasks/options',
+                'create_for_mutiple_shop' => '/tasks/multiple',
             ],
             'job_groups' => [
                 'list' => '/job-groups',
