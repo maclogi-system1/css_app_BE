@@ -188,31 +188,37 @@ class ExecuteScheduledMacros extends Command
     {
         $templates = $macro->taskTemplates;
         $diff = now()->diffInMinutes($macro->cron_expression->getNextRunDate());
+        $storeIds = $macro->store_ids;
 
         foreach ($templates as $template) {
             $data = $template->payload_decode;
 
-            foreach ($this->getListStoreId($macro) as $storeId) {
-                logger()->channel('macro')->info('Run create task: '.json_encode($data + ['store_id' => $storeId]));
-
-                $result = $this->taskRepository()->create($data, $storeId);
-
-                if (! $result || $result->get('errors')) {
-                    $content = is_null($result) ? 'check the OSS log' : json_encode($result->get('errors'));
-                    logger()->channel('macro')->error('Create task failed: '.$content);
-                }
-
-                // Increase the start and end times for the next new creation.
-                $template->payload = $this->getDataWithDateTimeForNextCreation(
-                    $data,
-                    'start_date',
-                    'start_time',
-                    'due_date',
-                    'due_time',
-                    $diff,
+            if (str($storeIds)->contains(ShopConstant::SHOP_OWNER_OPTION)) {
+                $storeIds = (string) str($storeIds)->replace(
+                    ShopConstant::SHOP_OWNER_OPTION,
+                    '__shop_owner_'.app(LinkedUserInfoRepository::class)->getOssUserIdByCssUserId($macro->created_by),
                 );
-                $template->save();
             }
+
+            logger()->channel('macro')->info('Run create task for multiple shop: '.json_encode($data + ['store_id' => $storeIds]));
+
+            $result = $this->taskRepository()->createForMultipleShops($data, $storeIds);
+
+            if (! $result || $result->get('errors')) {
+                $content = is_null($result) ? 'check the OSS log' : json_encode($result->get('errors'));
+                logger()->channel('macro')->error('Create task failed: '.$content);
+            }
+
+            // Increase the start and end times for the next new creation.
+            $template->payload = $this->getDataWithDateTimeForNextCreation(
+                $data,
+                'start_date',
+                'start_time',
+                'due_date',
+                'due_time',
+                $diff,
+            );
+            $template->save();
         }
     }
 
