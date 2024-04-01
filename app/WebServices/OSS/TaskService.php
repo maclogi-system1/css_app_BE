@@ -25,6 +25,14 @@ class TaskService extends Service
     }
 
     /**
+     * Handles create the task for multiple shops.
+     */
+    public function createForMultipleShops(array $data): Collection
+    {
+        return $this->toResponse(Http::oss()->post(OSSService::getApiUri('tasks.create_for_mutiple_shop'), $data));
+    }
+
+    /**
      * @param int $id
      * @param array $data
      * @return Collection

@@ -141,6 +141,32 @@ class TaskRepository extends Repository implements TaskRepositoryContract
         return null;
     }
 
+    /**
+     * Handles create the task for multiple shops.
+     */
+    public function createForMultipleShops(array $data, string $storeIds): ?Collection
+    {
+        $data = $this->handleStartAndEndDateForRequest($data);
+        $result = $this->taskService->createForMultipleShops($data + ['store_id' => $storeIds, 'is_draft' => 0]);
+
+        if ($result->get('status') == Response::HTTP_UNPROCESSABLE_ENTITY) {
+            $errors = $result->get('data')->get('message');
+
+            return collect([
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                'errors' => $errors,
+            ]);
+        }
+
+        if ($result->get('success')) {
+            return $this->handleTaskAssignees(collect($result->get('data')));
+        }
+
+        logger()->error('[OSS] Create the task for multiple shops: '.$result->get('data')->get('message'));
+
+        return null;
+    }
+
     public function update(array $data, string $storeId): ?Collection
     {
         $data = $this->handleStartAndEndDateForRequest($data);

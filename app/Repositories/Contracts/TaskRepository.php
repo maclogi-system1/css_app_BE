@@ -22,6 +22,11 @@ interface TaskRepository extends Repository
     public function create(array $data, string $storeId): ?Collection;
 
     /**
+     * Handles create the task for multiple shops.
+     */
+    public function createForMultipleShops(array $data, string $storeIds): ?Collection;
+
+    /**
      * Handle update a task.
      */
     public function update(array $data, string $storeId): ?Collection;
